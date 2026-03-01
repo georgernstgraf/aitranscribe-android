@@ -3,11 +3,10 @@ package com.georgernstgraf.aitranscribe.util
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationChannelGroupCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.app.Person
-import androidx.core.graphics.drawable.IconCompat
 import com.georgernstgraf.aitranscribe.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -32,81 +31,71 @@ class EnhancedNotificationManager @Inject constructor(
      * Create all notification channels and groups.
      */
     private fun createNotificationChannels() {
-        val channels = listOf(
-            NotificationChannelGroupCompat(
-                GROUP_ID_RECORDING,
-                "Recording"
-            ).apply {
-                description = "Recording related notifications"
-                isBlocked = false
-            },
-            NotificationChannelGroupCompat(
-                GROUP_ID_TRANSCRIPTION,
-                "Transcription"
-            ).apply {
-                description = "Transcription progress and completion notifications"
-                isBlocked = false
-            }
+        // Create channel groups
+        val recordingGroup = NotificationChannelGroupCompat.Builder(GROUP_ID_RECORDING)
+            .setName(context.getString(R.string.notification_channel_recording))
+            .setDescription(context.getString(R.string.notification_group_recording_desc))
+            .build()
+
+        val transcriptionGroup = NotificationChannelGroupCompat.Builder(GROUP_ID_TRANSCRIPTION)
+            .setName(context.getString(R.string.notification_channel_transcription))
+            .setDescription(context.getString(R.string.notification_group_transcription_desc))
+            .build()
+
+        notificationManager.createNotificationChannelGroupsCompat(
+            listOf(recordingGroup, transcriptionGroup)
         )
 
-        notificationManager.createNotificationChannelGroupCompat(channels)
-        notificationManager.createNotificationChannelCompat(
+        // Create notification channels
+        val recordingActiveChannel = NotificationChannelCompat.Builder(
             CHANNEL_RECORDING_ACTIVE,
-            NotificationCompat.Channel(
-                CHANNEL_RECORDING_ACTIVE,
-                "Active Recording",
-                NotificationManagerCompat.IMPORTANCE_LOW
-            ).apply {
-                description = "Shows when recording is active"
-                enableLights(false)
-                enableVibration(false)
-                setOngoing(true)
-                setShowBadge(false)
-                group = GROUP_ID_RECORDING
-            }
+            NotificationManagerCompat.IMPORTANCE_LOW
         )
+            .setName(context.getString(R.string.notification_channel_active_recording))
+            .setDescription(context.getString(R.string.notification_channel_desc_active_recording))
+            .setLightsEnabled(false)
+            .setVibrationEnabled(false)
+            .setShowBadge(false)
+            .setGroup(GROUP_ID_RECORDING)
+            .build()
 
-        notificationManager.createNotificationChannelCompat(
+        val transcriptionProgressChannel = NotificationChannelCompat.Builder(
             CHANNEL_TRANSCRIPTION_PROGRESS,
-            NotificationCompat.Channel(
-                CHANNEL_TRANSCRIPTION_PROGRESS,
-                "Transcription Progress",
-                NotificationManagerCompat.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Shows transcription progress"
-                enableLights(false)
-                enableVibration(false)
-                group = GROUP_ID_TRANSCRIPTION
-            }
+            NotificationManagerCompat.IMPORTANCE_DEFAULT
         )
+            .setName(context.getString(R.string.notification_channel_transcription_progress))
+            .setDescription(context.getString(R.string.notification_channel_desc_transcription_progress))
+            .setLightsEnabled(false)
+            .setVibrationEnabled(false)
+            .setGroup(GROUP_ID_TRANSCRIPTION)
+            .build()
 
-        notificationManager.createNotificationChannelCompat(
+        val transcriptionCompleteChannel = NotificationChannelCompat.Builder(
             CHANNEL_TRANSCRIPTION_COMPLETE,
-            NotificationCompat.Channel(
-                CHANNEL_TRANSCRIPTION_COMPLETE,
-                "Transcription Complete",
-                NotificationManagerCompat.IMPORTANCE_HIGH
-            ).apply {
-                description = "Shows when transcription is complete"
-                enableLights(true)
-                enableVibration(true)
-                group = GROUP_ID_TRANSCRIPTION
-            }
+            NotificationManagerCompat.IMPORTANCE_HIGH
         )
+            .setName(context.getString(R.string.notification_channel_transcription_complete))
+            .setDescription(context.getString(R.string.notification_channel_desc_transcription_complete))
+            .setLightsEnabled(true)
+            .setVibrationEnabled(true)
+            .setGroup(GROUP_ID_TRANSCRIPTION)
+            .build()
 
-        notificationManager.createNotificationChannelCompat(
+        val errorsChannel = NotificationChannelCompat.Builder(
             CHANNEL_ERRORS,
-            NotificationCompat.Channel(
-                CHANNEL_ERRORS,
-                "Errors",
-                NotificationManagerCompat.IMPORTANCE_HIGH
-            ).apply {
-                description = "Shows error notifications"
-                enableLights(true)
-                enableVibration(true)
-                group = GROUP_ID_TRANSCRIPTION
-            }
+            NotificationManagerCompat.IMPORTANCE_HIGH
         )
+            .setName(context.getString(R.string.notification_channel_errors))
+            .setDescription(context.getString(R.string.notification_channel_desc_errors))
+            .setLightsEnabled(true)
+            .setVibrationEnabled(true)
+            .setGroup(GROUP_ID_TRANSCRIPTION)
+            .build()
+
+        notificationManager.createNotificationChannelCompat(recordingActiveChannel)
+        notificationManager.createNotificationChannelCompat(transcriptionProgressChannel)
+        notificationManager.createNotificationChannelCompat(transcriptionCompleteChannel)
+        notificationManager.createNotificationChannelCompat(errorsChannel)
     }
 
     /**
@@ -114,8 +103,8 @@ class EnhancedNotificationManager @Inject constructor(
      */
     fun showRecordingActiveNotification(duration: Int) {
         val notification = NotificationCompat.Builder(context, CHANNEL_RECORDING_ACTIVE)
-            .setContentTitle("Recording Active")
-            .setContentText("Duration: ${duration}s")
+            .setContentTitle(context.getString(R.string.notification_recording_active))
+            .setContentText(context.getString(R.string.notification_recording_duration, duration))
             .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -135,8 +124,8 @@ class EnhancedNotificationManager @Inject constructor(
         max: Int = 100
     ) {
         val notification = NotificationCompat.Builder(context, CHANNEL_TRANSCRIPTION_PROGRESS)
-            .setContentTitle("Transcribing...")
-            .setContentText("$progress% complete")
+            .setContentTitle(context.getString(R.string.notification_transcribing))
+            .setContentText(context.getString(R.string.notification_progress_percent, progress))
             .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -156,7 +145,7 @@ class EnhancedNotificationManager @Inject constructor(
         text: String
     ) {
         val notification = NotificationCompat.Builder(context, CHANNEL_TRANSCRIPTION_COMPLETE)
-            .setContentTitle("Transcription Complete")
+            .setContentTitle(context.getString(R.string.notification_transcription_complete))
             .setContentText(text.take(50))
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setSmallIcon(R.mipmap.ic_launcher)
@@ -167,7 +156,7 @@ class EnhancedNotificationManager @Inject constructor(
             .addAction(
                 NotificationCompat.Action(
                     R.mipmap.ic_launcher,
-                    "Copy",
+                    context.getString(R.string.notification_action_copy),
                     PendingIntent.getActivity(
                         context,
                         0,
@@ -221,7 +210,7 @@ class EnhancedNotificationManager @Inject constructor(
         return Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
-            putExtra(Intent.EXTRA_SUBJECT, "Transcription from AITranscribe")
+            putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.notification_share_subject))
         }
     }
 

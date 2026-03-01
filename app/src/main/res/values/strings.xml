@@ -80,6 +80,31 @@
     <string name="notification_transcribing_text">Processing your audio…</string>
     <string name="notification_channel_recording">Recording</string>
     <string name="notification_channel_transcription">Transcription</string>
+
+    <!-- Notification Channel Groups -->
+    <string name="notification_group_recording_desc">Recording related notifications</string>
+    <string name="notification_group_transcription_desc">Transcription progress and completion notifications</string>
+
+    <!-- Notification Channel Names -->
+    <string name="notification_channel_active_recording">Active Recording</string>
+    <string name="notification_channel_transcription_progress">Transcription Progress</string>
+    <string name="notification_channel_transcription_complete">Transcription Complete</string>
+    <string name="notification_channel_errors">Errors</string>
+
+    <!-- Notification Channel Descriptions -->
+    <string name="notification_channel_desc_active_recording">Shows when recording is active</string>
+    <string name="notification_channel_desc_transcription_progress">Shows transcription progress</string>
+    <string name="notification_channel_desc_transcription_complete">Shows when transcription is complete</string>
+    <string name="notification_channel_desc_errors">Shows error notifications</string>
+
+    <!-- Enhanced Notification Content -->
+    <string name="notification_recording_active">Recording Active</string>
+    <string name="notification_recording_duration">Duration: %ds</string>
+    <string name="notification_transcribing">Transcribing…</string>
+    <string name="notification_progress_percent">%d%% complete</string>
+    <string name="notification_transcription_complete">Transcription Complete</string>
+    <string name="notification_action_copy">Copy</string>
+    <string name="notification_share_subject">Transcription from AITranscribe</string>
     
     <!-- Errors -->
     <string name="error_network">Network error</string>
