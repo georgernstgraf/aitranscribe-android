@@ -13,7 +13,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -25,7 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,12 +36,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.navigation.NavHost
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.georgernstgraf.aitranscribe.ui.components.AudioRecordingButton
+import com.georgernstgraf.aitranscribe.ui.components.TranscriptionItem
 import com.georgernstgraf.aitranscribe.ui.theme.AITranscribeTheme
+import com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -89,7 +95,7 @@ fun MainNavigation(mainViewModel: MainViewModel) {
     val navController = rememberNavController()
     val state by mainViewModel.uiState.collectAsState()
 
-    val scrollBehavior = rememberTopAppBarState()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     NavHost(
         navController = navController,
@@ -120,7 +126,7 @@ fun MainNavigation(mainViewModel: MainViewModel) {
                 ) {
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    RecordingButton(
+                    AudioRecordingButton(
                         isRecording = state.isRecording,
                         recordingDuration = state.recordingDuration,
                         onStartRecording = { mainViewModel.startRecording() },
@@ -136,7 +142,7 @@ fun MainNavigation(mainViewModel: MainViewModel) {
                             modifier = Modifier.padding(horizontal = 16.dp)
                         )
 
-                        androidx.compose.foundation.lazy.LazyColumn(
+                        LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)

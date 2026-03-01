@@ -73,8 +73,8 @@ class TranscribeAudioUseCase @Inject constructor(
 
             if (!response.isSuccessful || response.body() == null) {
                 throw TranscriptionException(
-                    "Transcription failed: ${response.message()}",
-                    response.code()
+                    message = "Transcription failed: ${response.message()}",
+                    errorCode = response.code()
                 )
             }
 

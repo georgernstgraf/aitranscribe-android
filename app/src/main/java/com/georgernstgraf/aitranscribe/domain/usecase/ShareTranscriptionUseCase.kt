@@ -8,6 +8,7 @@ import dagger.hilt.android.scopes.ViewModelScoped
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import javax.inject.Inject
 
 /**
@@ -24,7 +25,7 @@ class ShareTranscriptionUseCase @Inject constructor(
         val transcription = repository.getById(id)
             ?: throw ShareException("Transcription not found: $id")
 
-        val text = transcription.getDisplayText()
+        val text = transcription.processedText ?: transcription.originalText
         
         Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
@@ -35,11 +36,11 @@ class ShareTranscriptionUseCase @Inject constructor(
         }
     }
 
-    suspend operator fun invokeAsFile(id: Long): Intent = withContext(Dispatchers.IO) {
+    suspend fun invokeAsFile(id: Long): Intent = withContext(Dispatchers.IO) {
         val transcription = repository.getById(id)
             ?: throw ShareException("Transcription not found: $id")
 
-        val text = transcription.getDisplayText()
+        val text = transcription.processedText ?: transcription.originalText
         val fileName = "transcription_${transcription.id}.txt"
         
         val authority = "${context.packageName}.fileprovider"

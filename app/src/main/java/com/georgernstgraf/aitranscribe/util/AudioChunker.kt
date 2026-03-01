@@ -1,6 +1,7 @@
 package com.georgernstgraf.aitranscribe.util
 
 import android.content.Context
+import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
@@ -8,6 +9,7 @@ import android.media.MediaMuxer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.nio.ByteBuffer
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -143,11 +145,10 @@ class AudioChunker @Inject constructor(
         startTimeUs: Long,
         endTimeUs: Long
     ) = withContext(Dispatchers.IO) {
-        val inputFile = File(inputPath)
         val outputFile = File(outputPath)
         
         val extractor = MediaExtractor()
-        val muxer = MediaMuxer(outputPath.absolutePath)
+        val muxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         
         try {
             extractor.setDataSource(inputPath)
@@ -174,10 +175,9 @@ class AudioChunker @Inject constructor(
             // Copy data
             val bufferInfo = MediaCodec.BufferInfo()
             val maxBufferSize = 1024 * 1024 // 1MB buffer
-            val buffer = java.nio.ByteBuffer.allocate(maxBufferSize)
+            val buffer = ByteBuffer.allocate(maxBufferSize)
             
-            var sampleTimeUs: Long = -1
-            while (sampleTimeUs < endTimeUs) {
+            while (true) {
                 val sampleSize = extractor.readSampleData(buffer, 0)
                 
                 if (sampleSize < 0) {
@@ -185,8 +185,7 @@ class AudioChunker @Inject constructor(
                     break
                 }
                 
-                extractor.getSampleTime(bufferInfo)
-                sampleTimeUs = bufferInfo.presentationTimeUs
+                val sampleTimeUs = extractor.sampleTime
                 
                 if (sampleTimeUs >= endTimeUs) {
                     // Reached end of chunk
@@ -196,10 +195,14 @@ class AudioChunker @Inject constructor(
                 // Skip samples before start time (after seeking)
                 if (sampleTimeUs >= startTimeUs) {
                     bufferInfo.size = sampleSize
-                    bufferInfo.presentationTimeUs -= startTimeUs
+                    bufferInfo.presentationTimeUs = sampleTimeUs - startTimeUs
+                    bufferInfo.offset = 0
+                    bufferInfo.flags = extractor.sampleFlags
                     
-                    muxer.writeSampleData(buffer, bufferInfo, muxerTrackIndex)
+                    muxer.writeSampleData(muxerTrackIndex, buffer, bufferInfo)
                 }
+                
+                extractor.advance()
             }
             
         } catch (e: Exception) {
@@ -209,8 +212,12 @@ class AudioChunker @Inject constructor(
             }
             throw Exception("Failed to create chunk: ${e.message}", e)
         } finally {
-            muxer.stop()
-            muxer.release()
+            try {
+                muxer.stop()
+                muxer.release()
+            } catch (_: Exception) {
+                // Ignore stop/release errors
+            }
             extractor.release()
         }
     }

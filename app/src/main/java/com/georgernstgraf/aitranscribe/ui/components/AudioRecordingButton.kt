@@ -1,6 +1,7 @@
 package com.georgernstgraf.aitranscribe.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
@@ -32,67 +33,54 @@ fun AudioRecordingButton(
     modifier: Modifier = Modifier
 ) {
     val recordingColor = if (isRecording) Red else MaterialTheme.colorScheme.primary
-    val icon = if (isRecording) {
-        androidx.compose.material.icons.Icons.Filled.Stop
-    } else {
-        androidx.compose.material.icons.Icons.Filled.Mic
-    }
+    val icon = if (isRecording) Icons.Filled.Stop else Icons.Filled.Mic
 
-    Surface(
-        shape = CircleShape,
-        modifier = modifier.size(120.dp),
-        onClick = { }
-    ) {
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .background(recordingColor)
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = { if (isRecording) onStopRecording() else onStartRecording() },
-                        onPress = {
-                            if (!isRecording) onStartRecording()
-                            tryAwaitRelease()
+    Box(
+        modifier = modifier
+            .size(120.dp)
+            .clip(CircleShape)
+            .background(recordingColor)
+            .pointerInput(isRecording) {
+                detectTapGestures(
+                    onPress = {
+                        if (!isRecording) {
+                            onStartRecording()
+                            val released = tryAwaitRelease()
+                            if (released) {
+                                onStopRecording()
+                            }
+                        } else {
                             onStopRecording()
                         }
-                    )
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            if (isRecording) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = if (isRecording) "Stop Recording" else "Start Recording",
-                        tint = Color.White,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Text(
-                        text = "$recordingDuration",
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else {
+                    }
+                )
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        if (isRecording) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = "Start Recording",
+                    contentDescription = "Stop Recording",
                     tint = Color.White,
                     modifier = Modifier.size(48.dp)
                 )
+                Text(
+                    text = "$recordingDuration",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center
+                )
             }
+        } else {
+            Icon(
+                imageVector = icon,
+                contentDescription = "Start Recording",
+                tint = Color.White,
+                modifier = Modifier.size(48.dp)
+            )
         }
-    }
-}
-
-private suspend fun PointerInputScope.tryAwaitRelease() {
-    val success = try {
-        awaitRelease()
-    } catch (e: Exception) {
-        false
     }
 }

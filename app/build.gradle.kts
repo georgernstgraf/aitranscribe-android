@@ -125,10 +125,6 @@ dependencies {
     // Audio Processing - Uses native Android Media APIs (MediaExtractor, MediaMuxer)
     // Replaces FFmpegKit to avoid native dependencies for F-Droid compatibility
 
-    // Crash Reporting (ACRA - FOSS)
-    implementation("ch.acra:acra-http:5.11.3")
-    implementation("ch.acra:acra-dialog:5.11.3")
-
     // Date/Time
     implementation("org.threeten:threetenbp:1.6.9")
 
@@ -140,6 +136,9 @@ dependencies {
 
     // DataStore (Preferences)
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // Security (Encrypted SharedPreferences)
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // ========== TESTING DEPENDENCIES ==========
 

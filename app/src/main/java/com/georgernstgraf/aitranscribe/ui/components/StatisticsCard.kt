@@ -7,15 +7,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -28,6 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -70,13 +73,13 @@ fun StatisticsCard(
                 StatItem(
                     label = "Total",
                     value = totalCount.toString(),
-                    icon = androidx.compose.material.icons.Icons.Default.List
+                    icon = Icons.Default.Info
                 )
 
                 StatItem(
                     label = "Unviewed",
                     value = unviewedCount.toString(),
-                    icon = androidx.compose.material.icons.Default.Visibility
+                    icon = Icons.Default.Visibility
                 )
 
                 StatItem(
@@ -99,7 +102,7 @@ fun StatisticsCard(
 
                     TextButton(
                         onClick = {  },
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
+                        contentPadding = PaddingValues(0.dp)
                     ) {
                         Text("Details")
                     }
@@ -113,7 +116,7 @@ fun StatisticsCard(
 private fun StatItem(
     label: String,
     value: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
+    icon: ImageVector
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
@@ -140,7 +143,7 @@ private fun StatItem(
         Text(
             text = value,
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+            fontWeight = FontWeight.Bold
         )
 
         Text(

@@ -56,8 +56,8 @@ class PostProcessTextUseCase @Inject constructor(
 
             if (!response.isSuccessful || response.body() == null) {
                 throw PostProcessingException(
-                    "Post-processing failed: ${response.message()}",
-                    response.code()
+                    message = "Post-processing failed: ${response.message()}",
+                    errorCode = response.code()
                 )
             }
 

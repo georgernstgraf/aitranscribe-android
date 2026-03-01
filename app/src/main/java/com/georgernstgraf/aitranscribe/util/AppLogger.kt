@@ -1,8 +1,6 @@
 package com.georgernstgraf.aitranscribe.util
 
 import android.util.Log
-import com.georgernstgraf.aitranscribe.domain.usecase.TranscribeAudioUseCase
-import com.georgernstgraf.aitranscribe.domain.usecase.TranscriptionException
 import com.georgernstgraf.aitranscribe.domain.usecase.TranscribeAudioUseCase.TranscriptionException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import javax.inject.Inject

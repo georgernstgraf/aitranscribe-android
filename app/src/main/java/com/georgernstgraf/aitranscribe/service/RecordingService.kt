@@ -10,6 +10,7 @@ import android.content.Intent
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.IBinder
+import com.georgernstgraf.aitranscribe.R
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -154,7 +155,6 @@ class RecordingService : Service() {
             ).apply {
                 description = "Foreground notification for recording"
                 setShowBadge(false)
-                setOngoing(true)
             }
             notificationManager.createNotificationChannel(channel)
         }

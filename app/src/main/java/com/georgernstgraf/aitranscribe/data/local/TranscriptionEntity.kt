@@ -3,6 +3,10 @@ package com.georgernstgraf.aitranscribe.data.local
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
+import com.georgernstgraf.aitranscribe.domain.model.Transcription
+import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
+import java.time.LocalDateTime
 
 @Entity(tableName = "transcriptions")
 data class TranscriptionEntity(
@@ -27,3 +31,20 @@ data class TranscriptionEntity(
     @ColumnInfo(name = "retry_count")
     val retryCount: Int = 0
 )
+
+fun TranscriptionEntity.toDomain(): Transcription {
+    return Transcription(
+        id = id,
+        originalText = originalText,
+        processedText = processedText,
+        audioFilePath = audioFilePath,
+        createdAt = LocalDateTime.parse(createdAt),
+        postProcessingType = postProcessingType?.let {
+            PostProcessingType.valueOf(it)
+        },
+        status = TranscriptionStatus.valueOf(status),
+        errorMessage = errorMessage,
+        playedCount = playedCount,
+        retryCount = retryCount
+    )
+}

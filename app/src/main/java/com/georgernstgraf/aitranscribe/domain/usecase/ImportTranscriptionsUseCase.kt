@@ -44,7 +44,7 @@ class ImportTranscriptionsUseCase @Inject constructor(
         val json = file.readText()
         
         try {
-            val transcriptionsType = object : TypeToken<List<TranscriptionEntity>>() {}
+            val transcriptionsType = object : TypeToken<List<TranscriptionEntity>>() {}.type
             val transcriptions: List<TranscriptionEntity> = gson.fromJson(json, transcriptionsType)
 
             if (transcriptions.isEmpty()) {

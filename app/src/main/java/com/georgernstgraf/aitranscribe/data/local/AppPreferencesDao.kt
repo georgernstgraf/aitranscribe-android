@@ -28,6 +28,9 @@ interface AppPreferencesDao {
     @Query("SELECT * FROM app_preferences")
     fun getAll(): Flow<List<AppPreferenceEntity>>
 
+    @Query("SELECT * FROM app_preferences")
+    suspend fun getAllOnce(): List<AppPreferenceEntity>
+
     @Query("DELETE FROM app_preferences")
     suspend fun deleteAll()
 

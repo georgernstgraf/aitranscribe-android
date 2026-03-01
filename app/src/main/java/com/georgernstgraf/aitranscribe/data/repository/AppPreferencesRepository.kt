@@ -5,7 +5,6 @@ import com.georgernstgraf.aitranscribe.data.local.AppPreferenceEntity
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -38,12 +37,12 @@ class AppPreferencesRepository @Inject constructor(
     }
 
     suspend fun getAllPreferences(): Map<String, String> {
-        return appPreferencesDao.getAll()
-            .map { it.associate { it.key to it.value } }
+        return appPreferencesDao.getAllOnce()
+            .associate { it.key to it.value }
     }
 
     suspend fun exportPreferences(): List<AppPreferenceEntity> {
-        return appPreferencesDao.getAll()
+        return appPreferencesDao.getAllOnce()
     }
 
     suspend fun importPreferences(preferences: List<AppPreferenceEntity>) {

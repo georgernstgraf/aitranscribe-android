@@ -1,17 +1,24 @@
 package com.georgernstgraf.aitranscribe.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -23,7 +30,7 @@ fun ExportDialog(
     onDismiss: () -> Unit,
     onExport: (format: String) -> Unit
 ) {
-    var selectedFormat by androidx.compose.runtime.mutableStateOf("json")
+    var selectedFormat by remember { mutableStateOf("json") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -36,18 +43,18 @@ fun ExportDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(
                         onClick = { selectedFormat = "json" },
                         modifier = Modifier.weight(1f),
                         colors = if (selectedFormat == "json") {
-                            androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                            ButtonDefaults.outlinedButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         } else {
-                            androidx.compose.material3.ButtonDefaults.outlinedButtonColors()
+                            ButtonDefaults.outlinedButtonColors()
                         }
                     ) {
                         Text("JSON")
@@ -57,12 +64,12 @@ fun ExportDialog(
                         onClick = { selectedFormat = "csv" },
                         modifier = Modifier.weight(1f),
                         colors = if (selectedFormat == "csv") {
-                            androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                            ButtonDefaults.outlinedButtonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         } else {
-                            androidx.compose.material3.ButtonDefaults.outlinedButtonColors()
+                            ButtonDefaults.outlinedButtonColors()
                         }
                     ) {
                         Text("CSV")

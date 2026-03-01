@@ -1,14 +1,12 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
-import android.content.Context
-import android.provider.Settings as AndroidSettings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val deleteTranscriptionUseCase: DeleteTranscriptionUseCase,
-    @ApplicationContext private val context: Context
+    private val securePreferences: SecurePreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -57,22 +55,26 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val state = _uiState.value
 
-            saveToSecureStorage(PREF_GROQ_API_KEY, state.groqApiKey)
-            saveToSecureStorage(PREF_OPENROUTER_API_KEY, state.openRouterApiKey)
-            saveToSecureStorage(PREF_STT_MODEL, state.sttModel)
-            saveToSecureStorage(PREF_LLM_MODEL, state.llmModel)
+            state.groqApiKey?.let { securePreferences.setGroqApiKey(it) }
+            state.openRouterApiKey?.let { securePreferences.setOpenRouterApiKey(it) }
+            securePreferences.setSttModel(state.sttModel)
+            securePreferences.setLlmModel(state.llmModel)
 
             _uiState.update { it.copy(isSaved = true) }
         }
     }
 
-    fun getOldCount(daysOld: Int): Int {
-        return deleteTranscriptionUseCase(
-            mode = DeleteMode.OLD_ALL,
-            cutoffDate = deleteTranscriptionUseCase.getCutoffDate(daysOld),
-            viewFilter = _uiState.value.deleteViewFilter,
-            getCount = true
-        )
+    fun getOldCount(daysOld: Int) {
+        viewModelScope.launch {
+            val cutoffDate = deleteTranscriptionUseCase.getCutoffDate(daysOld)
+            val count = deleteTranscriptionUseCase(
+                mode = DeleteMode.OLD_ALL,
+                cutoffDate = cutoffDate,
+                viewFilter = _uiState.value.deleteViewFilter,
+                getCount = true
+            )
+            _uiState.update { it.copy(oldCount = count) }
+        }
     }
 
     fun deleteOldTranscriptions() {
@@ -92,10 +94,10 @@ class SettingsViewModel @Inject constructor(
 
     private fun loadSettings() {
         viewModelScope.launch {
-            val groqKey = loadFromSecureStorage(PREF_GROQ_API_KEY)
-            val openRouterKey = loadFromSecureStorage(PREF_OPENROUTER_API_KEY)
-            val sttModel = loadFromSecureStorage(PREF_STT_MODEL) ?: "whisper-large-v3-turbo"
-            val llmModel = loadFromSecureStorage(PREF_LLM_MODEL) ?: "anthropic/claude-3-haiku"
+            val groqKey = securePreferences.getGroqApiKey()
+            val openRouterKey = securePreferences.getOpenRouterApiKey()
+            val sttModel = securePreferences.getSttModel()
+            val llmModel = securePreferences.getLlmModel()
 
             _uiState.update {
                 SettingsUiState(
@@ -107,23 +109,6 @@ class SettingsViewModel @Inject constructor(
             }
         }
     }
-
-    private fun saveToSecureStorage(key: String, value: String?) {
-        if (value != null) {
-            Settings.Secure.putString(context, key, value)
-        }
-    }
-
-    private fun loadFromSecureStorage(key: String): String? {
-        return Settings.Secure.getString(context, key)
-    }
-
-    companion object {
-        const val PREF_GROQ_API_KEY = "groq_api_key"
-        const val PREF_OPENROUTER_API_KEY = "openrouter_api_key"
-        const val PREF_STT_MODEL = "stt_model"
-        const val PREF_LLM_MODEL = "llm_model"
-    }
 }
 
 data class SettingsUiState(
@@ -134,5 +119,6 @@ data class SettingsUiState(
     val daysToDelete: Int = 30,
     val deleteViewFilter: ViewFilter = ViewFilter.UNVIEWED_ONLY,
     val isSaved: Boolean = false,
-    val deletedCount: Int? = null
+    val deletedCount: Int? = null,
+    val oldCount: Int? = null
 )

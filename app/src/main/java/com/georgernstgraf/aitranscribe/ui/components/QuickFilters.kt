@@ -1,12 +1,16 @@
 package com.georgernstgraf.aitranscribe.ui.components
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
 /**
  * Quick filters for transcription list.
@@ -18,9 +22,9 @@ fun QuickFilters(
     onFilterChanged: (QuickFilter) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    androidx.compose.foundation.layout.Row(
+    Row(
         modifier = modifier,
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         QuickFilter.values().forEach { filter ->
             FilterChip(
@@ -28,8 +32,8 @@ fun QuickFilters(
                 onClick = { onFilterChanged(filter) },
                 label = { Text(filter.label) },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = androidx.compose.material3.MaterialTheme.colorScheme.primaryContainer,
-                    selectedLabelColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             )
         }

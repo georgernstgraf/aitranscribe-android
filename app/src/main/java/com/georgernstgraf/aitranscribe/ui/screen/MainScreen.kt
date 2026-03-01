@@ -1,37 +1,51 @@
 package com.georgernstgraf.aitranscribe.ui.screen
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.rememberSnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.georgernstgraf.aitranscribe.ui.components.AudioRecordingButton
+import com.georgernstgraf.aitranscribe.ui.components.ExportDialog
+import com.georgernstgraf.aitranscribe.ui.components.QuickFilter
 import com.georgernstgraf.aitranscribe.ui.components.QuickFilters
 import com.georgernstgraf.aitranscribe.ui.components.StatisticsCard
 import com.georgernstgraf.aitranscribe.ui.components.TranscriptionItem
-import com.georgernstgraf.aitranscribe.ui.components.TranscriptionActions
 import com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,7 +68,7 @@ fun MainScreen(
             snackbarHostState.showSnackbar(
                 message = error,
                 actionLabel = "OK",
-                duration = androidx.compose.material3.SnackbarDuration.Short
+                duration = SnackbarDuration.Short
             )
         }
     }
@@ -68,34 +82,28 @@ fun MainScreen(
                     IconButton(
                         onClick = { navController.navigate("search") }
                     ) {
-                        androidx.compose.material.icons.Icons.Default.Search.let { icon ->
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = "Search"
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search"
+                        )
                     }
 
                     IconButton(
                         onClick = { navController.navigate("settings") }
                     ) {
-                        androidx.compose.material.icons.Icons.Default.Settings.let { icon ->
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = "Settings"
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
                     }
 
                     IconButton(
                         onClick = { showExportDialog = true }
                     ) {
-                        androidx.compose.material.icons.Icons.Default.Share.let { icon ->
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = "Export"
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Export"
+                        )
                     }
                 },
                 scrollBehavior = scrollBehavior
@@ -120,19 +128,19 @@ fun MainScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             QuickFilters(
-                currentFilter = com.georgernstgraf.aitranscribe.ui.components.QuickFilters.ALL,
+                currentFilter = QuickFilter.ALL,
                 onFilterChanged = {  },
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            androidx.compose.foundation.layout.Row(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RecordingButton(
+                AudioRecordingButton(
                     isRecording = state.isRecording,
                     recordingDuration = state.recordingDuration,
                     onStartRecording = { viewModel.startRecording() },
@@ -160,14 +168,12 @@ fun MainScreen(
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    androidx.compose.material.icons.Icons.Default.Mic.let { icon ->
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Mic,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.surfaceVariant
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -192,8 +198,8 @@ fun MainScreen(
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(state.recentTranscriptions) { transcription ->
                         TranscriptionItem(
@@ -209,10 +215,11 @@ fun MainScreen(
     }
 
     if (showExportDialog) {
-        com.georgernstgraf.aitranscribe.ui.components.ExportDialog(
+        ExportDialog(
             onDismiss = { showExportDialog = false },
             onExport = { format ->
-                viewModel.onExportRequested(format)
+                // Export functionality - could be added to MainViewModel later
+                showExportDialog = false
             }
         )
     }

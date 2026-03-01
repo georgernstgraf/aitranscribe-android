@@ -4,6 +4,7 @@ import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
 import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionDao
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
+import com.georgernstgraf.aitranscribe.data.local.toDomain
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
@@ -121,22 +122,5 @@ class TranscriptionRepositoryImpl @Inject constructor(
 
     override suspend fun getQueueCount(): Int {
         return queuedTranscriptionDao.getCount()
-    }
-
-    private fun TranscriptionEntity.toDomain(): Transcription {
-        return Transcription(
-            id = id,
-            originalText = originalText,
-            processedText = processedText,
-            audioFilePath = audioFilePath,
-            createdAt = java.time.LocalDateTime.parse(createdAt),
-            postProcessingType = postProcessingType?.let { 
-                com.georgernstgraf.aitranscribe.domain.model.PostProcessingType.valueOf(it) 
-            },
-            status = TranscriptionStatus.valueOf(status),
-            errorMessage = errorMessage,
-            playedCount = playedCount,
-            retryCount = retryCount
-        )
     }
 }
