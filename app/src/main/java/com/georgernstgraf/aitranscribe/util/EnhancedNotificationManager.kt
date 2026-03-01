@@ -92,10 +92,10 @@ class EnhancedNotificationManager @Inject constructor(
             .setGroup(GROUP_ID_TRANSCRIPTION)
             .build()
 
-        notificationManager.createNotificationChannelCompat(recordingActiveChannel)
-        notificationManager.createNotificationChannelCompat(transcriptionProgressChannel)
-        notificationManager.createNotificationChannelCompat(transcriptionCompleteChannel)
-        notificationManager.createNotificationChannelCompat(errorsChannel)
+        notificationManager.createNotificationChannel(recordingActiveChannel)
+        notificationManager.createNotificationChannel(transcriptionProgressChannel)
+        notificationManager.createNotificationChannel(transcriptionCompleteChannel)
+        notificationManager.createNotificationChannel(errorsChannel)
     }
 
     /**
