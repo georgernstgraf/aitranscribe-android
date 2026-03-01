@@ -1,0 +1,155 @@
+package com.georgernstgraf.aitranscribe.ui.viewmodel
+
+import app.cash.turbine.test
+import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+
+/**
+ * Test class for SettingsViewModel.
+ * Tests settings screen UI logic.
+ */
+class SettingsViewModelTest {
+
+    private lateinit var viewModel: SettingsViewModel
+    private lateinit var fakeRepository: FakeTranscriptionRepository
+
+    @Before
+    fun setup() {
+        fakeRepository = FakeTranscriptionRepository()
+        viewModel = SettingsViewModel(fakeRepository)
+    }
+
+    @Test
+    fun `initial state has default values`() = runTest {
+        val initialState = viewModel.uiState.value
+
+        assertEquals("GROQ key should be null initially", null, initialState.groqApiKey)
+        assertEquals("OpenRouter key should be null initially", null, initialState.openRouterApiKey)
+        assertEquals("STT model should be default", "whisper-large-v3-turbo", initialState.sttModel)
+        assertEquals("LLM model should be default", "anthropic/claude-3-haiku", initialState.llmModel)
+        assertEquals("Days to delete should be 30", 30, initialState.daysToDelete)
+        assertEquals("View filter should be UNVIEWED_ONLY", 
+            com.georgernstgraf.aitranscribe.domain.model.ViewFilter.UNVIEWED_ONLY, 
+            initialState.deleteViewFilter)
+    }
+
+    @Test
+    fun `updateGroqApiKey updates state`() = runTest {
+        val apiKey = "test-groq-key"
+
+        viewModel.onGroqApiKeyChanged(apiKey)
+
+        assertEquals("GROQ API key should be updated", apiKey, viewModel.uiState.value.groqApiKey)
+    }
+
+    @Test
+    fun `updateOpenRouterApiKey updates state`() = runTest {
+        val apiKey = "test-openrouter-key"
+
+        viewModel.onOpenRouterApiKeyChanged(apiKey)
+
+        assertEquals("OpenRouter API key should be updated", apiKey, viewModel.uiState.value.openRouterApiKey)
+    }
+
+    @Test
+    fun `updateSttModel updates state`() = runTest {
+        val model = "whisper-large-v3"
+
+        viewModel.onSttModelChanged(model)
+
+        assertEquals("STT model should be updated", model, viewModel.uiState.value.sttModel)
+    }
+
+    @Test
+    fun `updateLlmModel updates state`() = runTest {
+        val model = "anthropic/claude-3-sonnet"
+
+        viewModel.onLlmModelChanged(model)
+
+        assertEquals("LLM model should be updated", model, viewModel.uiState.value.llmModel)
+    }
+
+    @Test
+    fun `updateDaysToDelete updates state`() = runTest {
+        val days = 60
+
+        viewModel.onDaysToDeleteChanged(days)
+
+        assertEquals("Days to delete should be updated", days, viewModel.uiState.value.daysToDelete)
+    }
+
+    @Test
+    fun `updateDeleteViewFilter updates state`() = runTest {
+        viewModel.onDeleteViewFilterChanged(com.georgernstgraf.aitranscribe.domain.model.ViewFilter.ALL)
+
+        assertEquals("Delete view filter should be updated", 
+            com.georgernstgraf.aitranscribe.domain.model.ViewFilter.ALL, 
+            viewModel.uiState.value.deleteViewFilter)
+    }
+
+    @Test
+    fun `saveSettings saves to secure storage`() = runTest {
+        viewModel.onGroqApiKeyChanged("test-groq-key")
+        viewModel.onOpenRouterApiKeyChanged("test-openrouter-key")
+        viewModel.onSttModelChanged("whisper-large-v3")
+        viewModel.onLlmModelChanged("anthropic/claude-3-sonnet")
+
+        viewModel.saveSettings()
+
+        val state = viewModel.uiState.value
+        assertTrue("Settings should be saved", state.isSaved)
+    }
+
+    @Test
+    fun `getOldCount returns correct count`() = runTest {
+        val now = java.time.LocalDateTime.now()
+        createTestTranscription(id = 1, createdAt = now.minusDays(40))
+        createTestTranscription(id = 2, createdAt = now.minusDays(20))
+        createTestTranscription(id = 3, createdAt = now.minusDays(5))
+
+        val count = viewModel.getOldCount(30)
+
+        assertEquals("Should return correct count of old transcriptions", 1, count)
+    }
+
+    @Test
+    fun `deleteOldTranscriptions removes correct items`() = runTest {
+        val now = java.time.LocalDateTime.now()
+        createTestTranscription(id = 1, createdAt = now.minusDays(40))
+        createTestTranscription(id = 2, createdAt = now.minusDays(20))
+        createTestTranscription(id = 3, createdAt = now.minusDays(5))
+
+        viewModel.onDaysToDeleteChanged(30)
+        viewModel.onDeleteViewFilterChanged(com.georgernstgraf.aitranscribe.domain.model.ViewFilter.ALL)
+
+        viewModel.deleteOldTranscriptions()
+
+        val remaining = fakeRepository.getAllTranscriptions()
+        assertEquals("Should remove correct transcriptions", 2, remaining.size)
+    }
+
+    private fun createTestTranscription(
+        id: Long,
+        createdAt: java.time.LocalDateTime
+    ) {
+        val entity = com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity(
+            id = id,
+            originalText = "Test transcription",
+            processedText = null,
+            audioFilePath = "/path/to/audio.mp3",
+            createdAt = createdAt.toString(),
+            postProcessingType = null,
+            status = com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.COMPLETED.name,
+            errorMessage = null,
+            playedCount = 0,
+            retryCount = 0
+        )
+        fakeRepository.insert(entity)
+    }
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="audio_cache" path="audio/" />
+    <cache-path name="temp_files" path="temp/" />
+    <files-path name="shared_files" path="shared/" />
+    <external-path name="external_files" path="." />
+</paths>

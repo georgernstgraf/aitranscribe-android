@@ -1,0 +1,940 @@
+# AITranscribe Android Architecture Documentation
+
+## Overview
+
+This document describes the complete architecture of the AITranscribe Android application. It serves as a reference for future agents, maintainers, and contributors.
+
+**Design Principles:**
+- **Test-First Development:** Tests written before implementation
+- **Clean Architecture:** Separation of concerns (Data, Domain, UI)
+- **Dependency Injection:** Using Hilt for loose coupling
+- **Reactive Programming:** Flow-based data streams
+- **SOLID Principles:** Single Responsibility, Open/Closed, Liskov Substitution
+
+---
+
+## 📁 Project Structure
+
+```
+android/
+├── app/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/com/georgernstgraf/aitranscribe/
+│   │   │   │   ├── data/                    # Data Layer
+│   │   │   │   │   ├── local/         # Room database
+│   │   │   │   │   │   ├── TranscriptionEntity.kt
+│   │   │   │   │   │   ├── QueuedTranscriptionEntity.kt
+│   │   │   │   │   │   ├── TranscriptionDao.kt
+│   │   │   │   │   │   ├── TranscriptionDaoEnhanced.kt
+│   │   │   │   │   │   ├── QueuedTranscriptionDao.kt
+│   │   │   │   │   │   ├── TranscriptionDatabase.kt
+│   │   │   │   │   │   ├── TranscriptionDatabaseEnhanced.kt
+│   │   │   │   │   │   ├── DatabaseModule.kt
+│   │   │   │   │   │   ├── AppPreferencesDao.kt
+│   │   │   │   │   │   └── SecurePreferences.kt
+│   │   │   │   │   ├── remote/        # API clients
+│   │   │   │   │   │   ├── GroqApiService.kt
+│   │   │   │   │   │   ├── OpenRouterApiService.kt
+│   │   │   │   │   │   └── dto/
+│   │   │   │   │   │       └── ApiDtos.kt
+│   │   │   │   │   ├── repository/     # Repository pattern
+│   │   │   │   │   │   ├── TranscriptionRepository.kt (interface)
+│   │   │   │   │   │   ├── TranscriptionRepositoryImpl.kt
+│   │   │   │   │   │   ├── RepositoryModule.kt
+│   │   │   │   │   │   └── AppPreferencesRepository.kt
+│   │   │   │   │   ├── testing/       # Test doubles
+│   │   │   │   │   │   └── FakeTranscriptionRepository.kt (in-memory)
+│   │   │   │   ├── domain/          # Domain Layer
+│   │   │   │   │   ├── model/          # Domain models
+│   │   │   │   │   │   ├── Transcription.kt
+│   │   │   │   │   │   │   ├── TranscriptionStatus.kt
+│   │   │   │   │   │   │   ├── PostProcessingType.kt
+│   │   │   │   │   │   │   ├── ViewFilter.kt
+│   │   │   │   │   │   │   ├── DeleteMode.kt
+│   │   │   │   │   │   │   └── QueuedTranscription.kt
+│   │   │   │   │   ├── usecase/        # Business logic
+│   │   │   │   │   │   ├── TranscribeAudioUseCase.kt
+│   │   │   │   │   │   │   ├── PostProcessTextUseCase.kt
+│   │   │   │   │   │   │   ├── QueueOfflineTranscriptionUseCase.kt
+│   │   │   │   │   │   │   ├── SearchTranscriptionsUseCase.kt
+│   │   │   │   │   │   │   ├── DeleteTranscriptionUseCase.kt
+│   │   │   │   │   │   │   ├── MarkAsViewedUseCase.kt
+│   │   │   │   │   │   │   ├── ResetViewStatusUseCase.kt
+│   │   │   │   │   │   │   ├── ExportTranscriptionsUseCase.kt
+│   │   │   │   │   │   │   ├── ImportTranscriptionsUseCase.kt
+│   │   │   │   │   │   │   └── ShareTranscriptionUseCase.kt
+│   │   │   │   │   │   └── BackupRestoreUseCase.kt
+│   │   │   │   ├── service/       # Services
+│   │   │   │   │   │   ├── RecordingService.kt (foreground)
+│   │   │   │   │   │   └── TranscriptionWorker.kt (WorkManager)
+│   │   │   │   ├── ui/            # UI Layer
+│   │   │   │   │   ├── theme/         # Material 3 theme
+│   │   │   │   │   │   ├── Color.kt
+│   │   │   │   │   │   ├── Theme.kt
+│   │   │   │   │   │   │   ├── Type.kt
+│   │   │   │   │   │   │   └── Icon.kt (compose-based)
+│   │   │   │   │   ├── components/    # Reusable components
+│   │   │   │   │   │   ├── AudioRecordingButton.kt
+│   │   │   │   │   │   ├── TranscriptionItem.kt
+│   │   │   │   │   │   ├── ViewFilterToggle.kt
+│   │   │   │   │   │   ├── DeleteOldDialog.kt
+│   │   │   │   │   │   ├── TranscriptionActions.kt
+│   │   │   │   │   │   ├── ExportDialog.kt
+│   │   │   │   │   │   ├── QuickFilters.kt
+│   │   │   │   │   │   ├── StatisticsCard.kt
+│   │   │   │   │   │   └── ViewStatusIndicator.kt
+│   │   │   │   │   ├── screen/        # Screens
+│   │   │   │   │   │   ├── MainActivity.kt
+│   │   │   │   │   │   ├── SearchScreen.kt
+│   │   │   │   │   │   ├── SettingsScreen.kt
+│   │   │   │   │   │   └── TranscriptionDetailScreen.kt
+│   │   │   │   │   └── viewmodel/     # ViewModels
+│   │   │   │   │       ├── MainViewModel.kt
+│   │   │   │   │       ├── SearchViewModel.kt
+│   │   │   │   │       ├── SettingsViewModel.kt
+│   │   │   │   │       └── TranscriptionDetailViewModel.kt
+│   │   │   │   ├── util/          # Utilities
+│   │   │   │   │   ├── AudioChunker.kt
+│   │   │   │   │   ├── NetworkMonitor.kt
+│   │   │   │   │   ├── NotificationManager.kt
+│   │   │   │   │   ├── AppLogger.kt
+│   │   │   │   │   ├── FilePicker.kt
+│   │   │   │   │   └── EnhancedNotificationManager.kt
+│   │   │   │   └── AITranscribeApp.kt (application class)
+│   │   │   ├── res/
+│   │   │   │   ├── values/
+│   │   │   │   │   ├── strings.xml
+│   │   │   │   │   └── themes.xml
+│   │   │   │   └── xml/
+│   │   │   │       ├── file_paths.xml
+│   │   │   │       ├── backup_rules.xml
+│   │   │   │       └── data_extraction_rules.xml
+│   │   │   └── AndroidManifest.xml
+│   │   ├── src/test/java/com/georgernstgraf/aitranscribe/    # Unit tests
+│   │   ├── src/androidTest/java/com/georgernstgraf/aitranscribe/ # UI tests
+│   │   ├── build.gradle.kts
+│   │   └── proguard-rules.pro
+│   ├── build.gradle.kts
+│   ├── gradle.properties
+│   ├── settings.gradle.kts
+│   └── README.md
+└── fdroid/                                  # F-Droid metadata (future)
+```
+
+---
+
+## 🏗️ Architecture Layers
+
+### 1. Data Layer
+
+**Purpose:** Manages data persistence, API communication, and external dependencies.
+
+**Components:**
+
+#### Local Database (Room)
+
+**Entities:**
+- `TranscriptionEntity` - Main transcription data
+- `QueuedTranscriptionEntity` - Offline queue items
+- `AppPreferenceEntity` - App preferences
+
+**DAOs:**
+- `TranscriptionDao` - Basic CRUD operations
+- `TranscriptionDaoEnhanced` - Optimized queries with bulk operations
+- `QueuedTranscriptionDao` - Offline queue management
+- `AppPreferencesDao` - Preferences storage
+
+**Database:**
+- `TranscriptionDatabase` - Main database with migrations
+- `TranscriptionDatabaseEnhanced` - Enhanced version
+
+**Modules:**
+- `DatabaseModule` - Provides DAO instances
+- `SecurePreferences` - Encrypted API key storage
+
+#### Remote (API Clients)
+
+**Services:**
+- `GroqApiService` - GROQ STT API client
+- `OpenRouterApiService` - OpenRouter LLM API client
+
+**DTOs:**
+- `GroqTranscriptionResponse` - GROQ response model
+- `OpenRouterRequest/Response` - OpenRouter models
+
+#### Repository
+
+**Pattern:** Repository Pattern (interface + implementation)
+
+**Repositories:**
+- `TranscriptionRepository` - Main transcription data
+- `AppPreferencesRepository` - App preferences
+
+**Module:**
+- `RepositoryModule` - Provides repository instances
+
+**Testing:**
+- `FakeTranscriptionRepository` - In-memory test double
+
+---
+
+### 2. Domain Layer
+
+**Purpose:** Business logic and use cases. Independent of UI and data layers.
+
+**Components:**
+
+#### Models
+
+**Domain Models:**
+- `Transcription` - Transcription domain model
+- `QueuedTranscription` - Queue item model
+- Enums: `TranscriptionStatus`, `PostProcessingType`, `ViewFilter`, `DeleteMode`
+
+**Use Cases**
+
+**Naming Convention:** `[Action][Entity]UseCase` (e.g., `TranscribeAudioUseCase`)
+
+**Use Cases:**
+1. `TranscribeAudioUseCase` - GROQ STT transcription
+2. `PostProcessTextUseCase` - OpenRouter LLM post-processing
+3. `QueueOfflineTranscriptionUseCase` - Offline queue management
+4. `SearchTranscriptionsUseCase` - Search with filters
+5. `DeleteTranscriptionUseCase` - Delete operations
+6. `MarkAsViewedUseCase` - View status management
+7. `ResetViewStatusUseCase` - Reset view status
+8. `ExportTranscriptionsUseCase` - Export to JSON/CSV
+9. `ImportTranscriptionsUseCase` - Import from JSON/CSV
+10. `ShareTranscriptionUseCase` - Share to other apps
+11. `BackupRestoreUseCase` - Backup/restore functionality
+
+**Test Coverage:**
+- All use cases have comprehensive tests
+- Tests written BEFORE implementation
+- Use FakeTranscriptionRepository for isolation
+
+---
+
+### 3. UI Layer
+
+**Purpose:** User interface with Jetpack Compose. Reactive and testable.
+
+**Components:**
+
+#### Theme
+- `Color.kt` - App color scheme
+- `Theme.kt` - Material 3 theme with dark/light support
+- `Type.kt` - Typography
+- `Icon.kt` - Compose-based app icon (microphone)
+
+#### Reusable Components
+- `AudioRecordingButton` - Push-to-talk button with duration
+- `TranscriptionItem` - List item with view status indicator
+- `ViewFilterToggle` - All/Unviewed toggle
+- `DeleteOldDialog` - Delete old transcriptions dialog
+- `ViewStatusIndicator` - Blue dot indicator
+- `TranscriptionActions` - Action buttons (view, copy, share, delete)
+- `ExportDialog` - Format selection dialog
+- `QuickFilters` - Filter chips (All, Unviewed, Viewed, etc.)
+- `StatisticsCard` - Statistics display
+
+#### Screens
+- `MainActivity` - Main screen with recording + recent list
+- `SearchScreen` - Search with filters and results
+- `SettingsScreen` - API keys + model selection + delete old
+- `TranscriptionDetailScreen` - Detail view with actions
+
+#### ViewModels
+
+**State Management:**
+- Uses `StateFlow` for reactive state
+- `data class` for immutable state
+- `MutableStateFlow` for state updates
+
+**ViewModels:**
+1. `MainViewModel` - Recording + recent transcriptions
+2. `SearchViewModel` - Search filters + results
+3. `SettingsViewModel` - API keys + preferences
+4. `TranscriptionDetailViewModel` - Detail view + actions
+
+#### Navigation
+
+**Pattern:** Jetpack Compose Navigation
+- Single NavHost with multiple composable destinations
+- Type-safe navigation with `NavType`
+
+---
+
+### 4. Service Layer
+
+**Purpose:** Background services and system-level operations.
+
+**Components:**
+
+#### Services
+- `RecordingService` - Foreground service for audio recording
+- `TranscriptionWorker` - WorkManager worker for background transcription
+
+#### Utilities
+- `AudioChunker` - Audio file chunking with FFmpeg
+- `NetworkMonitor` - Network connectivity monitoring
+- `NotificationManager` - Notification management
+- `EnhancedNotificationManager` - Enhanced notifications with channels
+- `AppLogger` - Structured logging
+- `FilePicker` - File picker for import/export
+
+---
+
+## 🔄 Data Flow
+
+### Recording Flow
+
+```
+User Action (Push & Hold)
+    ↓
+RecordingService.start()
+    ↓
+MediaRecorder.start()
+    ↓
+Foreground Notification
+    ↓
+User Release or Cancel
+    ↓
+Audio file saved to temp
+    ↓
+TranscriptionWorker.enqueue()
+    ↓
+TranscriptionWorker.execute()
+    ↓
+GROQ API Call
+    ↓
+OpenRouter API Call (if enabled)
+    ↓
+Database.insert()
+    ↓
+Notification.complete()
+```
+
+### Search Flow
+
+```
+User Input (Date/Text/Filter)
+    ↓
+SearchViewModel.onFilterChanged()
+    ↓
+SearchTranscriptionsUseCase.invoke()
+    ↓
+TranscriptionRepository.searchTranscriptions()
+    ↓
+TranscriptionDao.searchTranscriptions()
+    ↓
+StateFlow.emit(SearchResults)
+    ↓
+SearchScreen.updateUI()
+```
+
+### Offline Queue Flow
+
+```
+NetworkMonitor.isDisconnected()
+    ↓
+TranscriptionWorker.enqueue()
+    ↓
+NetworkMonitor.isReconnected()
+    ↓
+WorkManager.execute(TranscriptionWorker)
+    ↓
+QueueOfflineTranscriptionUseCase.invoke()
+    ↓
+TranscriptionRepository.queueForOffline()
+    ↓
+Next network connection
+    ↓
+Process queue (FIFO)
+```
+
+---
+
+## 🗄️ Database Schema
+
+### Transcriptions Table
+
+```sql
+CREATE TABLE transcriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    original_text TEXT NOT NULL,
+    processed_text TEXT,
+    audio_file_path TEXT,
+    created_at TEXT NOT NULL,
+    post_processing_type TEXT,
+    status TEXT NOT NULL,
+    error_message TEXT,
+    played_count INTEGER NOT NULL DEFAULT 0,
+    retry_count INTEGER NOT NULL DEFAULT 0
+);
+
+-- Indexes for performance
+CREATE INDEX idx_transcriptions_played ON transcriptions(played_count);
+CREATE INDEX idx_transcriptions_created ON transcriptions(created_at DESC);
+CREATE INDEX idx_transcriptions_status ON transcriptions(status);
+```
+
+### Queued Transcriptions Table
+
+```sql
+CREATE TABLE queued_transcriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    audio_file_path TEXT NOT NULL,
+    stt_model TEXT NOT NULL,
+    llm_model TEXT,
+    post_processing_type TEXT,
+    created_at TEXT NOT NULL,
+    priority INTEGER NOT NULL DEFAULT 0
+);
+
+-- Ordered by creation time and priority
+CREATE INDEX idx_queued_created ON queued_transcriptions(created_at ASC, priority DESC);
+```
+
+### App Preferences Table
+
+```sql
+CREATE TABLE app_preferences (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+```
+
+---
+
+## 🎯 Key Features Implementation
+
+### 1. Push-to-Talk Recording
+
+**Component:** `AudioRecordingButton`  
+**Service:** `RecordingService`  
+**Gesture:** `Modifier.pointerInput` with `detectTapGestures`  
+**Audio:** `MediaRecorder` with AAC encoding  
+**Foreground:** Foreground service with notification
+
+### 2. GROQ STT Integration
+
+**Use Case:** `TranscribeAudioUseCase`  
+**Service:** `GroqApiService`  
+**Audio Processing:** `AudioChunker` (25MB limit)  
+**Error Handling:** Retry logic with exponential backoff
+
+### 3. OpenRouter LLM Integration
+
+**Use Case:** `PostProcessTextUseCase`  
+**Service:** `OpenRouterApiService`  
+**Prompt Types:** Grammar correction, English translation  
+**Prompt Building:** `buildSystemPrompt()` method
+
+### 4. View Status Tracking
+
+**Database:** `played_count` field  
+**Indicator:** Blue dot for unviewed (played_count = 0)  
+**Use Cases:** `MarkAsViewedUseCase`, `ResetViewStatusUseCase`  
+**Auto-Mark:** Incremented when opening detail view
+
+### 5. Search & Filtering
+
+**Use Case:** `SearchTranscriptionsUseCase`  
+**Filters:** Date range, text search, view status  
+**Default Filter:** `ViewFilter.UNVIEWED_ONLY`  
+**DAO Query:** Optimized SQL with parameterized queries
+
+### 6. Delete Operations
+
+**Use Case:** `DeleteTranscriptionUseCase`  
+**Modes:** Single, Old All, Old Unviewed  
+**Confirmation:** Show count before deletion  
+**UI Component:** `DeleteOldDialog`
+
+### 7. Offline Queue
+
+**Use Case:** `QueueOfflineTranscriptionUseCase`  
+**Worker:** `TranscriptionWorker`  
+**Monitoring:** `NetworkMonitor` with Flow  
+**Retry:** Automatic on network reconnect
+
+### 8. Background Processing
+
+**Worker:** `TranscriptionWorker` (WorkManager)  
+**Notifications:** `EnhancedNotificationManager`  
+**Chains:** Recording → STT → LLM → Storage
+
+---
+
+## 🧪 Testing Strategy
+
+### Test-First Approach
+
+**Process:**
+1. Write test for new feature
+2. Implement feature
+3. Run tests
+4. Refactor until all tests pass
+
+### Fake Implementations
+
+**Purpose:** Isolate code from external dependencies
+
+**Fakes:**
+- `FakeTranscriptionRepository` - In-memory repository
+- `FakeGroqApiService` - Mock API responses
+- `FakeOpenRouterApiService` - Mock LLM responses
+- `FakeConnectivityManager` - Mock network state
+
+### Test Coverage
+
+**Unit Tests:** 17 test files, ~80 tests
+- Use case tests
+- ViewModel tests
+- Repository tests
+- Utility tests
+
+**UI Tests:** 4 test files, ~40 tests
+- Component interaction tests
+- Service tests
+- Worker tests
+
+---
+
+## 🎨 UI/UX Design
+
+### Design System
+
+**Framework:** Material 3  
+**Theme:** Dark/Light system theme  
+**Icons:** Material Icons Extended  
+**Typography:** Material 3 default
+
+### Key UX Patterns
+
+**Push-to-Talk:**
+- Large circular button
+- Visual feedback (color change, animation)
+- Duration counter overlay
+- Cancel on gesture interruption
+
+**List Items:**
+- Compact preview (first 100 chars)
+- View status indicator (blue dot)
+- Tap to expand
+- Swipe to delete
+
+**Dialogs:**
+- Clear confirmation messages
+- Progress indicators
+- Error handling
+
+**Feedback:**
+- Snackbars for actions
+- Notifications for long operations
+- Loading states
+
+---
+
+## 🔐 Security
+
+### API Key Storage
+
+**Implementation:** `SecurePreferences.kt`  
+**Encryption:** AndroidX Security (EncryptedSharedPreferences)  
+**Keys:** `GROQ_API_KEY`, `OPENROUTER_API_KEY`
+
+### Data Storage
+
+**Database:** Room (SQLite)  
+**Files:** App cache directory  
+**Backup:** JSON export (manual)
+
+### Permissions
+
+**Requested Permissions:**
+- `RECORD_AUDIO` - Microphone access
+- `INTERNET` - API calls
+- `ACCESS_NETWORK_STATE` - Offline detection
+- `FOREGROUND_SERVICE` - Recording service
+- `FOREGROUND_SERVICE_MICROPHONE` - Foreground recording
+- `POST_NOTIFICATIONS` - Notifications (Android 13+)
+- `WAKE_LOCK` - Background processing
+- `READ_EXTERNAL_STORAGE` - Audio file access
+- `READ_MEDIA_AUDIO` - Modern audio access
+
+---
+
+## 📦 Dependency Management
+
+### Core Dependencies
+
+| Category | Library | Version | Purpose |
+|----------|---------|---------|---------|
+| Core | `androidx.core:core-ktx` | 1.12.0 | KTX extensions |
+| Lifecycle | `androidx.lifecycle:*` | 2.7.0 | Lifecycle components |
+| Compose | `androidx.compose:*` | 2024.02.00 | Jetpack Compose |
+| Database | `androidx.room:*` | 2.6.1 | Room database |
+| DI | `com.google.dagger:hilt-android` | 2.50 | Dependency injection |
+| Networking | `com.squareup.retrofit2:*` | 2.9.0 | HTTP client |
+| Background | `androidx.work:*` | 2.9.0 | WorkManager |
+| Audio | `com.arthenica:ffmpeg-kit` | 6.0-2 | FFmpeg (FOSS) |
+| Crash Reporting | `ch.acra:acra-*` | 5.11.3 | ACRA (FOSS) |
+
+### Testing Dependencies
+
+| Category | Library | Version | Purpose |
+|----------|---------|---------|---------|
+| Unit Tests | `org.junit:junit` | 4.13.2 | Unit testing |
+| Mocking | `org.mockito:*` | 5.7.0 | Test doubles |
+| Coroutines | `org.jetbrains.kotlinx:kotlinx-coroutines-test` | 1.7.3 | Async testing |
+| Flow Testing | `app.cash.turbine:turbine` | 1.0.0 | Flow testing |
+| Android Tests | `androidx.test:*` | Latest | Instrumented tests |
+| Compose Tests | `androidx.compose.ui:*` | Latest | UI tests |
+
+---
+
+## 🚀 Build Configuration
+
+### Gradle Build Types
+
+**Debug:** 
+- Minification: None
+- Shrink resources: No
+- Optimizations: None
+- Debuggable: Yes
+
+**Release:**
+- Minification: R8 (full mode)
+- Shrink resources: Yes
+- Optimizations: ProGuard rules
+- Debuggable: No
+- Code obfuscation: Yes
+
+### Build Variants
+
+```
+debug - For development and testing
+release - For production (signed)
+```
+
+### ProGuard Rules
+
+**Location:** `app/proguard-rules.pro`
+
+**Optimizations:**
+- Keep Room entities
+- Keep GSON models
+- Keep Hilt generated classes
+- Keep Compose components
+- Obfuscate everything else
+
+---
+
+## 🔄 Continuous Integration
+
+### Pre-Commit Checklist
+
+- [ ] All tests passing
+- [ ] No compiler warnings
+- [ ] Code coverage >75%
+- [ ] No TODO comments
+- [ ] No debug code
+- [ ] ProGuard rules tested
+- [ ] Manual testing completed
+
+### Git Workflow
+
+1. **Feature Branch:**
+   ```bash
+   git checkout -b feature/new-feature
+   ```
+
+2. **Develop & Test:**
+   ```bash
+   ./gradlew test
+   ```
+
+3. **Commit:**
+   ```bash
+   git add .
+   git commit -m "feat: Add new feature"
+   ```
+
+4. **Push & PR:**
+   ```bash
+   git push origin feature/new-feature
+   gh pr create --base main --head feature/new-feature
+   ```
+
+---
+
+## 📊 Performance Considerations
+
+### Database Optimization
+
+- Use indexed queries
+- Batch operations for bulk inserts/updates
+- Proper column types
+- Query optimization with `@Query` annotations
+
+### UI Performance
+
+- Use `remember` for expensive computations
+- Lazy loading for lists
+- Avoid recomposition with proper state management
+- Use `LaunchedEffect` for one-time operations
+
+### Memory Management
+
+- Release audio files after transcription
+- Use `LazyColumn` for large lists
+- Proper coroutine scoping
+- Clear references in `onDispose`
+
+### Network Efficiency
+
+- OkHttp connection pooling
+- Request/response caching where appropriate
+- Offline queue to avoid failed requests
+- Exponential backoff for retries
+
+---
+
+## 🧰 Maintainability Guidelines
+
+### Code Style
+
+**Kotlin:**
+- Follow Android Kotlin Style Guide
+- Use Kotlin idioms
+- Prefer immutability
+- Use data classes for DTOs
+- Use sealed classes for states
+
+**Naming Conventions:**
+
+**Classes:** PascalCase
+```kotlin
+class TranscriptionUseCase
+class RecordingService
+```
+
+**Functions:** camelCase
+```kotlin
+fun transcribeAudio()
+fun markAsViewed()
+```
+
+**Variables:** camelCase (lowerCamelCase for private)
+```kotlin
+val transcriptionId: Long
+private var isRecording: Boolean
+```
+
+**Constants:** UPPER_SNAKE_CASE
+```kotlin
+const val CHANNEL_ID_RECORDING = "recording_channel"
+```
+
+### Documentation
+
+**KDoc:** Public APIs
+```kotlin
+/**
+ * Use case for transcribing audio using GROQ API.
+ *
+ * @param audioPath Path to audio file
+ * @param sttModel STT model to use
+ * @return Transcription result with ID
+ * @throws TranscriptionException if transcription fails
+ */
+suspend operator fun invoke(
+    audioPath: String,
+    sttModel: String
+): TranscriptionResult
+```
+
+**Comments:** Only for complex logic
+```kotlin
+// Build system prompt based on post-processing type
+private fun buildSystemPrompt(type: PostProcessingType): String {
+    return when (type) {
+        PostProcessingType.GRAMMAR -> "...grammar prompt..."
+        PostProcessingType.ENGLISH -> "...translation prompt..."
+    }
+}
+```
+
+---
+
+## 🐛 Error Handling
+
+### Exception Hierarchy
+
+```kotlin
+TranscriptionException
+    └── TranscriptionException (STT failures)
+PostProcessingException
+DeleteException
+QueueException
+ExportException
+ImportException
+ShareException
+BackupRestoreException
+```
+
+### Error Handling Strategy
+
+1. **Log error with AppLogger**
+2. **Record error in database** (if applicable)
+3. **Show user-friendly message**
+4. **Offer retry option** (for transient errors)
+5. **Notify user** (for background errors)
+
+### Error Types
+
+**Transient Errors:** Retry with exponential backoff
+- Network timeout
+- Temporary API errors
+- Service unavailable
+
+**Permanent Errors:** Show error message
+- Invalid API keys
+- Invalid audio format
+- Storage errors
+
+---
+
+## 📱 F-Droid Compatibility
+
+### FOSS Requirements
+
+**All Dependencies are FOSS:** ✅
+
+- AndroidX (Apache 2.0)
+- Jetpack Compose (Apache 2.0)
+- Room (Apache 2.0)
+- Hilt (Apache 2.0)
+- Retrofit (Apache 2.0)
+- OkHttp (Apache 2.0)
+- WorkManager (Apache 2.0)
+- FFmpeg Kit (LGPL-3.0)
+- ACRA (Apache 2.0)
+- Gson (Apache 2.0)
+
+**No Proprietary SDKs:** ✅
+- No Google Play Services
+- No Firebase
+- No crash reporting services (except FOSS ACRA)
+
+### Build Reproducibility
+
+**Requirements:**
+- Use Gradle Wrapper version from build.gradle.kts
+- Use specific dependency versions
+- No dynamic version resolution
+- Build with Docker container for reproducibility
+
+**Configuration:**
+```kotlin
+// build.gradle.kts
+gradle {
+    toolsVersion = "8.2.2"
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.2.2")
+    }
+}
+```
+
+---
+
+## 🔄 Future Enhancement Opportunities
+
+### Planned Features
+
+1. **Voice Commands**
+   - "Record new", "Open last", "Search..."
+   - Integration with device assistant
+
+2. **Widget Support**
+   - Quick recording widget
+   - Recent transcriptions widget
+
+3. **Sync with Cloud**
+   - Google Drive sync
+   - Dropbox sync
+
+4. **Advanced Editing**
+   - In-app text editor
+   - Rich text formatting
+
+5. **Analytics**
+   - Usage statistics
+   - Error reporting analytics
+
+6. **Accessibility**
+   - TalkBack support
+   - Screen reader support
+   - High contrast mode
+
+### Code Quality Improvements
+
+1. **Increased Test Coverage** - Target 90%+
+2. **Static Analysis** - Detekt, lint
+3. **Code Metrics** - Maintain complexity thresholds
+4. **Documentation** - Improved KDoc coverage
+5. **Performance Profiling** - Regular profiling and optimization
+
+---
+
+## 📞 Support and Maintenance
+
+### Debugging
+
+**Enable USB Debugging:**
+```bash
+adb devices
+adb logcat | grep aitranscribe
+```
+
+**View Crash Reports:**
+- ACRA reports sent to server
+- Check ACRA dashboard
+- Review device-specific issues
+
+### Common Issues
+
+**Build Failures:**
+```bash
+./gradlew clean
+rm -rf ~/.gradle/caches/
+./gradlew --refresh-dependencies
+```
+
+**Test Failures:**
+```bash
+./gradlew clean
+./gradlew test
+./gradlew installDebug
+```
+
+---
+
+## 📝 Conclusion
+
+This architecture is designed for:
+- **Testability:** Test-first approach with isolated dependencies
+- **Maintainability:** Clean architecture with clear separation of concerns
+- **Scalability:** Room database, WorkManager, Flow-based streams
+- **F-Droid Compliance:** All FOSS dependencies, build reproducibility
+- **User Experience:** Material 3, responsive, reactive
+
+**For specific implementation details, see individual files in the project structure.**
+
+**Last Updated:** March 2026  
+**Version:** 1.0.0  
+**Maintainer:** Georg Ernst Graf

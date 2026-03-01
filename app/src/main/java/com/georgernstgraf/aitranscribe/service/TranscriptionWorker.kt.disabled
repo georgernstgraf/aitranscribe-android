@@ -1,0 +1,136 @@
+package com.georgernstgraf.aitranscribe.service
+
+import android.content.Context
+import androidx.hilt.work.HiltWorker
+import androidx.work.CoroutineWorker
+import androidx.work.Data
+import androidx.work.WorkerParameters
+import androidx.work.workDataOf
+import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
+import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
+import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
+import com.georgernstgraf.aitranscribe.util.NotificationManager
+import com.georgernstgraf.aitranscribe.util.NetworkMonitor
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import javax.inject.Inject
+
+/**
+ * Worker for processing transcriptions in background.
+ * Handles offline queue processing with notifications.
+ */
+@HiltWorker
+class TranscriptionWorker @AssistedInject constructor(
+    @Assisted private val context: Context,
+    @Assisted private val params: WorkerParameters,
+    private val repository: TranscriptionRepository,
+    private val groqApiService: GroqApiService,
+    private val networkMonitor: NetworkMonitor,
+    private val notificationManager: NotificationManager
+) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        val queuedId = inputData.getLong(KEY_QUEUED_ID, -1)
+
+        if (queuedId == -1L) {
+            return@withContext Result.failure()
+        }
+
+        val queued = repository.getNextQueued()
+        if (queued == null || queued.id != queuedId) {
+            return@withContext Result.failure()
+        }
+
+        try {
+            if (!networkMonitor.isConnected()) {
+                notificationManager.showOfflineNotification()
+                return@withContext Result.retry()
+            }
+
+            notificationManager.showTranscriptionProgressNotification(queuedId)
+
+            val transcriptionText = transcribeAudio(queued)
+
+            val entity = TranscriptionEntity(
+                originalText = transcriptionText,
+                processedText = null,
+                audioFilePath = queued.audioFilePath,
+                createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                postProcessingType = queued.postProcessingType,
+                status = TranscriptionStatus.COMPLETED.name,
+                errorMessage = null,
+                playedCount = 0,
+                retryCount = 0
+            )
+
+            val transcriptionId = repository.insert(entity)
+
+            if (queued.postProcessingType != null) {
+                notificationManager.showPostProcessingNotification(transcriptionId)
+            } else {
+                notificationManager.showTranscriptionCompleteNotification(transcriptionId)
+            }
+
+            repository.removeQueued(queuedId)
+
+            cleanupAudioFile(queued.audioFilePath)
+
+            Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
+        } catch (e: Exception) {
+            repository.recordError(transcriptionId = -1, e.message ?: "Unknown error")
+            notificationManager.showTranscriptionErrorNotification(e.message ?: "Transcription failed")
+            Result.retry()
+        }
+    }
+
+    private suspend fun transcribeAudio(queued: QueuedTranscriptionEntity): String {
+        val audioFile = File(queued.audioFilePath)
+        if (!audioFile.exists()) {
+            throw Exception("Audio file not found: ${queued.audioFilePath}")
+        }
+
+        val apiKey = getGroqApiKey()
+        if (apiKey.isNullOrBlank()) {
+            throw Exception("GROQ API key not configured")
+        }
+
+        return groqApiService.transcribeAudio(
+            authorization = "Bearer $apiKey",
+            file = createAudioPart(audioFile),
+            model = createModelPart(queued.sttModel),
+            responseFormat = createFormatPart()
+        ).body()?.text ?: throw Exception("Empty transcription response")
+    }
+
+    private fun getGroqApiKey(): String? {
+        return android.provider.Settings.Secure.getString(
+            applicationContext,
+            PREF_GROQ_API_KEY
+        )
+    }
+
+    private fun cleanupAudioFile(path: String) {
+        try {
+            File(path).delete()
+        } catch (e: Exception) {
+            // Ignore cleanup errors
+        }
+    }
+
+    companion object {
+        const val KEY_QUEUED_ID = "queued_id"
+        const val KEY_TRANSCRIPTION_ID = "transcription_id"
+        const val PREF_GROQ_API_KEY = "groq_api_key"
+
+        fun createInputData(queuedId: Long): Data {
+            return workDataOf(KEY_QUEUED_ID to queuedId)
+        }
+    }
+}
