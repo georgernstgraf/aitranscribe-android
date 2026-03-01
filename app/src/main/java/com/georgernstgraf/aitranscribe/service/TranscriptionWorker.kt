@@ -6,21 +6,25 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
+import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
-import com.georgernstgraf.aitranscribe.util.NotificationManager
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
+import com.georgernstgraf.aitranscribe.util.NotificationManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import javax.inject.Inject
 
 /**
  * Worker for processing transcriptions in background.
@@ -33,7 +37,8 @@ class TranscriptionWorker @AssistedInject constructor(
     private val repository: TranscriptionRepository,
     private val groqApiService: GroqApiService,
     private val networkMonitor: NetworkMonitor,
-    private val notificationManager: NotificationManager
+    private val notificationManager: NotificationManager,
+    private val securePreferences: SecurePreferences
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -84,8 +89,9 @@ class TranscriptionWorker @AssistedInject constructor(
 
             Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
         } catch (e: Exception) {
-            repository.recordError(transcriptionId = -1, e.message ?: "Unknown error")
-            notificationManager.showTranscriptionErrorNotification(e.message ?: "Transcription failed")
+            notificationManager.showTranscriptionErrorNotification(
+                e.message ?: "Transcription failed"
+            )
             Result.retry()
         }
     }
@@ -96,7 +102,7 @@ class TranscriptionWorker @AssistedInject constructor(
             throw Exception("Audio file not found: ${queued.audioFilePath}")
         }
 
-        val apiKey = getGroqApiKey()
+        val apiKey = securePreferences.getGroqApiKey()
         if (apiKey.isNullOrBlank()) {
             throw Exception("GROQ API key not configured")
         }
@@ -109,11 +115,18 @@ class TranscriptionWorker @AssistedInject constructor(
         ).body()?.text ?: throw Exception("Empty transcription response")
     }
 
-    private fun getGroqApiKey(): String? {
-        return android.provider.Settings.Secure.getString(
-            applicationContext,
-            PREF_GROQ_API_KEY
-        )
+    private fun createAudioPart(audioFile: File): MultipartBody.Part {
+        val mediaType = "audio/mpeg".toMediaType()
+        val requestBody = audioFile.asRequestBody(mediaType)
+        return MultipartBody.Part.createFormData("file", audioFile.name, requestBody)
+    }
+
+    private fun createModelPart(model: String): okhttp3.RequestBody {
+        return model.toRequestBody("text/plain".toMediaType())
+    }
+
+    private fun createFormatPart(): okhttp3.RequestBody {
+        return "json".toRequestBody("text/plain".toMediaType())
     }
 
     private fun cleanupAudioFile(path: String) {
@@ -127,7 +140,6 @@ class TranscriptionWorker @AssistedInject constructor(
     companion object {
         const val KEY_QUEUED_ID = "queued_id"
         const val KEY_TRANSCRIPTION_ID = "transcription_id"
-        const val PREF_GROQ_API_KEY = "groq_api_key"
 
         fun createInputData(queuedId: Long): Data {
             return workDataOf(KEY_QUEUED_ID to queuedId)

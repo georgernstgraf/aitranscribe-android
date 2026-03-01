@@ -7,7 +7,6 @@ import android.os.Build
 import android.os.Build.VERSION_CODES
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
-import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
 import org.acra.ACRA
 import org.acra.annotation.AcraCore
@@ -34,7 +33,6 @@ class AITranscribeApp : Application(), Configuration.Provider {
 
         initCrashReporting()
         createNotificationChannels()
-        initWorkManager()
     }
 
     private fun initCrashReporting() {
@@ -64,15 +62,6 @@ class AITranscribeApp : Application(), Configuration.Provider {
             notificationManager.createNotificationChannel(recordingChannel)
             notificationManager.createNotificationChannel(transcriptionChannel)
         }
-    }
-
-    private fun initWorkManager() {
-        WorkManager.initialize(
-            this,
-            Configuration.Builder()
-                .setWorkerFactory(workerFactory)
-                .build()
-        )
     }
 
     override val workManagerConfiguration: Configuration

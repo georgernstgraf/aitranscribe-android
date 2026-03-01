@@ -70,6 +70,19 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Disable default WorkManager initializer so AITranscribeApp
+             can provide a custom Configuration with HiltWorkerFactory -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
     </application>
 
 </manifest>
