@@ -17,6 +17,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -183,6 +184,25 @@ fun SetupScreen(
             )
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            if (state.errorMessage != null && !state.isValidating) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = state.errorMessage!!,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    OutlinedButton(
+                        onClick = { viewModel.validateAndSave() }
+                    ) {
+                        Text("Retry")
+                    }
+                }
+            }
 
             if (state.isValidating) {
                 CircularProgressIndicator()

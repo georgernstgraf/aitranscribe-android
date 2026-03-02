@@ -83,19 +83,8 @@ android {
             resources.srcDirs("src/androidTest/resources")
         }
     }
-
-    // Temporarily disable unit tests due to compilation errors
-    // TODO: Fix test compilation errors and remove this
-    tasks.named("test").configure {
-        enabled = false
-    }
-    tasks.named("compileDebugUnitTestKotlin").configure {
-        enabled = false
-    }
-    tasks.named("compileReleaseUnitTestKotlin").configure {
-        enabled = false
-    }
 }
+
 
 dependencies {
     // Core Android
