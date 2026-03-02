@@ -28,7 +28,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
 
     override suspend fun insertAll(transcriptions: List<TranscriptionEntity>) {
         val newTranscriptions = transcriptions.map { t ->
-            val newId = (transcriptions.value.maxOfOrNull { it.id } ?: 0) + 1
+            val newId = (this.transcriptions.value.maxOfOrNull { it.id } ?: 0L) + 1L
             t.copy(id = newId)
         }
         this.transcriptions.value = this.transcriptions.value + newTranscriptions
@@ -81,7 +81,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
                     (endDate == null || it.createdAt <= endDate) &&
                     (searchQuery == null ||
                         it.originalText.contains(searchQuery, ignoreCase = true) ||
-                        (it.processedText?.contains(searchQuery, ignoreCase = true) == true)
+                        (it.processedText?.contains(searchQuery, ignoreCase = true) == true))
                 }
                 .filter {
                     viewFilter == ViewFilter.ALL || it.playedCount == 0

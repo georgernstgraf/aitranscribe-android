@@ -22,6 +22,10 @@ class SetupViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SetupUiState())
     val uiState: StateFlow<SetupUiState> = _uiState.asStateFlow()
 
+    init {
+        loadExistingKeys()
+    }
+
     fun onGroqApiKeyChanged(apiKey: String?) {
         _uiState.update { it.copy(groqApiKey = apiKey, groqKeyError = null, isGroqKeyValid = null) }
     }
@@ -34,7 +38,10 @@ class SetupViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isValidating = true, errorMessage = null) }
 
-            val result = validateApiKeysUseCase()
+            val groqKey = _uiState.value.groqApiKey
+            val openRouterKey = _uiState.value.openRouterApiKey
+
+            val result = validateApiKeysUseCase(groqKey, openRouterKey)
 
             if (result.isValid) {
                 saveApiKeys()
@@ -43,6 +50,7 @@ class SetupViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isValidating = false,
+                        errorMessage = "Could not validate API keys. Check keys and network connection.",
                         groqKeyError = result.groqKeyError,
                         openRouterKeyError = result.openRouterKeyError,
                         isGroqKeyValid = result.isGroqKeyValid,
@@ -56,6 +64,33 @@ class SetupViewModel @Inject constructor(
     private suspend fun saveApiKeys() {
         _uiState.value.groqApiKey?.let { securePreferences.setGroqApiKey(it) }
         _uiState.value.openRouterApiKey?.let { securePreferences.setOpenRouterApiKey(it) }
+    }
+
+    private fun loadExistingKeys() {
+        viewModelScope.launch {
+            val savedGroqKey = securePreferences.getGroqApiKey()
+            val savedOpenRouterKey = securePreferences.getOpenRouterApiKey()
+
+            _uiState.update {
+                it.copy(
+                    groqApiKey = savedGroqKey,
+                    openRouterApiKey = savedOpenRouterKey
+                )
+            }
+
+            if (!savedGroqKey.isNullOrBlank() && !savedOpenRouterKey.isNullOrBlank()) {
+                val result = validateApiKeysUseCase(savedGroqKey, savedOpenRouterKey)
+                if (result.isValid) {
+                    _uiState.update {
+                        it.copy(
+                            isSetupComplete = true,
+                            isGroqKeyValid = true,
+                            isOpenRouterKeyValid = true
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

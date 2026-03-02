@@ -1,7 +1,10 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import dagger.hilt.android.scopes.ViewModelScoped
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import javax.inject.Inject
 
 /**
@@ -10,16 +13,16 @@ import javax.inject.Inject
  */
 @ViewModelScoped
 class ValidateApiKeysUseCase @Inject constructor(
-    private val securePreferences: SecurePreferences
+    private val okHttpClient: OkHttpClient
 ) {
 
-    suspend operator fun invoke(): ApiKeyValidationResult {
-        val groqKey = securePreferences.getGroqApiKey()
-        val openRouterKey = securePreferences.getOpenRouterApiKey()
-
-        return when {
+    suspend operator fun invoke(
+        groqKey: String?,
+        openRouterKey: String?
+    ): ApiKeyValidationResult = withContext(Dispatchers.IO) {
+        when {
             groqKey.isNullOrBlank() && openRouterKey.isNullOrBlank() -> {
-                ApiKeyValidationResult(
+                return@withContext ApiKeyValidationResult(
                     isGroqKeyValid = false,
                     isOpenRouterKeyValid = false,
                     groqKeyError = ApiKeyError.MISSING,
@@ -28,7 +31,7 @@ class ValidateApiKeysUseCase @Inject constructor(
                 )
             }
             groqKey.isNullOrBlank() -> {
-                ApiKeyValidationResult(
+                return@withContext ApiKeyValidationResult(
                     isGroqKeyValid = false,
                     isOpenRouterKeyValid = true,
                     groqKeyError = ApiKeyError.MISSING,
@@ -37,7 +40,7 @@ class ValidateApiKeysUseCase @Inject constructor(
                 )
             }
             openRouterKey.isNullOrBlank() -> {
-                ApiKeyValidationResult(
+                return@withContext ApiKeyValidationResult(
                     isGroqKeyValid = true,
                     isOpenRouterKeyValid = false,
                     groqKeyError = null,
@@ -46,7 +49,7 @@ class ValidateApiKeysUseCase @Inject constructor(
                 )
             }
             !isValidGroqKeyFormat(groqKey) -> {
-                ApiKeyValidationResult(
+                return@withContext ApiKeyValidationResult(
                     isGroqKeyValid = false,
                     isOpenRouterKeyValid = true,
                     groqKeyError = ApiKeyError.INVALID_FORMAT,
@@ -55,7 +58,7 @@ class ValidateApiKeysUseCase @Inject constructor(
                 )
             }
             !isValidOpenRouterKeyFormat(openRouterKey) -> {
-                ApiKeyValidationResult(
+                return@withContext ApiKeyValidationResult(
                     isGroqKeyValid = true,
                     isOpenRouterKeyValid = false,
                     groqKeyError = null,
@@ -63,16 +66,67 @@ class ValidateApiKeysUseCase @Inject constructor(
                     isValid = false
                 )
             }
-            else -> {
-                ApiKeyValidationResult(
-                    isGroqKeyValid = true,
-                    isOpenRouterKeyValid = true,
-                    groqKeyError = null,
-                    openRouterKeyError = null,
-                    isValid = true
-                )
-            }
         }
+
+        val validatedGroqKey = groqKey ?: return@withContext ApiKeyValidationResult(
+            isGroqKeyValid = false,
+            isOpenRouterKeyValid = true,
+            groqKeyError = ApiKeyError.MISSING,
+            openRouterKeyError = null,
+            isValid = false
+        )
+        val validatedOpenRouterKey = openRouterKey ?: return@withContext ApiKeyValidationResult(
+            isGroqKeyValid = true,
+            isOpenRouterKeyValid = false,
+            groqKeyError = null,
+            openRouterKeyError = ApiKeyError.MISSING,
+            isValid = false
+        )
+
+        val groqApiReachable = validateGroqKey(validatedGroqKey)
+        val openRouterApiReachable = validateOpenRouterKey(validatedOpenRouterKey)
+
+        val groqError = if (groqApiReachable) null else ApiKeyError.API_ERROR
+        val openRouterError = if (openRouterApiReachable) null else ApiKeyError.API_ERROR
+
+        ApiKeyValidationResult(
+            isGroqKeyValid = groqApiReachable,
+            isOpenRouterKeyValid = openRouterApiReachable,
+            groqKeyError = groqError,
+            openRouterKeyError = openRouterError,
+            isValid = groqApiReachable && openRouterApiReachable
+        )
+    }
+
+    private fun validateGroqKey(apiKey: String): Boolean {
+        val request = Request.Builder()
+            .url("https://api.groq.com/openai/v1/models")
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Accept", "application/json")
+            .get()
+            .build()
+
+        return runCatching {
+            okHttpClient.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        }.getOrElse { false }
+    }
+
+    private fun validateOpenRouterKey(apiKey: String): Boolean {
+        val request = Request.Builder()
+            .url("https://openrouter.ai/api/v1/auth/key")
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Accept", "application/json")
+            .addHeader("User-Agent", "AITranscribe/1.0")
+            .get()
+            .build()
+
+        return runCatching {
+            okHttpClient.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        }.getOrElse { false }
     }
 
     private fun isValidGroqKeyFormat(key: String): Boolean {

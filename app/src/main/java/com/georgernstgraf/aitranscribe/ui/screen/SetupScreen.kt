@@ -111,22 +111,18 @@ fun SetupScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 trailingIcon = {
                     when {
-                        state.groqApiKey.isNullOrBlank() -> null
-                        state.isGroqKeyValid == true -> {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Valid",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        state.isGroqKeyValid == false -> {
-                            Icon(
-                                imageVector = Icons.Default.Error,
-                                contentDescription = "Invalid",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                        else -> null
+                        state.groqApiKey.isNullOrBlank() -> Unit
+                        state.isGroqKeyValid == true -> Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Valid",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        state.isGroqKeyValid == false -> Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = "Invalid",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        else -> Unit
                     }
                 },
                 isError = state.groqKeyError != null,
@@ -157,22 +153,18 @@ fun SetupScreen(
                 visualTransformation = PasswordVisualTransformation(),
                 trailingIcon = {
                     when {
-                        state.openRouterApiKey.isNullOrBlank() -> null
-                        state.isOpenRouterKeyValid == true -> {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = "Valid",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        state.isOpenRouterKeyValid == false -> {
-                            Icon(
-                                imageVector = Icons.Default.Error,
-                                contentDescription = "Invalid",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                        else -> null
+                        state.openRouterApiKey.isNullOrBlank() -> Unit
+                        state.isOpenRouterKeyValid == true -> Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Valid",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        state.isOpenRouterKeyValid == false -> Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = "Invalid",
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                        else -> Unit
                     }
                 },
                 isError = state.openRouterKeyError != null,
