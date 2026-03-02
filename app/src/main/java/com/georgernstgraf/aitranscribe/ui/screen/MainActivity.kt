@@ -46,6 +46,7 @@ import com.georgernstgraf.aitranscribe.ui.components.TranscriptionItem
 import com.georgernstgraf.aitranscribe.ui.theme.AITranscribeTheme
 import com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import com.georgernstgraf.aitranscribe.ui.screen.MainScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -99,72 +100,23 @@ fun MainNavigation(mainViewModel: MainViewModel) {
 
     NavHost(
         navController = navController,
-        startDestination = "main"
+        startDestination = "setup"
     ) {
-        composable("main") {
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = { Text("AITranscribe") },
-                        actions = {
-                            IconButton(onClick = { navController.navigate("search") }) {
-                                Icon(Icons.Default.Search, contentDescription = "Search")
-                            }
-                            IconButton(onClick = { navController.navigate("settings") }) {
-                                Icon(Icons.Default.Settings, contentDescription = "Settings")
-                            }
-                        },
-                        scrollBehavior = scrollBehavior
-                    )
-                }
-            ) { padding ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    AudioRecordingButton(
-                        isRecording = state.isRecording,
-                        recordingDuration = state.recordingDuration,
-                        onStartRecording = { mainViewModel.startRecording() },
-                        onStopRecording = { mainViewModel.stopRecording() }
-                    )
-
-                    Spacer(modifier = Modifier.height(32.dp))
-
-                    if (state.recentTranscriptions.isNotEmpty()) {
-                        Text(
-                            text = "Recent Transcriptions",
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.padding(horizontal = 16.dp)
-                        )
-
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(state.recentTranscriptions) { transcription ->
-                                TranscriptionItem(
-                                    transcription = transcription,
-                                    onClick = {
-                                        navController.navigate("transcription/${transcription.id}")
-                                    }
-                                )
-                            }
-                        }
-                    } else {
-                        Text(
-                            text = "No transcriptions yet. Record your first one!",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+        composable("setup") {
+            SetupScreen(
+                onSetupComplete = {
+                    navController.navigate("main") {
+                        popUpTo("setup") { inclusive = true }
                     }
                 }
-            }
+            )
+        }
+
+        composable("main") {
+            MainScreen(
+                navController = navController,
+                viewModel = mainViewModel
+            )
         }
 
         composable(

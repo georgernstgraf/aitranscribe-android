@@ -39,13 +39,17 @@ class SearchViewModel @Inject constructor(
 
     fun performSearch() {
         viewModelScope.launch {
-            searchTranscriptionsUseCase(
-                startDate = _uiState.value.startDate,
-                endDate = _uiState.value.endDate,
-                searchQuery = _uiState.value.searchQuery,
-                viewFilter = _uiState.value.viewFilter
-            ).collect { results ->
-                _uiState.update { it.copy(searchResults = results) }
+            try {
+                searchTranscriptionsUseCase(
+                    startDate = _uiState.value.startDate,
+                    endDate = _uiState.value.endDate,
+                    searchQuery = _uiState.value.searchQuery,
+                    viewFilter = _uiState.value.viewFilter
+                ).collect { results ->
+                    _uiState.update { it.copy(searchResults = results) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(searchResults = emptyList()) }
             }
         }
     }

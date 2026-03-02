@@ -94,18 +94,24 @@ class SettingsViewModel @Inject constructor(
 
     private fun loadSettings() {
         viewModelScope.launch {
-            val groqKey = securePreferences.getGroqApiKey()
-            val openRouterKey = securePreferences.getOpenRouterApiKey()
-            val sttModel = securePreferences.getSttModel()
-            val llmModel = securePreferences.getLlmModel()
+            try {
+                val groqKey = securePreferences.getGroqApiKey()
+                val openRouterKey = securePreferences.getOpenRouterApiKey()
+                val sttModel = securePreferences.getSttModel()
+                val llmModel = securePreferences.getLlmModel()
 
-            _uiState.update {
-                SettingsUiState(
-                    groqApiKey = groqKey,
-                    openRouterApiKey = openRouterKey,
-                    sttModel = sttModel,
-                    llmModel = llmModel
-                )
+                _uiState.update {
+                    SettingsUiState(
+                        groqApiKey = groqKey,
+                        openRouterApiKey = openRouterKey,
+                        sttModel = sttModel,
+                        llmModel = llmModel
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    SettingsUiState()
+                }
             }
         }
     }

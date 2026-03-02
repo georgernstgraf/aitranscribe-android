@@ -31,8 +31,12 @@ class MainViewModel @Inject constructor(
 
     fun loadRecentTranscriptions() {
         viewModelScope.launch {
-            repository.getUnviewed(limit = 10).collect { transcriptions ->
-                _uiState.update { it.copy(recentTranscriptions = transcriptions) }
+            try {
+                repository.getUnviewed(limit = 10).collect { transcriptions ->
+                    _uiState.update { it.copy(recentTranscriptions = transcriptions) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(recentTranscriptions = emptyList()) }
             }
         }
     }

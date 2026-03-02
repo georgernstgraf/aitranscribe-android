@@ -22,10 +22,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -47,17 +49,27 @@ import com.georgernstgraf.aitranscribe.ui.components.QuickFilters
 import com.georgernstgraf.aitranscribe.ui.components.StatisticsCard
 import com.georgernstgraf.aitranscribe.ui.components.TranscriptionItem
 import com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel
+import com.georgernstgraf.aitranscribe.ui.viewmodel.SetupViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     navController: NavController,
-    viewModel: MainViewModel = viewModel()
+    viewModel: MainViewModel = viewModel(),
+    setupViewModel: SetupViewModel = viewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val setupState by setupViewModel.uiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     var showExportDialog by remember { mutableStateOf(false) }
+    var showSetupPrompt by remember { mutableStateOf(false) }
+
+    LaunchedEffect(setupState.groqApiKey, setupState.openRouterApiKey) {
+        if (setupState.groqApiKey.isNullOrBlank() || setupState.openRouterApiKey.isNullOrBlank()) {
+            showSetupPrompt = true
+        }
+    }
 
     val totalCount = state.recentTranscriptions.size
     val unviewedCount = state.recentTranscriptions.count { it.isUnviewed }
@@ -212,6 +224,38 @@ fun MainScreen(
                 }
             }
         }
+    }
+
+    if (showSetupPrompt) {
+        AlertDialog(
+            onDismissRequest = { showSetupPrompt = false },
+            title = { Text("API Keys Required") },
+            text = {
+                Column {
+                    Text("Please configure your API keys to use AITranscribe.")
+                    Text(
+                        "You can set them up in Settings.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showSetupPrompt = false
+                        navController.navigate("settings")
+                    }
+                ) {
+                    Text("Go to Settings")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSetupPrompt = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     if (showExportDialog) {

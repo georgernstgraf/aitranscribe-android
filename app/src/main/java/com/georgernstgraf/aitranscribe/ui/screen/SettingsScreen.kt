@@ -67,6 +67,12 @@ fun SettingsScreen(
         }
     }
 
+    LaunchedEffect(showDeleteDialog) {
+        if (showDeleteDialog) {
+            viewModel.getOldCount(state.daysToDelete)
+        }
+    }
+
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val scrollState = rememberScrollState()
 
@@ -190,11 +196,10 @@ fun SettingsScreen(
     }
 
     if (showDeleteDialog) {
-        viewModel.getOldCount(state.daysToDelete)
-
         DeleteOldDialog(
             onDismiss = { showDeleteDialog = false },
             onDelete = { daysOld, viewFilter ->
+                viewModel.onDaysToDeleteChanged(daysOld)
                 viewModel.onDeleteViewFilterChanged(viewFilter)
                 viewModel.deleteOldTranscriptions()
                 showDeleteDialog = false
