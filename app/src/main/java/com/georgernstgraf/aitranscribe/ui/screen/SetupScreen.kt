@@ -185,7 +185,20 @@ fun SetupScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (state.errorMessage != null && !state.isValidating) {
+            if (state.isValidating) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Validating API keys...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else if (state.errorMessage != null) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
