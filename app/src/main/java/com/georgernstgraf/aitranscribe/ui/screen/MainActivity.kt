@@ -35,6 +35,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        android.util.Log.e("MainActivity", "=== onCreate: STARTED ===")
         
         setContent {
             AITranscribeTheme {

@@ -225,14 +225,16 @@ class RecordingService : Service() {
         duration: Int,
         wasCancelled: Boolean
     ) {
-        Log.d(TAG, "broadcastRecordingResult: audioPath=$audioPath, duration=$duration, wasCancelled=$wasCancelled")
+        Log.e(TAG, "broadcastRecordingResult: audioPath=$audioPath, duration=$duration, wasCancelled=$wasCancelled")
         val intent = Intent(ACTION_RECORDING_RESULT).apply {
             putExtra(EXTRA_AUDIO_PATH, audioPath)
             putExtra(EXTRA_DURATION, duration)
             putExtra(EXTRA_WAS_CANCELLED, wasCancelled)
+            setPackage(packageName)
         }
+        Log.e(TAG, "broadcastRecordingResult: packageName=$packageName")
         sendBroadcast(intent)
-        Log.d(TAG, "broadcastRecordingResult: broadcast sent")
+        Log.e(TAG, "broadcastRecordingResult: broadcast sent with action=$ACTION_RECORDING_RESULT")
     }
 
     fun isRecording(): Boolean = isRecording

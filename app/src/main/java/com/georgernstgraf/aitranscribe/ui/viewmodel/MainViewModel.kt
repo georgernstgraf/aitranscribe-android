@@ -48,7 +48,8 @@ class MainViewModel @Inject constructor(
     private var recordingResultReceiver: RecordingResultReceiver? = null
 
     init {
-        Log.i("MainViewModel", "=== INIT: MainViewModel created ===")
+        Log.e("MainViewModel", "=== INIT: MainViewModel created ===")
+        Log.e("MainViewModel", "=== INIT: context=$context ===")
         loadRecentTranscriptions()
         registerRecordingResultReceiver()
     }
@@ -121,35 +122,43 @@ class MainViewModel @Inject constructor(
     }
 
     private fun registerRecordingResultReceiver() {
+        Log.e("MainViewModel", "registerRecordingResultReceiver: START")
         recordingResultReceiver = RecordingResultReceiver()
         val filter = IntentFilter(RecordingService.ACTION_RECORDING_RESULT)
+        Log.e("MainViewModel", "registerRecordingResultReceiver: filter action=${RecordingService.ACTION_RECORDING_RESULT}")
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(
-                recordingResultReceiver,
-                filter,
-                Context.RECEIVER_NOT_EXPORTED
-            )
-        } else {
-            context.registerReceiver(recordingResultReceiver, filter)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(
+                    recordingResultReceiver,
+                    filter,
+                    Context.RECEIVER_NOT_EXPORTED
+                )
+                Log.e("MainViewModel", "registerRecordingResultReceiver: Registered with RECEIVER_NOT_EXPORTED")
+            } else {
+                context.registerReceiver(recordingResultReceiver, filter)
+                Log.e("MainViewModel", "registerRecordingResultReceiver: Registered (pre-Tiramisu)")
+            }
+        } catch (e: Exception) {
+            Log.e("MainViewModel", "registerRecordingResultReceiver: FAILED", e)
         }
     }
 
     inner class RecordingResultReceiver : android.content.BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            Log.d("MainViewModel", "onReceive: action=${intent?.action}")
+            Log.e("MainViewModel", "=== onReceive: action=${intent?.action} ===")
             if (intent?.action == RecordingService.ACTION_RECORDING_RESULT) {
                 val audioPath = intent.getStringExtra(RecordingService.EXTRA_AUDIO_PATH)
                 val duration = intent.getIntExtra(RecordingService.EXTRA_DURATION, 0)
                 val wasCancelled = intent.getBooleanExtra(RecordingService.EXTRA_WAS_CANCELLED, false)
                 
-                Log.d("MainViewModel", "onReceive: audioPath=$audioPath, duration=$duration, wasCancelled=$wasCancelled")
+                Log.e("MainViewModel", "onReceive: audioPath=$audioPath, duration=$duration, wasCancelled=$wasCancelled")
                 
                 if (!wasCancelled && audioPath != null) {
                     // Start transcription worker
                     startTranscription(audioPath, duration)
                 } else {
-                    Log.w("MainViewModel", "onReceive: wasCancelled=$wasCancelled, audioPath=$audioPath - skipping transcription")
+                    Log.e("MainViewModel", "onReceive: wasCancelled=$wasCancelled, audioPath=$audioPath - skipping transcription")
                 }
             }
         }
