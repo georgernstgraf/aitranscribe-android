@@ -1,0 +1,347 @@
+--------- beginning of main
+03-03 09:01:17.001  1075  3734 E AiAiSuggestUi: Timeout while retrieving suggestContentSelections
+03-03 09:01:17.001  1075  3734 E AiAiSuggestUi: java.util.concurrent.TimeoutException
+03-03 09:01:17.001  1075  3734 E AiAiSuggestUi: 	at java.util.concurrent.CompletableFuture$Timeout.run(CompletableFuture.java:2908)
+03-03 09:01:17.001  1075  3734 E AiAiSuggestUi: 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:520)
+03-03 09:01:17.001  1075  3734 E AiAiSuggestUi: 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+03-03 09:01:17.001  1075  3734 E AiAiSuggestUi: 	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:348)
+03-03 09:01:17.001  1075  3734 E AiAiSuggestUi: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+03-03 09:01:17.001  1075  3734 E AiAiSuggestUi: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+03-03 09:01:17.001  1075  3734 E AiAiSuggestUi: 	at java.lang.Thread.run(Thread.java:1563)
+03-03 09:01:20.149  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.149  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.298  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.298  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.298  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.299  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.303  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.303  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.401  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.445  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.445  3702  3881 E MESA    : Failed to open rendernode: No such file or directory
+03-03 09:01:20.537  3861  3861 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+03-03 09:01:20.809  3861  3918 E adservices.measurement: Consent notification has not been displayed.
+03-03 09:01:21.001  3878  3878 E chromium: [0303/090120.997636:ERROR:aw_component_update_service.cc(285)] No directory found for component cffplpkejcbdpfnfabnjikeicbedmifn
+03-03 09:01:21.002  3878  3878 E chromium: [0303/090121.002013:ERROR:aw_component_update_service.cc(285)] No directory found for component llkgjffcdpffmhiakmfcdcblohccpfmo
+03-03 09:01:21.154  3793  3793 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+--------- beginning of crash
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: FATAL EXCEPTION: main
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: Process: com.georgernstgraf.aitranscribe.debug, PID: 3793
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: java.lang.SecurityException: com.georgernstgraf.aitranscribe.debug: One of RECEIVER_EXPORTED or RECEIVER_NOT_EXPORTED should be specified when a receiver isn't being registered exclusively for system broadcasts
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at android.os.Parcel.createExceptionOrNull(Parcel.java:3373)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at android.os.Parcel.createException(Parcel.java:3357)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at android.os.Parcel.readException(Parcel.java:3340)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at android.os.Parcel.readException(Parcel.java:3282)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at android.app.IActivityManager$Stub$Proxy.registerReceiverWithFeature(IActivityManager.java:6319)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at android.app.ContextImpl.registerReceiverInternal(ContextImpl.java:1995)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at android.app.ContextImpl.registerReceiver(ContextImpl.java:1924)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at android.app.ContextImpl.registerReceiver(ContextImpl.java:1912)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at android.content.ContextWrapper.registerReceiver(ContextWrapper.java:793)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel.registerRecordingResultReceiver(MainViewModel.kt:123)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel.<init>(MainViewModel.kt:50)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.DaggerAITranscribeApp_HiltComponents_SingletonC$ViewModelCImpl$SwitchingProvider.get(DaggerAITranscribeApp_HiltComponents_SingletonC.java:508)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at dagger.hilt.android.internal.lifecycle.HiltViewModelFactory$2.createViewModel(HiltViewModelFactory.java:133)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at dagger.hilt.android.internal.lifecycle.HiltViewModelFactory$2.create(HiltViewModelFactory.java:104)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at dagger.hilt.android.internal.lifecycle.HiltViewModelFactory.create(HiltViewModelFactory.java:171)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.lifecycle.ViewModelProvider.get(ViewModelProvider.kt:184)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.lifecycle.ViewModelProvider.get(ViewModelProvider.kt:150)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.lifecycle.ViewModelLazy.getValue(ViewModelLazy.kt:53)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.lifecycle.ViewModelLazy.getValue(ViewModelLazy.kt:35)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.screen.MainActivity.getMainViewModel(MainActivity.kt:29)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.screen.MainActivity.access$getMainViewModel(MainActivity.kt:26)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.screen.MainActivity$onCreate$1$1$1.invoke(MainActivity.kt:46)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.screen.MainActivity$onCreate$1$1$1.invoke(MainActivity.kt:45)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.material3.SurfaceKt$Surface$1.invoke(Surface.kt:134)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.material3.SurfaceKt$Surface$1.invoke(Surface.kt:115)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.CompositionLocalKt.CompositionLocalProvider(CompositionLocal.kt:228)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.material3.SurfaceKt.Surface-T9BRK9s(Surface.kt:112)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.screen.MainActivity$onCreate$1$1.invoke(MainActivity.kt:42)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.screen.MainActivity$onCreate$1$1.invoke(MainActivity.kt:41)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.CompositionLocalKt.CompositionLocalProvider(CompositionLocal.kt:248)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.material3.TextKt.ProvideTextStyle(Text.kt:352)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.material3.MaterialThemeKt$MaterialTheme$1.invoke(MaterialTheme.kt:72)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.material3.MaterialThemeKt$MaterialTheme$1.invoke(MaterialTheme.kt:71)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+03-03 09:01:21.887  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.CompositionLocalKt.CompositionLocalProvider(CompositionLocal.kt:228)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.material3.MaterialThemeKt.MaterialTheme(MaterialTheme.kt:64)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.theme.ThemeKt.AITranscribeTheme(Theme.kt:54)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.screen.MainActivity$onCreate$1.invoke(MainActivity.kt:41)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at com.georgernstgraf.aitranscribe.ui.screen.MainActivity$onCreate$1.invoke(MainActivity.kt:40)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.ComposeView.Content(ComposeView.android.kt:428)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.AbstractComposeView$ensureCompositionCreated$1.invoke(ComposeView.android.kt:252)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.AbstractComposeView$ensureCompositionCreated$1.invoke(ComposeView.android.kt:251)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.CompositionLocalKt.CompositionLocalProvider(CompositionLocal.kt:228)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.CompositionLocalsKt.ProvideCommonCompositionLocals(CompositionLocals.kt:186)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.AndroidCompositionLocals_androidKt$ProvideAndroidCompositionLocals$3.invoke(AndroidCompositionLocals.android.kt:119)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.AndroidCompositionLocals_androidKt$ProvideAndroidCompositionLocals$3.invoke(AndroidCompositionLocals.android.kt:118)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.CompositionLocalKt.CompositionLocalProvider(CompositionLocal.kt:228)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.AndroidCompositionLocals_androidKt.ProvideAndroidCompositionLocals(AndroidCompositionLocals.android.kt:110)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.WrappedComposition$setContent$1$1$2.invoke(Wrapper.android.kt:139)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.WrappedComposition$setContent$1$1$2.invoke(Wrapper.android.kt:138)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.CompositionLocalKt.CompositionLocalProvider(CompositionLocal.kt:248)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.WrappedComposition$setContent$1$1.invoke(Wrapper.android.kt:138)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.WrappedComposition$setContent$1$1.invoke(Wrapper.android.kt:123)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.ActualJvm_jvmKt.invokeComposable(ActualJvm.jvm.kt:90)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.ComposerImpl.doCompose(Composer.kt:3302)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.ComposerImpl.composeContent$runtime_release(Composer.kt:3235)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.CompositionImpl.composeContent(Composition.kt:725)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.Recomposer.composeInitial$runtime_release(Recomposer.kt:1071)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.CompositionImpl.composeInitial(Composition.kt:633)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.runtime.CompositionImpl.setContent(Composition.kt:619)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.WrappedComposition$setContent$1.invoke(Wrapper.android.kt:123)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.WrappedComposition$setContent$1.invoke(Wrapper.android.kt:114)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.AndroidComposeView.setOnViewTreeOwnersAvailable(AndroidComposeView.android.kt:1289)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.WrappedComposition.setContent(Wrapper.android.kt:114)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.WrappedComposition.onStateChanged(Wrapper.android.kt:164)
+03-03 09:01:21.891  3793  3793 E AndroidRuntime: 	at androidx.lifecycle.LifecycleRegistry$ObserverWithState.dispatchEvent(LifecycleRegistry.kt:322)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at androidx.lifecycle.LifecycleRegistry.addObserver(LifecycleRegistry.kt:199)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.WrappedComposition$setContent$1.invoke(Wrapper.android.kt:121)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.WrappedComposition$setContent$1.invoke(Wrapper.android.kt:114)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at androidx.compose.ui.platform.AndroidComposeView.onAttachedToWindow(AndroidComposeView.android.kt:1364)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.View.dispatchAttachedToWindow(View.java:23294)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3517)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3524)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3524)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3524)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.ViewGroup.dispatchAttachedToWindow(ViewGroup.java:3524)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:3667)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:3127)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:10807)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1630)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1639)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.Choreographer.doCallbacks(Choreographer.java:1235)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.Choreographer.doFrame(Choreographer.java:1164)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1613)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.os.Handler.handleCallback(Handler.java:1070)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:125)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.os.Looper.dispatchMessage(Looper.java:333)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:263)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:367)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:9287)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:566)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:929)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: Caused by: android.os.RemoteException: Remote stack trace:
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at com.android.server.am.BroadcastController.registerReceiverWithFeatureTraced(BroadcastController.java:477)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at com.android.server.am.BroadcastController.registerReceiverWithFeature(BroadcastController.java:280)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at com.android.server.am.ActivityManagerService.registerReceiverWithFeature(ActivityManagerService.java:14459)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at android.app.IActivityManager$Stub.onTransact(IActivityManager.java:2867)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 	at com.android.server.am.ActivityManagerService.onTransact(ActivityManagerService.java:2768)
+03-03 09:01:21.893  3793  3793 E AndroidRuntime: 
+--------- beginning of system
+03-03 09:01:21.918   689  1680 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+03-03 09:01:22.035  1075  1688 E FrameEvents: addRelease: Did not find frame.
+03-03 09:01:25.994   689  1173 E TransitionChain: Can't collect into a chain with no transition
+03-03 09:01:25.994   689  1173 E TransitionChain: Can't collect into a chain with no transition
+03-03 09:01:29.008   689  1680 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+03-03 09:01:39.311   689  1653 E AppOps  : Bad call made by uid 1000. Package "com.google.android.googlequicksearchbox" does not belong to uid 1000.
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: com.android.dialer.voicemail.service.impl.vvmclients.rest.RestVvmCarrierService.getMsisdn:420 Retrieved phone number in an unexpected format: +15551234567 [CONTEXT disable_client_error_logging=true ]
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: adis: MEDIUM
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at a.dC(PG:15)
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at smu.apply(PG:1019)
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at acnt.apply(PG:13)
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at advm.d(PG:3)
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at advn.run(PG:38)
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at xlk.run(PG:7)
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at adoy.run(PG:44)
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at wvj.run(PG:254)
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at tif.run(PG:267)
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at java.lang.Thread.run(Thread.java:1563)
+03-03 09:01:41.814  2068  2354 E DialerRestVvmCarrierService: 	at xmm.run(PG:61)
+03-03 09:02:13.683   689  1833 E WifiService: Attempt to retrieve passpoint with invalid scanResult List
+03-03 09:02:13.687  3368  3978 E WifiScanner: listener does not exist
+03-03 09:03:40.310  4025  4047 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+03-03 09:03:41.345  1073  1196 E SatelliteAppTracker: packageName: com.google.android.apps.photos, value: null
+03-03 09:03:41.421  1073  1073 E SmsApplication: com.google.android.apps.messaging lost android:read_cell_broadcasts:  (fixing)
+03-03 09:03:41.714   689  2787 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms.supervision, role: android.app.role.SYSTEM_SUPERVISION, user: 0
+03-03 09:03:41.791   689  2787 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms, role: android.app.role.SYSTEM_DEPENDENCY_INSTALLER, user: 0
+03-03 09:03:41.851   689  2787 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms, role: android.app.role.WALLET, user: 0
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: com.android.dialer.voicemail.service.impl.vvmclients.rest.RestVvmCarrierService.getMsisdn:420 Retrieved phone number in an unexpected format: +15551234567 [CONTEXT disable_client_error_logging=true ]
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: adis: MEDIUM
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at a.dC(PG:15)
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at smu.apply(PG:1019)
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at acnt.apply(PG:13)
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at advm.d(PG:3)
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at advn.run(PG:38)
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at xlk.run(PG:7)
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at adoy.run(PG:44)
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at wvj.run(PG:254)
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at tif.run(PG:267)
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at java.lang.Thread.run(Thread.java:1563)
+03-03 09:03:41.976  2068  2316 E DialerRestVvmCarrierService: 	at xmm.run(PG:61)
+03-03 09:03:42.130  1073  1263 E SmsApplication: com.google.android.apps.messaging lost android:read_cell_broadcasts:  (fixing)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: com.android.dialer.voicemail.service.impl.vvmclients.rest.RestVvmCarrierService.getMsisdn:420 Retrieved phone number in an unexpected format: +15551234567 [CONTEXT disable_client_error_logging=true ]
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: adis: MEDIUM
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at a.dC(PG:15)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at smu.apply(PG:1019)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at acnt.apply(PG:13)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at advm.d(PG:3)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at advn.run(PG:38)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at xlk.run(PG:7)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at adoy.run(PG:44)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at wvj.run(PG:254)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at tif.run(PG:267)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at java.lang.Thread.run(Thread.java:1563)
+03-03 09:03:42.394  2068  2316 E DialerRestVvmCarrierService: 	at xmm.run(PG:61)
+03-03 09:03:42.602  2068  4073 E libbinder.IPCThreadState: Binder transaction failure. id: 153696, cmd: BR_FROZEN_REPLY (29202), error: 0 (Success)
+03-03 09:03:42.602  2068  4073 E JavaBinder: !!! FAILED BINDER TRANSACTION !!!  (parcel size = 84)
+03-03 09:03:42.661   689  1169 E libbinder.IPCThreadState: Binder transaction failure. id: 153777, cmd: BR_FROZEN_REPLY (29202), error: 0 (Success)
+03-03 09:03:42.710  2068  2354 E advr    : Got more than one input Future failure. Logging failures after the first
+03-03 09:03:42.710  2068  2354 E advr    : abth: android.os.DeadObjectException: Transaction failed on small parcel; remote process probably died, but this could also be caused by running out of binder buffer space
+03-03 09:03:42.710  2068  2354 E advr    : 	at achj.ag(PG:70)
+03-03 09:03:42.710  2068  2354 E advr    : 	at achj.f(PG:20)
+03-03 09:03:42.710  2068  2354 E advr    : 	at abvi.a(PG:19)
+03-03 09:03:42.710  2068  2354 E advr    : 	at aaoq.d(PG:6)
+03-03 09:03:42.710  2068  2354 E advr    : 	at aaos.run(PG:74)
+03-03 09:03:42.710  2068  2354 E advr    : 	at acnv.run(PG:21)
+03-03 09:03:42.710  2068  2354 E advr    : 	at xlk.run(PG:7)
+03-03 09:03:42.710  2068  2354 E advr    : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+03-03 09:03:42.710  2068  2354 E advr    : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+03-03 09:03:42.710  2068  2354 E advr    : 	at wvj.run(PG:254)
+03-03 09:03:42.710  2068  2354 E advr    : 	at xkw.run(PG:470)
+03-03 09:03:42.710  2068  2354 E advr    : 	at java.lang.Thread.run(Thread.java:1563)
+03-03 09:03:42.710  2068  2354 E advr    : 	at xmm.run(PG:61)
+03-03 09:03:42.710  2068  2354 E advr    : Caused by: android.os.DeadObjectException: Transaction failed on small parcel; remote process probably died, but this could also be caused by running out of binder buffer space
+03-03 09:03:42.710  2068  2354 E advr    : 	at android.os.BinderProxy.transactNative(Native Method)
+03-03 09:03:42.710  2068  2354 E advr    : 	at android.os.BinderProxy.transact(BinderProxy.java:599)
+03-03 09:03:42.710  2068  2354 E advr    : 	at android.content.ContentProviderProxy.createCancellationSignal(ContentProviderNative.java:832)
+03-03 09:03:42.710  2068  2354 E advr    : 	at android.content.ContentProviderClient.query(ContentProviderClient.java:193)
+03-03 09:03:42.710  2068  2354 E advr    : 	at android.content.ContentProviderClient.query(ContentProviderClient.java:178)
+03-03 09:03:42.710  2068  2354 E advr    : 	at achj.ag(PG:23)
+03-03 09:03:42.710  2068  2354 E advr    : 	... 12 more
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: com.android.dialer.voicemail.service.impl.vvmclients.rest.RestVvmCarrierService.getMsisdn:420 Retrieved phone number in an unexpected format: +15551234567 [CONTEXT disable_client_error_logging=true ]
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: adis: MEDIUM
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at a.dC(PG:15)
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at smu.apply(PG:1019)
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at acnt.apply(PG:13)
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at advm.d(PG:3)
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at advn.run(PG:38)
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at xlk.run(PG:7)
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at adoy.run(PG:44)
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at wvj.run(PG:254)
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at tif.run(PG:267)
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at java.lang.Thread.run(Thread.java:1563)
+03-03 09:03:42.950  2068  2354 E DialerRestVvmCarrierService: 	at xmm.run(PG:61)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: com.android.dialer.voicemail.service.impl.vvmclients.rest.RestVvmCarrierService.getMsisdn:420 Retrieved phone number in an unexpected format: +15551234567 [CONTEXT disable_client_error_logging=true ]
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: adis: MEDIUM
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at a.dC(PG:15)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at smu.apply(PG:1019)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at acnt.apply(PG:13)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at advm.d(PG:3)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at advn.run(PG:38)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at xlk.run(PG:7)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at adoy.run(PG:44)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at wvj.run(PG:254)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at tif.run(PG:267)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at java.lang.Thread.run(Thread.java:1563)
+03-03 09:03:43.228  2068  2354 E DialerRestVvmCarrierService: 	at xmm.run(PG:61)
+03-03 09:03:43.417  4085  4098 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: No service published for: persistent_data_block
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: android.os.ServiceManager$ServiceNotFoundException: No service published for: persistent_data_block
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.os.ServiceManager.getServiceOrThrow(ServiceManager.java:203)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.app.SystemServiceRegistry$86.createService(SystemServiceRegistry.java:1201)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.app.SystemServiceRegistry$86.createService(SystemServiceRegistry.java:1198)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.app.SystemServiceRegistry$StaticServiceFetcher.getService(SystemServiceRegistry.java:2610)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.app.SystemServiceRegistry.getSystemService(SystemServiceRegistry.java:2063)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.app.ContextImpl.getSystemService(ContextImpl.java:2434)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.content.Context.getSystemService(Context.java:4901)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at com.android.server.pm.PackageInstallerSession.markAsSealed(PackageInstallerSession.java:2573)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at com.android.server.pm.PackageInstallerSession.commit(PackageInstallerSession.java:2323)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.content.pm.PackageInstaller$Session.commit(PackageInstaller.java:2343)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at com.android.server.pm.PackageManagerShellCommand.doCommitSession(PackageManagerShellCommand.java:4390)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at com.android.server.pm.PackageManagerShellCommand.doRunInstall(PackageManagerShellCommand.java:1651)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at com.android.server.pm.PackageManagerShellCommand.runInstall(PackageManagerShellCommand.java:1572)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at com.android.server.pm.PackageManagerShellCommand.onCommand(PackageManagerShellCommand.java:246)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at com.android.modules.utils.BasicShellCommandHandler.exec(BasicShellCommandHandler.java:97)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.os.ShellCommand.exec(ShellCommand.java:38)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onShellCommand(PackageManagerService.java:6721)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.os.Binder.shellCommand(Binder.java:1183)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.os.Binder.onTransact(Binder.java:961)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.content.pm.IPackageManager$Stub.onTransact(IPackageManager.java:4666)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at com.android.server.pm.PackageManagerService$IPackageManagerImpl.onTransact(PackageManagerService.java:6705)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.os.Binder.execTransactInternal(Binder.java:1478)
+03-03 09:05:06.237   689   705 E SystemServiceRegistry: 	at android.os.Binder.execTransact(Binder.java:1418)
+03-03 09:05:06.240   689   705 E SystemServiceRegistry: Manager wrapper not available: persistent_data_block
+03-03 09:05:06.529   689   845 E AppOps  : attributionTag VCN not declared in manifest of android
+03-03 09:05:06.588   689   755 E AtomicFile: Failed to rename /data/system/install_sessions.xml.new to /data/system/install_sessions.xml
+03-03 09:05:06.625  1073  1073 E SmsApplication: com.google.android.apps.messaging lost android:read_cell_broadcasts:  (fixing)
+03-03 09:05:07.302  1073  1073 E SmsApplication: com.google.android.apps.messaging lost android:read_cell_broadcasts:  (fixing)
+03-03 09:05:07.322   689  2787 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms.supervision, role: android.app.role.SYSTEM_SUPERVISION, user: 0
+03-03 09:05:07.749  1073  1073 E SmsApplication: com.google.android.apps.messaging lost android:read_cell_broadcasts:  (fixing)
+03-03 09:05:07.773   689   705 E AppOps  : attributionTag VCN not declared in manifest of android
+03-03 09:05:08.075  4142  4179 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+03-03 09:05:08.501   689  2787 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms, role: android.app.role.SYSTEM_DEPENDENCY_INSTALLER, user: 0
+03-03 09:05:08.570   689  2787 E RoleControllerServiceImpl: Default/fallback role holder package doesn't qualify for the role, package: com.google.android.gms, role: android.app.role.WALLET, user: 0
+03-03 09:05:08.676  4143  4143 E FeatureFlagsImplExport: android.os.flagging.AconfigStorageReadException: ERROR_PACKAGE_NOT_FOUND: package android.xr cannot be found on the device
+03-03 09:05:10.259  1476  4183 E jgdb    : *~*~*~ Previous channel {0} was garbage collected without being shut down! ~*~*~*
+03-03 09:05:10.259  1476  4183 E jgdb    :     Make sure to call shutdown()/shutdownNow()
+03-03 09:05:10.259  1476  4183 E jgdb    : java.lang.RuntimeException: ManagedChannel allocation site
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at jgda.<init>(:com.google.android.gms@260834038@26.08.34 (260800-876566425):21)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at jgdb.<init>(:com.google.android.gms@260834038@26.08.34 (260800-876566425):10)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at jgcz.a(:com.google.android.gms@260834038@26.08.34 (260800-876566425):296)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at jfkv.a(:com.google.android.gms@260834038@26.08.34 (260800-876566425):5)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at bgta.a(:com.google.android.gms@260834038@26.08.34 (260800-876566425):85)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at bgsr.t(:com.google.android.gms@260834038@26.08.34 (260800-876566425):119)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at bgsr.G(:com.google.android.gms@260834038@26.08.34 (260800-876566425):5)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at fekj.a(:com.google.android.gms@260834038@26.08.34 (260800-876566425):45)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at fejo.c(:com.google.android.gms@260834038@26.08.34 (260800-876566425):20)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at fejo.a(:com.google.android.gms@260834038@26.08.34 (260800-876566425):3)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at baqe.run(:com.google.android.gms@260834038@26.08.34 (260800-876566425):5)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at bgzd.c(:com.google.android.gms@260834038@26.08.34 (260800-876566425):50)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at bgzd.run(:com.google.android.gms@260834038@26.08.34 (260800-876566425):73)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at bhev.run(:com.google.android.gms@260834038@26.08.34 (260800-876566425):8)
+03-03 09:05:10.259  1476  4183 E jgdb    : 	at java.lang.Thread.run(Thread.java:1563)
+03-03 09:05:12.333   689   964 E SettingsToPropertiesMapper: key=persist.device_config.storage_native_boot.transcode_compat_manifest value=com.yelp.android,0,com.yy.biu,0,com.groupme.android,0,air.tv.douyu.android,0,com.baidu.mbaby,0,com.vlocker.locker,0,com.znxh.hyhuo,0,com.yixia.xiaokaxiu,0 exceeds system property max length.
+03-03 09:05:12.401  3329  3329 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+03-03 09:05:12.434  4229  4229 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+03-03 09:05:12.735   689  1680 E TaskPersister: File error accessing recents directory (directory doesn't exist?).
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: Cannot write token, exception in Context lookup [CONTEXT service_id=130 ]
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: java.io.FileNotFoundException: /data/user/0/com.google.android.gsf/files/security_token: open failed: ENOENT (No such file or directory)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at java.io.FileOutputStream.<init>(FileOutputStream.java:259)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at android.app.ContextImpl.openFileOutput(ContextImpl.java:823)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at baim.a(:com.google.android.gms@260834038@26.08.34 (260800-876566425):1738)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at bajw.a(:com.google.android.gms@260834038@26.08.34 (260800-876566425):824)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at com.google.android.gms.checkin.CheckinIntentOperation.onHandleIntent(:com.google.android.gms@260834038@26.08.34 (260800-876566425):30)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at com.google.android.chimera.IntentOperation.onHandleIntent(:com.google.android.gms@260834038@26.08.34 (260800-876566425):1)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at baxe.onHandleIntent(:com.google.android.gms@260834038@26.08.34 (260800-876566425):84)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at zwr.run(:com.google.android.gms@260834038@26.08.34 (260800-876566425):64)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at zwq.run(:com.google.android.gms@260834038@26.08.34 (260800-876566425):132)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at gsnq.run(:com.google.android.gms@260834038@26.08.34 (260800-876566425):19)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1154)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:652)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at java.lang.Thread.run(Thread.java:1563)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at libcore.io.Linux.open(Native Method)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:574)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:574)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at android.app.AndroidForwardingOs.open(AndroidForwardingOs.java:120)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+03-03 09:05:13.306  1476  4205 E GoogleSettingsUtils: 	... 13 more
+03-03 09:05:16.072   689  4263 E SettingsToPropertiesMapper: key=persist.device_config.configuration.AdbWritableFlags__adb_writable_flags_list value=adservices/disable_sdk_sandbox,adservices/enforce_broadcast_receiver_restrictions,adservices/fledge_ad_selection_enforce_foreground_status_custom_audience,adservices/fledge_custom_audience_max_count,adservices/fledge_custom_audience_max_num_ads,adservices/fledge_custom_audience_max_owner_count,adservices/fledge_custom_audience_per_app_max_count,adservices/fledge_js_isolate_enforce_max_heap_size,adservices/fledge_js_isolate_max_heap_size_bytes,adservices/sdk_request_permits_per_second,adservices/sdksandbox_customized_sdk_context_enabled,configuration/namespace_to_package_mapping,constrain_display_apis/always_constrain_display_apis,constrain_display_apis/never_constrain_display_apis,constrain_display_apis/never_constrain_display_apis_all_packages,device_policy_manager/disable_resources_updatability,flipendo/default_savings_mode_launch,flipendo/essential_apps,flipendo/flipendo_enabled_launch,flipendo/grayscale_enabled_launch,flipendo/lever_ble_scanning_enabled_launch,flipendo/lever_hotspot_enabled_launch,flipendo/lever_work_profile_enabled_launch,flipendo/resuspend_delay_minutes,namespace/key,namespace1/key1,namespace1/key2,namespace2/key1,namespace2/key2,package_manager_service/incfs_default_timeouts,package_manager_service/known_digesters_list,privacy/location_access_check_periodic_interval_millis,rollback/enable_rollback_timeout,rollback/watchdog_explicit_health_check_enabled,rollback/watchdog_request_timeout_millis,rollback/watchdog_trigger_failure_count,rollback/watchdog_trigger_failure_duration_millis,rollback_boot/rollback_lifetime_in_millis,systemui/nas_generate_actions,systemui/nas_generate_replies,systemui/nas_max_messages_to_extract,systemui/nas_max_suggestions,testspace/another,testspace/flagname,textclassifier/config_updater_model_enabled,textclassifier/key,textclassifier/key2,textclassifier/manifest_url_annotator_en,textclassifier/manifest_url_annotator_ru,textclassifier/model_download_backoff_delay_in_millis,textclassifier/model_download_manager_enabled,textclassifier/multi_language_support_enabled,textclassifier/testing_locale_list_override,textclassifier/textclassifier_service_package_override,window_manager/enable_default_rescind_bal_privileges_from_pending_intent_sender,wrong/nas_generate_replies, exceeds system property max length.
+03-03 09:05:16.545  1075  1075 E RecyclerView: Cannot scroll to position a LayoutManager set. Call setLayoutManager with a non-null argument.
+03-03 09:05:16.552  1075  1075 E RecyclerView: Cannot scroll to position a LayoutManager set. Call setLayoutManager with a non-null argument.
+03-03 09:05:16.683   689  4304 E GnssPsdsDownloader: No Long-Term PSDS servers were specified in the GnssConfiguration
+03-03 09:05:16.800   689   794 E InputDispatcher: channel '[Gesture Monitor] minus-one' ~ Channel is unrecoverably broken and will be disposed!
+03-03 09:05:17.008   689   689 E DeviceConfig: Parsing int failed for location_mode
+03-03 09:05:42.742   689   710 E AppOps  : attributionTag UwbCountryCode not declared in manifest of android

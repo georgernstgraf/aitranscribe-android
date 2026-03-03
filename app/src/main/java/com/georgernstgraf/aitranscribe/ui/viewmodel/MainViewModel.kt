@@ -3,6 +3,7 @@ package com.georgernstgraf.aitranscribe.ui.viewmodel
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
@@ -120,7 +121,16 @@ class MainViewModel @Inject constructor(
     private fun registerRecordingResultReceiver() {
         recordingResultReceiver = RecordingResultReceiver()
         val filter = IntentFilter(RecordingService.ACTION_RECORDING_RESULT)
-        context.registerReceiver(recordingResultReceiver, filter)
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(
+                recordingResultReceiver,
+                filter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            context.registerReceiver(recordingResultReceiver, filter)
+        }
     }
 
     inner class RecordingResultReceiver : android.content.BroadcastReceiver() {
