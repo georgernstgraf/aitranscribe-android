@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
@@ -135,14 +136,19 @@ class MainViewModel @Inject constructor(
 
     inner class RecordingResultReceiver : android.content.BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            Log.d("MainViewModel", "onReceive: action=${intent?.action}")
             if (intent?.action == RecordingService.ACTION_RECORDING_RESULT) {
                 val audioPath = intent.getStringExtra(RecordingService.EXTRA_AUDIO_PATH)
                 val duration = intent.getIntExtra(RecordingService.EXTRA_DURATION, 0)
                 val wasCancelled = intent.getBooleanExtra(RecordingService.EXTRA_WAS_CANCELLED, false)
                 
+                Log.d("MainViewModel", "onReceive: audioPath=$audioPath, duration=$duration, wasCancelled=$wasCancelled")
+                
                 if (!wasCancelled && audioPath != null) {
                     // Start transcription worker
                     startTranscription(audioPath, duration)
+                } else {
+                    Log.w("MainViewModel", "onReceive: wasCancelled=$wasCancelled, audioPath=$audioPath - skipping transcription")
                 }
             }
         }
@@ -151,9 +157,13 @@ class MainViewModel @Inject constructor(
     private fun startTranscription(audioPath: String, duration: Int) {
         viewModelScope.launch {
             try {
+                Log.d("MainViewModel", "startTranscription: audioPath=$audioPath, duration=$duration")
+                
                 // Get STT and LLM models from preferences
                 val sttModel = securePreferences.getSttModel() ?: "whisper-large-v3"
                 val llmModel = securePreferences.getLlmModel()
+                
+                Log.d("MainViewModel", "startTranscription: sttModel=$sttModel, llmModel=$llmModel")
                 
                 // Create queued transcription entity
                 val queuedTranscription = QueuedTranscriptionEntity(
@@ -167,6 +177,7 @@ class MainViewModel @Inject constructor(
                 
                 // Insert into database
                 val queuedId = queuedTranscriptionDao.insert(queuedTranscription)
+                Log.d("MainViewModel", "startTranscription: queuedId=$queuedId")
                 
                 // Start transcription worker
                 val workRequest = OneTimeWorkRequestBuilder<TranscriptionWorker>()
@@ -176,10 +187,12 @@ class MainViewModel @Inject constructor(
                     .build()
                 
                 WorkManager.getInstance(context).enqueue(workRequest)
+                Log.d("MainViewModel", "startTranscription: WorkManager enqueued")
                 
                 // Refresh transcriptions list
                 loadRecentTranscriptions()
             } catch (e: Exception) {
+                Log.e("MainViewModel", "startTranscription: error", e)
                 _uiState.update { 
                     it.copy(recordingError = "Failed to start transcription: ${e.message}")
                 }

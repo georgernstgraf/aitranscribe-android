@@ -10,6 +10,7 @@ import android.content.Intent
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import com.georgernstgraf.aitranscribe.R
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -38,9 +39,25 @@ class RecordingService : Service() {
     private var recordingDuration = 0
     private var isRecording = false
 
+    companion object {
+        private const val TAG = "RecordingService"
+        const val NOTIFICATION_ID_RECORDING = 1001
+        const val CHANNEL_ID_RECORDING = "recording_channel"
+
+        const val ACTION_START_RECORDING = "com.georgernstgraf.aitranscribe.START_RECORDING"
+        const val ACTION_STOP_RECORDING = "com.georgernstgraf.aitranscribe.STOP_RECORDING"
+        const val ACTION_CANCEL_RECORDING = "com.georgernstgraf.aitranscribe.CANCEL_RECORDING"
+
+        const val ACTION_RECORDING_RESULT = "com.georgernstgraf.aitranscribe.RECORDING_RESULT"
+        const val EXTRA_AUDIO_PATH = "audio_path"
+        const val EXTRA_DURATION = "duration"
+        const val EXTRA_WAS_CANCELLED = "was_cancelled"
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "onStartCommand: action=${intent?.action}")
         when (intent?.action) {
             ACTION_START_RECORDING -> startRecording()
             ACTION_STOP_RECORDING -> stopRecording()
@@ -50,8 +67,12 @@ class RecordingService : Service() {
     }
 
     private fun startRecording() {
-        if (isRecording) return
+        if (isRecording) {
+            Log.w(TAG, "startRecording: already recording")
+            return
+        }
 
+        Log.d(TAG, "startRecording: starting...")
         isRecording = true
         recordingDuration = 0
 
@@ -63,8 +84,12 @@ class RecordingService : Service() {
     }
 
     private fun stopRecording() {
-        if (!isRecording) return
+        if (!isRecording) {
+            Log.w(TAG, "stopRecording: not recording")
+            return
+        }
 
+        Log.d(TAG, "stopRecording: stopping...")
         isRecording = false
         recordingJob?.cancel()
         
@@ -72,7 +97,7 @@ class RecordingService : Service() {
             mediaRecorder?.stop()
             mediaRecorder?.reset()
         } catch (e: Exception) {
-            // Ignore stop exception if recording was cancelled
+            Log.e(TAG, "stopRecording: error stopping mediaRecorder", e)
         }
 
         mediaRecorder?.release()
@@ -82,6 +107,7 @@ class RecordingService : Service() {
         notificationManager.cancel(NOTIFICATION_ID_RECORDING)
 
         val audioPath = currentAudioFile?.absolutePath
+        Log.d(TAG, "stopRecording: audioPath=$audioPath, duration=$recordingDuration")
         broadcastRecordingResult(audioPath, recordingDuration, wasCancelled = false)
     }
 
@@ -199,12 +225,14 @@ class RecordingService : Service() {
         duration: Int,
         wasCancelled: Boolean
     ) {
+        Log.d(TAG, "broadcastRecordingResult: audioPath=$audioPath, duration=$duration, wasCancelled=$wasCancelled")
         val intent = Intent(ACTION_RECORDING_RESULT).apply {
             putExtra(EXTRA_AUDIO_PATH, audioPath)
             putExtra(EXTRA_DURATION, duration)
             putExtra(EXTRA_WAS_CANCELLED, wasCancelled)
         }
         sendBroadcast(intent)
+        Log.d(TAG, "broadcastRecordingResult: broadcast sent")
     }
 
     fun isRecording(): Boolean = isRecording
@@ -219,18 +247,4 @@ class RecordingService : Service() {
     }
 
     class RecordingException(message: String, cause: Throwable?) : Exception(message, cause)
-
-    companion object {
-        const val NOTIFICATION_ID_RECORDING = 1001
-        const val CHANNEL_ID_RECORDING = "recording_channel"
-
-        const val ACTION_START_RECORDING = "com.georgernstgraf.aitranscribe.START_RECORDING"
-        const val ACTION_STOP_RECORDING = "com.georgernstgraf.aitranscribe.STOP_RECORDING"
-        const val ACTION_CANCEL_RECORDING = "com.georgernstgraf.aitranscribe.CANCEL_RECORDING"
-
-        const val ACTION_RECORDING_RESULT = "com.georgernstgraf.aitranscribe.RECORDING_RESULT"
-        const val EXTRA_AUDIO_PATH = "audio_path"
-        const val EXTRA_DURATION = "duration"
-        const val EXTRA_WAS_CANCELLED = "was_cancelled"
-    }
 }
