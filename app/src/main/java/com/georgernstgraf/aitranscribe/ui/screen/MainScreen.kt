@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.georgernstgraf.aitranscribe.ui.components.AudioRecordingButton
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.georgernstgraf.aitranscribe.ui.components.ExportDialog
 import com.georgernstgraf.aitranscribe.ui.components.QuickFilter
 import com.georgernstgraf.aitranscribe.ui.components.QuickFilters
@@ -52,7 +53,7 @@ import com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel
 @Composable
 fun MainScreen(
     navController: NavController,
-    viewModel: MainViewModel = viewModel()
+    viewModel: MainViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
