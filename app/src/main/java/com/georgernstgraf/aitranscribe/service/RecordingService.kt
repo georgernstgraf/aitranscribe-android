@@ -130,7 +130,7 @@ class RecordingService : Service() {
         }
     }
 
-    private fun startRecordingJob(startId: Int) {
+    private fun startRecordingJob() {
         recordingJob = CoroutineScope(Dispatchers.Main).launch {
             while (isActive && isRecording) {
                 delay(1000)
