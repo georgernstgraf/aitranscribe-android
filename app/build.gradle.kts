@@ -135,50 +135,12 @@ dependencies {
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.6")
 
-    // DataStore (Preferences)
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     // Security (Encrypted SharedPreferences)
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    
+    // Navigation with Hilt
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("com.google.errorprone:error_prone_annotations:2.27.1")
-
-    // ========== TESTING DEPENDENCIES ==========
-
-    // Unit Testing
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
-    testImplementation("com.google.truth:truth:1.1.5")
-    testImplementation("org.mockito:mockito-core:5.7.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
-    testImplementation("org.mockito:mockito-inline:5.2.0")
-    testImplementation("app.cash.turbine:turbine:1.0.0")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-
-    // Room Testing
-    testImplementation("androidx.room:room-testing:2.6.1")
-
-    // Hilt Testing
-    testImplementation("com.google.dagger:hilt-android-testing:2.50")
-    kspTest("com.google.dagger:hilt-android-compiler:2.50")
-
-    // Android Instrumented Testing
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation("androidx.test:runner:1.5.2")
-    androidTestImplementation("androidx.test:rules:1.5.0")
-
-    // Compose Testing
-    androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
-
-    // Hilt Android Testing
-    androidTestImplementation("com.google.dagger:hilt-android-testing:2.50")
-    kspAndroidTest("com.google.dagger:hilt-android-compiler:2.50")
-
-    // WorkManager Testing
-    androidTestImplementation("androidx.work:work-testing:2.9.0")
-
-    // Navigation Testing
-    androidTestImplementation("androidx.navigation:navigation-testing:2.7.6")
 }
