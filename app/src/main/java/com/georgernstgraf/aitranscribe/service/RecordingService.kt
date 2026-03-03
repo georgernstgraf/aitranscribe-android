@@ -42,14 +42,14 @@ class RecordingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START_RECORDING -> startRecording(startId)
+            ACTION_START_RECORDING -> startRecording()
             ACTION_STOP_RECORDING -> stopRecording()
             ACTION_CANCEL_RECORDING -> cancelRecording()
         }
         return START_NOT_STICKY
     }
 
-    private fun startRecording(startId: Int) {
+    private fun startRecording() {
         if (isRecording) return
 
         isRecording = true
@@ -59,7 +59,7 @@ class RecordingService : Service() {
         startForeground(NOTIFICATION_ID_RECORDING, createRecordingNotification())
 
         initializeMediaRecorder()
-        startRecordingJob(startId)
+        startRecordingJob()
     }
 
     private fun stopRecording() {
