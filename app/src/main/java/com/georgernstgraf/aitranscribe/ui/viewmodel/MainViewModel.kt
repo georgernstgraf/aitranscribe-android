@@ -48,6 +48,7 @@ class MainViewModel @Inject constructor(
     private var recordingResultReceiver: RecordingResultReceiver? = null
 
     init {
+        Log.i("MainViewModel", "=== INIT: MainViewModel created ===")
         loadRecentTranscriptions()
         registerRecordingResultReceiver()
     }
