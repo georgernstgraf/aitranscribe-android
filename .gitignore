@@ -108,3 +108,6 @@ build/generated/ksp/
 
 # Emulator logs
 emulator-logs.txt
+
+# secrets
+.env
