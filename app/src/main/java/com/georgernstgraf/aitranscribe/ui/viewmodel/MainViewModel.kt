@@ -5,12 +5,18 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
+import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
+import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.service.RecordingService
+import com.georgernstgraf.aitranscribe.service.TranscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
@@ -28,6 +34,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: TranscriptionRepository,
+    private val queuedTranscriptionDao: QueuedTranscriptionDao,
+    private val securePreferences: SecurePreferences,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -122,10 +130,48 @@ class MainViewModel @Inject constructor(
                 val duration = intent.getIntExtra(RecordingService.EXTRA_DURATION, 0)
                 val wasCancelled = intent.getBooleanExtra(RecordingService.EXTRA_WAS_CANCELLED, false)
                 
-                // Handle the result - you could trigger transcription here
-                // For now just log it
                 if (!wasCancelled && audioPath != null) {
-                    // TODO: Start transcription process
+                    // Start transcription worker
+                    startTranscription(audioPath, duration)
+                }
+            }
+        }
+    }
+
+    private fun startTranscription(audioPath: String, duration: Int) {
+        viewModelScope.launch {
+            try {
+                // Get STT and LLM models from preferences
+                val sttModel = securePreferences.getSttModel() ?: "whisper-large-v3"
+                val llmModel = securePreferences.getLlmModel()
+                
+                // Create queued transcription entity
+                val queuedTranscription = QueuedTranscriptionEntity(
+                    audioFilePath = audioPath,
+                    sttModel = sttModel,
+                    llmModel = llmModel,
+                    postProcessingType = null, // Will be set based on user preference
+                    createdAt = LocalDateTime.now().toString(),
+                    priority = 0
+                )
+                
+                // Insert into database
+                val queuedId = queuedTranscriptionDao.insert(queuedTranscription)
+                
+                // Start transcription worker
+                val workRequest = OneTimeWorkRequestBuilder<TranscriptionWorker>()
+                    .setInputData(
+                        TranscriptionWorker.createInputData(queuedId = queuedId)
+                    )
+                    .build()
+                
+                WorkManager.getInstance(context).enqueue(workRequest)
+                
+                // Refresh transcriptions list
+                loadRecentTranscriptions()
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(recordingError = "Failed to start transcription: ${e.message}")
                 }
             }
         }
