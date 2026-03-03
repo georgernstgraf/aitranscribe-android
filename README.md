@@ -247,6 +247,442 @@ adb logcat AndroidRuntime:E *:FATAL
 4. Set app: `com.georgernstgraf.aitranscribe.AITranscribeApp`
 5. Click Debug
 
+## 📱 Device Installation & Debugging
+
+### Setting Up ADB (Android Debug Bridge)
+
+**Installation:**
+```bash
+# Ubuntu/Debian
+sudo apt install android-tools-adb android-tools-fastboot
+
+# Verify installation
+adb version
+
+# Start ADB server
+adb start-server
+
+# Kill and restart ADB server (if having connection issues)
+adb kill-server
+adb start-server
+```
+
+### Connecting Your Device
+
+**Enable USB Debugging:**
+1. Go to **Settings** > **About Phone**
+2. Tap **Build Number** 7 times to enable Developer Options
+3. Go to **Settings** > **Developer Options**
+4. Enable **USB Debugging**
+5. Connect device via USB cable
+6. Accept the debugging authorization prompt on device
+
+**Verify Connection:**
+```bash
+# List connected devices
+adb devices
+
+# Expected output:
+# List of devices attached
+# f6de166c    device
+
+# If device shows as "unauthorized":
+# - Check device for authorization prompt
+# - Revoke and re-authorize if needed
+```
+
+**Troubleshooting Connection Issues:**
+```bash
+# Device not showing up?
+# 1. Try different USB cable
+# 2. Try different USB port
+# 3. Restart ADB server
+adb kill-server
+adb start-server
+
+# 4. Check USB mode on device
+# Device should be in "File Transfer" or "PTP" mode, not "Charge Only"
+
+# 5. Restart device if needed
+adb reboot
+```
+
+### Installing APK on Device
+
+**Install Debug APK:**
+```bash
+# Build debug APK
+./gradlew assembleDebug
+
+# Install via ADB
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+# Expected output:
+# Performing Streamed Install
+# Success
+```
+
+**Install Release APK:**
+```bash
+# Build release APK
+./gradlew assembleRelease
+
+# Install release APK
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
+
+**Installation Options:**
+```bash
+# -r: Replace existing application (reinstall)
+adb install -r app-debug.apk
+
+# -d: Allow version code downgrade
+adb install -r -d app-debug.apk
+
+# -g: Grant all runtime permissions automatically
+adb install -r -g app-debug.apk
+```
+
+**Uninstall Before Installing:**
+```bash
+# Uninstall existing app
+adb uninstall com.georgernstgraf.aitranscribe
+
+# Or for debug builds
+adb uninstall com.georgernstgraf.aitranscribe.debug
+
+# Then install fresh
+adb install app/build/outputs/apk/debug/app-debug.apk
+```
+
+### Launching the App
+
+**Launch via ADB:**
+```bash
+# Method 1: Using monkey (simplest)
+adb shell monkey -p com.georgernstgraf.aitranscribe.debug -c android.intent.category.LAUNCHER 1
+
+# Method 2: Using am start
+adb shell am start -n com.georgernstgraf.aitranscribe/.ui.screen.MainActivity
+
+# For debug builds
+adb shell am start -n com.georgernstgraf.aitranscribe.debug/.ui.screen.MainActivity
+```
+
+### Viewing Logs (Logcat)
+
+**Basic Logcat:**
+```bash
+# View all logs
+adb logcat
+
+# Filter by package name
+adb logcat | grep aitranscribe
+
+# Filter by process ID (PID)
+adb logcat --pid=$(adb shell pidof com.georgernstgraf.aitranscribe.debug)
+
+# Clear log buffer first
+adb logcat -c && adb logcat | grep aitranscribe
+```
+
+**Filter by Log Level:**
+```bash
+# Errors only
+adb logcat *:E | grep aitranscribe
+
+# Warnings and errors
+adb logcat *:W | grep aitranscribe
+
+# Debug level and above
+adb logcat *:D | grep aitranscribe
+
+# Verbose (all logs)
+adb logcat *:V | grep aitranscribe
+```
+
+**Filter by Tags:**
+```bash
+# Filter by specific tag
+adb logcat -s MainActivity:D
+
+# Multiple tags
+adb logcat -s MainActivity:D,TranscriptionWorker:D,RecordingService:D
+
+# Use regular expressions
+adb logcat | grep -E "aitranscribe|FATAL|AndroidRuntime"
+```
+
+**Crash Logs:**
+```bash
+# View crash stack traces
+adb logcat AndroidRuntime:E *:FATAL
+
+# View recent crashes only (clear buffer first)
+adb logcat -c && adb logcat AndroidRuntime:E *:FATAL
+
+# Full crash report with timestamps
+adb logcat -v time AndroidRuntime:E *:FATAL
+```
+
+**Save Logs to File:**
+```bash
+# Save all logs to file
+adb logcat > logs.txt
+
+# Save filtered logs
+adb logcat | grep aitranscribe > aitranscribe-logs.txt
+
+# Save crash logs
+adb logcat AndroidRuntime:E *:FATAL > crashes.txt
+
+# Continuous logging to file
+adb logcat -v time | tee -a debug-$(date +%Y%m%d_%H%M%S).log
+```
+
+### Common Issues & Solutions
+
+**Issue 1: App Crashes on Launch**
+```bash
+# Check crash logs
+adb logcat -d | grep -A 20 "FATAL EXCEPTION"
+
+# Common causes:
+# 1. HiltViewModel instantiated with wrong factory
+#    Solution: Use hiltViewModel() instead of viewModel()
+#    
+# 2. Missing dependencies
+#    Solution: Check build.gradle.kts for all required dependencies
+#    
+# 3. Database migration issues
+#    Solution: Uninstall app and reinstall fresh
+```
+
+**Example: HiltViewModel Crash**
+```
+# Error in logcat:
+E AndroidRuntime: FATAL EXCEPTION: main
+E AndroidRuntime: Process: com.georgernstgraf.aitranscribe.debug, PID: 1033
+E AndroidRuntime: java.lang.RuntimeException: Cannot create an instance of class com.georgernstgraf.aitranscribe.ui.viewmodel.SetupViewModel
+E AndroidRuntime: Caused by: java.lang.NoSuchMethodException: com.georgernstgraf.aitranscribe.ui.viewmodel.SetupViewModel.<init> []
+
+# Solution:
+# In SetupScreen.kt, change:
+// Wrong
+viewModel: SetupViewModel = viewModel()
+
+// Correct
+viewModel: SetupViewModel = hiltViewModel()
+
+// And add dependency in build.gradle.kts:
+implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+```
+
+**Issue 2: ADB Device Unauthorized**
+```bash
+# If device shows as "unauthorized":
+adb devices
+# List of devices attached
+# f6de166c    unauthorized
+
+# Solution:
+# 1. Check device for USB debugging authorization prompt
+# 2. If no prompt appears, revoke authorizations:
+#    Settings > Developer Options > Revoke USB debugging authorizations
+# 3. Disconnect and reconnect device
+# 4. Accept authorization prompt
+```
+
+**Issue 3: Installation Failed**
+```bash
+# Installation failed errors:
+
+# Error: INSTALL_FAILED_UPDATE_INCOMPATIBLE
+# Solution: Uninstall existing app first
+adb uninstall com.georgernstgraf.aitranscribe
+
+# Error: INSTALL_FAILED_INSUFFICIENT_STORAGE
+# Solution: Free up space on device or uninstall unused apps
+
+# Error: INSTALL_FAILED_VERSION_DOWNGRADE
+# Solution: Use -d flag to allow downgrade
+adb install -r -d app-debug.apk
+```
+
+**Issue 4: App Not Starting**
+```bash
+# Check if app is installed
+adb shell pm list packages | grep aitranscribe
+
+# Check app info
+adb shell dumpsys package com.georgernstgraf.aitranscribe.debug
+
+# Force stop and restart
+adb shell am force-stop com.georgernstgraf.aitranscribe.debug
+adb shell am start -n com.georgernstgraf.aitranscribe.debug/.ui.screen.MainActivity
+```
+
+### Real-Time Debugging
+
+**Monitor App in Real-Time:**
+```bash
+# Terminal 1: Watch logs
+adb logcat -c && adb logcat | grep -E "aitranscribe|FATAL"
+
+# Terminal 2: Monitor CPU/Memory
+adb shell top | grep aitranscribe
+
+# Terminal 3: Monitor network
+adb shell dumpsys connectivity | grep -A 10 "NetworkAgentInfo"
+
+# Terminal 4: Watch for ANRs (Application Not Responding)
+adb logcat -s ActivityManager:* | grep ANR
+```
+
+**Check App Permissions:**
+```bash
+# List all permissions
+adb shell dumpsys package com.georgernstgraf.aitranscribe.debug | grep permission
+
+# Grant runtime permission
+adb shell pm grant com.georgernstgraf.aitranscribe.debug android.permission.RECORD_AUDIO
+
+# Revoke permission (to test permission request flow)
+adb shell pm revoke com.georgernstgraf.aitranscribe.debug android.permission.RECORD_AUDIO
+```
+
+**Database Inspection:**
+```bash
+# Access app's data directory (requires root or debug build)
+adb shell run-as com.georgernstgraf.aitranscribe.debug
+
+# Navigate to databases
+cd databases
+
+# List database files
+ls -la
+
+# Pull database to local machine
+adb exec-out run-as com.georgernstgraf.aitranscribe.debug cat databases/transcription.db > transcription.db
+```
+
+### Advanced Debugging
+
+**Enable Strict Mode:**
+```kotlin
+// In AITranscribeApp.kt, add for debug builds:
+if (BuildConfig.DEBUG) {
+    StrictMode.setThreadPolicy(
+        StrictMode.ThreadPolicy.Builder()
+            .detectAll()
+            .penaltyLog()
+            .build()
+    )
+    StrictMode.setVmPolicy(
+        StrictMode.VmPolicy.Builder()
+            .detectAll()
+            .penaltyLog()
+            .build()
+    )
+}
+```
+
+**Network Debugging:**
+```bash
+# Enable network logging in OkHttp
+# Add interceptor in NetworkModule.kt:
+val loggingInterceptor = HttpLoggingInterceptor().apply {
+    level = HttpLoggingInterceptor.Level.BODY
+}
+
+OkHttpClient.Builder()
+    .addInterceptor(loggingInterceptor)
+    .build()
+
+# Then view network logs
+adb logcat | grep "OkHttp"
+```
+
+**Performance Profiling:**
+```bash
+# Method tracing
+adb shell am profile start com.georgernstgraf.aitranscribe.debug /data/local/tmp/trace.prof
+# ... use app ...
+adb shell am profile stop com.georgernstgraf.aitranscribe.debug
+adb pull /data/local/tmp/trace.prof
+
+# View in Android Studio: Tools > Profile > Import trace file
+```
+
+### Debug vs Release Builds
+
+**Debug Build:**
+- Package name: `com.georgernstgraf.aitranscribe.debug`
+- Debuggable: true
+- Logging: Verbose
+- ProGuard: Disabled
+- Install command: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
+
+**Release Build:**
+- Package name: `com.georgernstgraf.aitranscribe`
+- Debuggable: false
+- Logging: Minimal
+- ProGuard: Enabled (minified/obfuscated)
+- Install command: `adb install -r app/build/outputs/apk/release/app-release.apk`
+
+### Quick Debugging Checklist
+
+When encountering issues:
+
+- [ ] **Check device connection**: `adb devices`
+- [ ] **Check logcat for crashes**: `adb logcat AndroidRuntime:E *:FATAL`
+- [ ] **Check app is installed**: `adb shell pm list packages | grep aitranscribe`
+- [ ] **Check permissions**: `adb shell dumpsys package com.georgernstgraf.aitranscribe.debug | grep permission`
+- [ ] **Check network connectivity**: `adb shell ping -c 1 google.com`
+- [ ] **Check available storage**: `adb shell df -h`
+- [ ] **Try clean install**: Uninstall and reinstall
+- [ ] **Check for ANRs**: `adb logcat -s ActivityManager:* | grep ANR`
+- [ ] **Monitor resources**: `adb shell top | grep aitranscribe`
+
+### Useful ADB Commands Reference
+
+```bash
+# Device management
+adb devices                    # List devices
+adb reboot                     # Reboot device
+adb reboot bootloader          # Reboot to bootloader
+adb shell                      # Open shell
+
+# App management
+adb install <apk>              # Install APK
+adb uninstall <package>        # Uninstall app
+adb shell pm clear <package>   # Clear app data
+adb shell am force-stop <pkg>  # Force stop app
+
+# File transfer
+adb push <local> <remote>      # Upload file
+adb pull <remote> <local>      # Download file
+
+# Logging
+adb logcat                     # View logs
+adb logcat -c                  # Clear logs
+adb logcat -d > logs.txt       # Save logs to file
+adb logcat -v time             # Timestamps in logs
+
+# Debugging
+adb bugreport                  # Full bug report
+adb shell dumpsys              # System dumps
+adb shell dumpsys meminfo <pkg> # Memory info
+adb shell dumpsys cpuinfo      # CPU info
+```
+
+**Studio Debugging:**
+1. Open `Run` > `Edit Configurations`
+2. Add Android configuration
+3. Set module: `android.app`
+4. Set app: `com.georgernstgraf.aitranscribe.AITranscribeApp`
+5. Click Debug
+
 ### Performance Profiling
 
 ```bash
