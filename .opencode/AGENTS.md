@@ -15,6 +15,18 @@ An Android app that records voice audio and transcribes it using the GROQ Whispe
 - **Build:** Gradle (Kotlin DSL), Java 17 target
 - **Min SDK:** 26, Target SDK: 36
 
+## Knowledge Bootstrap
+Before starting any task, read the following files in order:
+1. `.opencode/knowledge/HANDOFF.md` ← **read first, act on it**
+2. `.opencode/knowledge/CONVENTIONS.md`
+3. `.opencode/knowledge/DECISIONS.md`
+4. `.opencode/knowledge/PITFALLS.md`
+5. `.opencode/knowledge/STATE.md`
+6. `.opencode/knowledge/DOMAIN.md` (if task involves business logic)
+
+If `HANDOFF.md` contains open tasks, complete them before starting
+any new work unless the user explicitly says otherwise.
+
 ## Repository
 - GitHub: `georgernstgraf/aitranscribe-android`
 - Issue tracker: GitHub Issues (primary issue: #12)
