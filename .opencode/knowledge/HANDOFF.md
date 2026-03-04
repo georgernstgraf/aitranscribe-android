@@ -6,13 +6,15 @@ Pending tasks for the next session.
 
 ## Open Tasks
 
-- [ ] **Diagnose empty GROQ transcription**
-  - GROQ returns `" ."` (length=2) instead of actual text
-  - Audio files exist with valid durations (6s, 11s)
-  - Suspect emulator mic captures silence despite `-allow-host-audio`
-  - Next step: pull .m4a from emulator and play locally
-  - File path on device: `/data/data/com.georgernstgraf.aitranscribe/files/`
-  - Relevant code: `service/TranscriptionWorker.kt` (API call + logging)
+- [x] **Diagnose empty GROQ transcription** ← COMPLETED 2026-03-04
+  - Root cause: Emulator microphone captures silence (amplitude: 0.000275)
+  - Audio files have valid structure/duration but no speech content
+  - GROQ correctly returns " ." for silent audio
+  - Pipeline is working correctly - issue is audio input quality
+  
+- [ ] **Fix audio input for testing**
+  - Options: (1) Use physical Android device, (2) Implement audio file upload, (3) Try different emulator config
+  - Cannot proceed with transcription features until real audio is captured
 
 - [ ] **Implement LLM post-processing**
   - Not yet started; depends on transcription working first
