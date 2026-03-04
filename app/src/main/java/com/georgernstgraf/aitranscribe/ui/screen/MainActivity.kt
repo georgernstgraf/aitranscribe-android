@@ -92,10 +92,10 @@ fun MainNavigation() {
         }
 
         composable(
-            route = "transcription/{id}",
-            arguments = listOf(navArgument("id") { type = NavType.LongType })
+            route = "transcription/{transcription_id}",
+            arguments = listOf(navArgument("transcription_id") { type = NavType.LongType })
         ) { backStackEntry ->
-            val transcriptionId = backStackEntry.arguments?.getLong("id") ?: return@composable
+            val transcriptionId = backStackEntry.arguments?.getLong("transcription_id") ?: return@composable
             TranscriptionDetailScreen(
                 transcriptionId = transcriptionId,
                 navController = navController

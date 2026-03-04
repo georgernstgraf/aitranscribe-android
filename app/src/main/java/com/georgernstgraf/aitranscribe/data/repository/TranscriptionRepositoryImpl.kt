@@ -104,8 +104,8 @@ class TranscriptionRepositoryImpl @Inject constructor(
         return queuedTranscriptionDao.insert(queued)
     }
 
-    override suspend fun getNextQueued(): QueuedTranscriptionEntity? {
-        return queuedTranscriptionDao.getNext()
+    override suspend fun getQueuedById(id: Long): QueuedTranscriptionEntity? {
+        return queuedTranscriptionDao.getById(id)
     }
 
     override fun getAllQueued(): Flow<List<QueuedTranscriptionEntity>> {

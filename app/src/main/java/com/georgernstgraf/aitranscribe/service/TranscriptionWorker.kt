@@ -1,6 +1,7 @@
 package com.georgernstgraf.aitranscribe.service
 
 import android.content.Context
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.Data
@@ -43,13 +44,18 @@ class TranscriptionWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val queuedId = inputData.getLong(KEY_QUEUED_ID, -1)
+        Log.e("TranscriptionWorker", "doWork: queuedId=$queuedId")
 
         if (queuedId == -1L) {
+            Log.e("TranscriptionWorker", "doWork: FAILED - invalid queuedId")
             return@withContext Result.failure()
         }
 
-        val queued = repository.getNextQueued()
-        if (queued == null || queued.id != queuedId) {
+        val queued = repository.getQueuedById(queuedId)
+        Log.e("TranscriptionWorker", "doWork: queued=$queued, expected id=$queuedId")
+        
+        if (queued == null) {
+            Log.e("TranscriptionWorker", "doWork: FAILED - queued not found with id=$queuedId")
             return@withContext Result.failure()
         }
 
@@ -62,6 +68,7 @@ class TranscriptionWorker @AssistedInject constructor(
             notificationManager.showTranscriptionProgressNotification(queuedId)
 
             val transcriptionText = transcribeAudio(queued)
+            Log.e("TranscriptionWorker", "doWork: transcriptionText='$transcriptionText', length=${transcriptionText?.length}")
 
             val entity = TranscriptionEntity(
                 originalText = transcriptionText,
@@ -76,6 +83,8 @@ class TranscriptionWorker @AssistedInject constructor(
             )
 
             val transcriptionId = repository.insert(entity)
+            Log.e("TranscriptionWorker", "doWork: Saved transcription with id=$transcriptionId")
+            Log.e("TranscriptionWorker", "doWork: Saved transcription with id=$transcriptionId")
 
             if (queued.postProcessingType != null) {
                 notificationManager.showPostProcessingNotification(transcriptionId)
@@ -89,6 +98,7 @@ class TranscriptionWorker @AssistedInject constructor(
 
             Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
         } catch (e: Exception) {
+            Log.e("TranscriptionWorker", "doWork: ERROR", e)
             notificationManager.showTranscriptionErrorNotification(
                 e.message ?: "Transcription failed"
             )
@@ -116,7 +126,7 @@ class TranscriptionWorker @AssistedInject constructor(
     }
 
     private fun createAudioPart(audioFile: File): MultipartBody.Part {
-        val mediaType = "audio/mpeg".toMediaType()
+        val mediaType = "audio/mp4".toMediaType()
         val requestBody = audioFile.asRequestBody(mediaType)
         return MultipartBody.Part.createFormData("file", audioFile.name, requestBody)
     }

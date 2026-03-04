@@ -18,12 +18,8 @@ interface QueuedTranscriptionDao {
     @Query("DELETE FROM queued_transcriptions WHERE id = :id")
     suspend fun deleteById(id: Long): Int
 
-    @Query("""
-        SELECT * FROM queued_transcriptions 
-        ORDER BY created_at ASC, priority DESC
-        LIMIT 1
-    """)
-    suspend fun getNext(): QueuedTranscriptionEntity?
+    @Query("SELECT * FROM queued_transcriptions WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): QueuedTranscriptionEntity?
 
     @Query("""
         SELECT * FROM queued_transcriptions 

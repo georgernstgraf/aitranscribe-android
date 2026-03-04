@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -52,7 +53,7 @@ import com.georgernstgraf.aitranscribe.ui.viewmodel.TranscriptionDetailViewModel
 fun TranscriptionDetailScreen(
     transcriptionId: Long,
     navController: NavController,
-    viewModel: TranscriptionDetailViewModel = viewModel()
+    viewModel: TranscriptionDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()

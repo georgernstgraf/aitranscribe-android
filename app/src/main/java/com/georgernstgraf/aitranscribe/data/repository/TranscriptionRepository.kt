@@ -50,7 +50,7 @@ interface TranscriptionRepository {
 
     suspend fun queueForOffline(queued: QueuedTranscriptionEntity): Long
 
-    suspend fun getNextQueued(): QueuedTranscriptionEntity?
+    suspend fun getQueuedById(id: Long): QueuedTranscriptionEntity?
 
     fun getAllQueued(): Flow<List<QueuedTranscriptionEntity>>
 
