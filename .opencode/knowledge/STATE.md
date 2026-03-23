@@ -1,53 +1,58 @@
-# Current State (2026-03-04)
+# Current State (2026-03-23)
 
 ## Current Focus
-GROQ API returns empty transcription (" .") despite audio files being created with proper durations. Need to verify whether emulator audio actually contains speech data.
+Session completed multiple bug fixes and test infrastructure improvements. The app is stable with 0 warnings and 27+ tests passing. Main remaining issue is emulator audio capturing silence.
 
-## Latest Commit
-`6101ce0` - "Fix recording pipeline and transcription workflow (#12)"
+## Latest Commits
+- `827275d` - Add Repository layer tests (issue #21)
+- `99ad1c7` - Add MainViewModel and TranscriptionDetailViewModel tests
+- `afbd0dd` - Add NetworkMonitor and ViewModel tests (issues #19, #20)
+- `585eb08` - Fix test infrastructure and rewrite broken unit tests
+- `3e8e3a2` - Improve main screen layout
+- `b01b6ef` - Fix all compiler warnings
+- `b622db2` - Fix SettingsScreen crash
+- `8f19f64` - Add headless emulator script
 
-## Completed
-- [x] Fixed settings screen crash (Room database query timing)
-- [x] Fixed search icon crash (error handling)
-- [x] Fixed SetupViewModel crash (switched to hiltViewModel)
-- [x] Fixed BroadcastReceiver crash on Android 13+ (RECEIVER_NOT_EXPORTED)
-- [x] Fixed MainScreen to use hiltViewModel() instead of viewModel()
-- [x] Fixed TranscriptionDetailScreen to use hiltViewModel()
-- [x] Fixed TranscriptionWorker queue ID mismatch (getQueuedById instead of getNextQueued)
-- [x] Fixed navigation parameter name mismatch ("transcription_id")
-- [x] Enabled emulator audio support (-allow-host-audio)
-- [x] Verified recording service creates audio files with proper durations (6s, 11s)
-- [x] Verified TranscriptionWorker completes successfully
-- [x] Verified transcriptions appear in UI list
-- [x] Verified statistics update correctly
-- [x] Verified transcription detail screen opens without crash
-- [x] Added comprehensive logging throughout pipeline
-- [x] Changed audio MIME type from audio/mpeg to audio/mp4
+## Completed This Session
+- [x] Issue #10: Delete old transcriptions (already implemented, closed)
+- [x] Issue #13: Settings crash (viewModel → hiltViewModel)
+- [x] Issue #14: Compiler warnings (all 18 fixed)
+- [x] Issue #15: Main screen layout (compact stats, better space usage)
+- [x] Issue #16: Headless emulator testing (script added)
+- [x] Issue #17: Test infrastructure review (dependencies, tests rewritten)
+- [x] Issue #19: ViewModel tests (4 ViewModels tested)
+- [x] Issue #20: NetworkMonitor tests
+- [x] Issue #21: Repository/DAO tests
 
 ## In Progress
-- [ ] Diagnose why GROQ returns " ." (empty transcription)
-  - Audio files exist with correct durations
-  - Suspect: emulator virtual mic captures silence even with -allow-host-audio
-  - Next step: pull .m4a file from emulator and play it locally to verify content
+- [ ] Issue #12: Verify audio content from emulator (blocked by silent audio)
+- [ ] Issue #22: Compose UI tests (lower priority)
 
 ## Pending
-- [ ] Download .m4a from emulator to verify audio contains actual speech
-- [ ] If audio is silent: investigate emulator mic routing / try recording from host
-- [ ] If audio is valid: investigate GROQ API parameters (model, language, format)
-- [ ] LLM post-processing of transcriptions (feature not yet implemented)
-- [ ] Proper error handling for API failures (timeouts, auth errors, etc.)
-- [ ] End-to-end test with successful transcription containing real text
+- [ ] Test with physical device or real audio input
+- [ ] LLM post-processing of transcriptions (feature exists, untested)
+- [ ] Error handling for API failures
 
 ## Blockers
-- Cannot confirm audio content without downloading and playing the .m4a file from the emulator
-- Emulator microphone may not be capturing host audio despite -allow-host-audio flag
+- Emulator microphone captures silence even with `-allow-host-audio`
+- Need physical device or audio file upload feature to test transcription
+
+## Test Summary
+| Layer | Tests | Status |
+|-------|-------|--------|
+| Domain Use Cases | 9 | ✅ Passing |
+| ViewModels | 19 | ✅ Passing |
+| NetworkMonitor | 4 | ✅ Passing |
+| DAOs (Room) | 23 | ✅ Written (needs device) |
+| **Total Unit** | **27** | ✅ Passing |
+| **Total Instrumentation** | **23** | ⏳ Needs device |
 
 ## Key Files Modified (this session)
-- `app/src/main/java/com/georgernstgraf/aitranscribe/ui/screen/MainScreen.kt` - viewModel() -> hiltViewModel()
-- `app/src/main/java/com/georgernstgraf/aitranscribe/ui/screen/TranscriptionDetailScreen.kt` - viewModel() -> hiltViewModel()
-- `app/src/main/java/com/georgernstgraf/aitranscribe/ui/viewmodel/MainViewModel.kt` - RECEIVER_NOT_EXPORTED, broadcast handling
-- `app/src/main/java/com/georgernstgraf/aitranscribe/service/TranscriptionWorker.kt` - getQueuedById, audio/mp4 MIME, logging
-- `app/src/main/java/com/georgernstgraf/aitranscribe/data/local/QueuedTranscriptionDao.kt` - added getById query
-- `app/src/main/java/com/georgernstgraf/aitranscribe/data/repository/TranscriptionRepository.kt` - added getQueuedById
-- `app/src/main/java/com/georgernstgraf/aitranscribe/data/repository/TranscriptionRepositoryImpl.kt` - implemented getQueuedById
-- `app/src/main/java/com/georgernstgraf/aitranscribe/ui/screen/MainActivity.kt` - fixed route parameter name
+- `app/build.gradle.kts` - Added test dependencies
+- `app/src/main/java/.../ui/screen/SettingsScreen.kt` - hiltViewModel fix
+- `app/src/main/java/.../ui/screen/MainScreen.kt` - Layout improvements
+- `app/src/main/java/.../ui/components/StatisticsCard.kt` - Compact layout
+- `app/src/main/java/.../service/RecordingService.kt` - Warning fixes
+- `app/src/test/java/...` - 8 new/rewritten test files
+- `app/src/androidTest/java/...` - 2 new DAO test files
+- `scripts/start-emulator-headless.sh` - New helper script
