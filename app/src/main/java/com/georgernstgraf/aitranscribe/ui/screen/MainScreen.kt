@@ -119,31 +119,25 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
             StatisticsCard(
                 totalCount = totalCount,
                 unviewedCount = unviewedCount,
                 processedCount = processedCount,
                 averageLength = 150.0,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(8.dp)
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             QuickFilters(
                 currentFilter = QuickFilter.ALL,
                 onFilterChanged = {  },
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AudioRecordingButton(
@@ -164,8 +158,6 @@ fun MainScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             if (state.recentTranscriptions.isEmpty()) {
                 Column(
@@ -200,18 +192,16 @@ fun MainScreen(
             } else {
                 Text(
                     text = "Recent Transcriptions",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     items(state.recentTranscriptions) { transcription ->
                         TranscriptionItem(
