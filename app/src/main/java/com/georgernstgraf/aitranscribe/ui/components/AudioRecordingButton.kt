@@ -37,7 +37,7 @@ fun AudioRecordingButton(
 
     Box(
         modifier = modifier
-            .size(120.dp)
+            .size(90.dp)
             .clip(CircleShape)
             .background(recordingColor)
             .pointerInput(isRecording) {
@@ -65,12 +65,12 @@ fun AudioRecordingButton(
                     imageVector = icon,
                     contentDescription = "Stop Recording",
                     tint = Color.White,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(36.dp)
                 )
                 Text(
                     text = "$recordingDuration",
                     color = Color.White,
-                    fontSize = 24.sp,
+                    fontSize = 20.sp,
                     textAlign = TextAlign.Center
                 )
             }
@@ -79,7 +79,7 @@ fun AudioRecordingButton(
                 imageVector = icon,
                 contentDescription = "Start Recording",
                 tint = Color.White,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(36.dp)
             )
         }
     }
