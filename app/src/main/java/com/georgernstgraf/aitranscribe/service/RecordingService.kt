@@ -136,7 +136,7 @@ class RecordingService : Service() {
 
     private fun initializeMediaRecorder() {
         try {
-            mediaRecorder = MediaRecorder().apply {
+            mediaRecorder = MediaRecorder(this@RecordingService).apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
@@ -202,9 +202,11 @@ class RecordingService : Service() {
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setOngoing(true)
             .addAction(
-                android.R.drawable.ic_media_pause,
-                "Stop",
-                stopIntent
+                Notification.Action.Builder(
+                    android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_media_pause),
+                    "Stop",
+                    stopIntent
+                ).build()
             )
             .build()
     }

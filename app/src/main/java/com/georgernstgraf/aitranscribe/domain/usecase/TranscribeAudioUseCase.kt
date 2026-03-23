@@ -9,7 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -43,10 +44,7 @@ class TranscribeAudioUseCase @Inject constructor(
                 throw TranscriptionException("Audio file does not exist: $audioPath")
             }
 
-            val requestFile = RequestBody.create(
-                "audio/*".toMediaTypeOrNull(),
-                audioFile
-            )
+            val requestFile = audioFile.asRequestBody("audio/*".toMediaTypeOrNull())
 
             val filePart = MultipartBody.Part.createFormData(
                 "file",
@@ -54,15 +52,9 @@ class TranscribeAudioUseCase @Inject constructor(
                 requestFile
             )
 
-            val modelPart = RequestBody.create(
-                "text/plain".toMediaTypeOrNull(),
-                sttModel
-            )
+            val modelPart = sttModel.toRequestBody("text/plain".toMediaTypeOrNull())
 
-            val responseFormatPart = RequestBody.create(
-                "text/plain".toMediaTypeOrNull(),
-                "text"
-            )
+            val responseFormatPart = "text".toRequestBody("text/plain".toMediaTypeOrNull())
 
             val response = groqApiService.transcribeAudio(
                 authorization = "Bearer $apiKey",

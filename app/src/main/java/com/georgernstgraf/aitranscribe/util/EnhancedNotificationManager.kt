@@ -118,6 +118,7 @@ class EnhancedNotificationManager @Inject constructor(
     /**
      * Show transcription progress notification with progress bar.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun showTranscriptionProgressNotification(
         transcriptionId: Long,
         progress: Int,
@@ -140,6 +141,7 @@ class EnhancedNotificationManager @Inject constructor(
     /**
      * Show transcription complete notification with actions.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun showTranscriptionCompleteNotification(
         transcriptionId: Long,
         text: String
@@ -173,6 +175,7 @@ class EnhancedNotificationManager @Inject constructor(
     /**
      * Show error notification with detailed information.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun showErrorNotification(
         title: String,
         message: String,

@@ -68,7 +68,7 @@ class TranscriptionWorker @AssistedInject constructor(
             notificationManager.showTranscriptionProgressNotification(queuedId)
 
             val transcriptionText = transcribeAudio(queued)
-            Log.e("TranscriptionWorker", "doWork: transcriptionText='$transcriptionText', length=${transcriptionText?.length}")
+            Log.e("TranscriptionWorker", "doWork: transcriptionText='$transcriptionText', length=${transcriptionText.length}")
 
             val entity = TranscriptionEntity(
                 originalText = transcriptionText,

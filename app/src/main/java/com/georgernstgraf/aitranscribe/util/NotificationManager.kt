@@ -41,6 +41,7 @@ class NotificationManager @Inject constructor(
     /**
      * Shows transcription progress notification.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun showTranscriptionProgressNotification(queuedId: Long) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_TRANSCRIPTION)
             .setContentTitle(context.getString(R.string.notification_transcribing_title))
@@ -57,6 +58,7 @@ class NotificationManager @Inject constructor(
     /**
      * Shows post-processing progress notification.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun showPostProcessingNotification(transcriptionId: Long) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_TRANSCRIPTION)
             .setContentTitle("Post-processing transcription...")
@@ -73,6 +75,7 @@ class NotificationManager @Inject constructor(
     /**
      * Shows transcription complete notification.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun showTranscriptionCompleteNotification(transcriptionId: Long) {
         val intent = Intent(context, com.georgernstgraf.aitranscribe.ui.screen.MainActivity::class.java).apply {
             putExtra(EXTRA_TRANSCRIPTION_ID, transcriptionId)

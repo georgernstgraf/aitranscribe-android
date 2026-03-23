@@ -170,7 +170,7 @@ class MainViewModel @Inject constructor(
                 Log.d("MainViewModel", "startTranscription: audioPath=$audioPath, duration=$duration")
                 
                 // Get STT and LLM models from preferences
-                val sttModel = securePreferences.getSttModel() ?: "whisper-large-v3"
+                val sttModel = securePreferences.getSttModel()
                 val llmModel = securePreferences.getLlmModel()
                 
                 Log.d("MainViewModel", "startTranscription: sttModel=$sttModel, llmModel=$llmModel")
