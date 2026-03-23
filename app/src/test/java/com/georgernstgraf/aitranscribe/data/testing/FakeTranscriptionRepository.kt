@@ -158,8 +158,8 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         return newId
     }
 
-    override suspend fun getNextQueued(): QueuedTranscriptionEntity? {
-        return queuedTranscriptions.value.minByOrNull { it.createdAt }
+    override suspend fun getQueuedById(id: Long): QueuedTranscriptionEntity? {
+        return queuedTranscriptions.value.find { it.id == id }
     }
 
     override fun getAllQueued(): Flow<List<QueuedTranscriptionEntity>> {
