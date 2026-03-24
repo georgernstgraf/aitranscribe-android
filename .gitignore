@@ -112,3 +112,6 @@ emulator-logs.txt
 
 # secrets
 .env
+
+# Symlinked skills from opencode-helpers (not tracked)
+skills/

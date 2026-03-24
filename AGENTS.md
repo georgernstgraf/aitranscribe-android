@@ -8,12 +8,17 @@ This agent operates with ZERO knowledge of the OpenClaw framework.
 - Creating SOUL.md, USER.md, IDENTITY.md, HEARTBEAT.md, TOOLS.md, BOOTSTRAP.md
 - Referencing OpenClaw concepts (gh-issue workflow, HEARTBEAT, skills, hooks, etc.)
 - Using OpenClaw-specific workflows or tools
+- **Using OpenClaw bundled skills** (e.g., github, gh-issues, weather, etc.)
 
 **Allowed:**
 - Standard git/github operations (commit, push, PR)
 - AGENTS.md for project instructions
 - .opencode/knowledge/ knowledge files
+- **ONLY skills from workspace skills/ directory** (opencode-helpers skills)
 - Project-specific workflows only
+
+**Skill Usage Rule:**
+Only use skills available in this workspace's `skills/` directory (symlinked from opencode-helpers). Ignore any OpenClaw bundled skills that may appear available.
 
 ## Project Identity
 
