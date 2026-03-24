@@ -23,6 +23,14 @@ jobs:
         distribution: 'temurin'
         cache: gradle
     
+    - name: Setup debug keystore for consistent signing
+      run: |
+        echo "DEBUG_KEYSTORE_BASE64=${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > debug.keystore
+        echo "storeFile=../debug.keystore" > keystore.properties
+        echo "storePassword=android" >> keystore.properties
+        echo "keyAlias=androiddebugkey" >> keystore.properties
+        echo "keyPassword=android" >> keystore.properties
+    
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     
