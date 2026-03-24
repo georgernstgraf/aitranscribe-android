@@ -77,14 +77,14 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun deleteOldTranscriptions() {
+    fun deleteOldTranscriptions(daysOld: Int, viewFilter: ViewFilter) {
         viewModelScope.launch {
-            val cutoffDate = deleteTranscriptionUseCase.getCutoffDate(_uiState.value.daysToDelete)
+            val cutoffDate = deleteTranscriptionUseCase.getCutoffDate(daysOld)
             
             val deletedCount = deleteTranscriptionUseCase(
                 mode = DeleteMode.OLD_ALL,
                 cutoffDate = cutoffDate,
-                viewFilter = _uiState.value.deleteViewFilter,
+                viewFilter = viewFilter,
                 getCount = false
             )
 

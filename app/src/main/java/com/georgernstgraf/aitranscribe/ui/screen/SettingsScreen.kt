@@ -199,9 +199,7 @@ fun SettingsScreen(
         DeleteOldDialog(
             onDismiss = { showDeleteDialog = false },
             onDelete = { daysOld, viewFilter ->
-                viewModel.onDaysToDeleteChanged(daysOld)
-                viewModel.onDeleteViewFilterChanged(viewFilter)
-                viewModel.deleteOldTranscriptions()
+                viewModel.deleteOldTranscriptions(daysOld, viewFilter)
                 showDeleteDialog = false
             }
         )
