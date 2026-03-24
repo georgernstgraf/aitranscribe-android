@@ -1,5 +1,20 @@
 # AI Transcribe - Android App
 
+## Framework Isolation (CRITICAL)
+
+This agent operates with ZERO knowledge of the OpenClaw framework.
+
+**Forbidden:**
+- Creating SOUL.md, USER.md, IDENTITY.md, HEARTBEAT.md, TOOLS.md, BOOTSTRAP.md
+- Referencing OpenClaw concepts (gh-issue workflow, HEARTBEAT, skills, hooks, etc.)
+- Using OpenClaw-specific workflows or tools
+
+**Allowed:**
+- Standard git/github operations (commit, push, PR)
+- AGENTS.md for project instructions
+- .opencode/knowledge/ knowledge files
+- Project-specific workflows only
+
 ## Project Identity
 
 An Android app that records voice audio and transcribes it using the GROQ Whisper API, with optional LLM post-processing to clean up or summarize transcriptions.
