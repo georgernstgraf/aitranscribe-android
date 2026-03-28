@@ -16,6 +16,7 @@ import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
+import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.service.RecordingService
 import com.georgernstgraf.aitranscribe.service.TranscriptionWorker
@@ -54,6 +55,7 @@ class MainViewModel @Inject constructor(
         Log.e("MainViewModel", "=== INIT: context=$context ===")
         loadRecentTranscriptions()
         registerRecordingResultReceiver()
+        loadProcessingMode()
     }
 
     override fun onCleared() {
@@ -182,7 +184,7 @@ class MainViewModel @Inject constructor(
                     audioFilePath = audioPath,
                     sttModel = sttModel,
                     llmModel = llmModel,
-                    postProcessingType = null, // Will be set based on user preference
+                    postProcessingType = _uiState.value.processingMode.name,
                     createdAt = LocalDateTime.now().toString(),
                     priority = 0
                 )
@@ -217,6 +219,25 @@ class MainViewModel @Inject constructor(
         loadRecentTranscriptions()
     }
 
+    fun setProcessingMode(mode: PostProcessingType) {
+        _uiState.update { it.copy(processingMode = mode) }
+        viewModelScope.launch {
+            securePreferences.setProcessingMode(mode.name)
+        }
+    }
+
+    private fun loadProcessingMode() {
+        viewModelScope.launch {
+            val modeName = securePreferences.getProcessingMode()
+            val mode = try {
+                PostProcessingType.valueOf(modeName)
+            } catch (_: Exception) {
+                PostProcessingType.RAW
+            }
+            _uiState.update { it.copy(processingMode = mode) }
+        }
+    }
+
     private fun loadRecentTranscriptions() {
         transcriptionsJob?.cancel()
         transcriptionsJob = viewModelScope.launch {
@@ -241,5 +262,6 @@ data class MainUiState(
     val recordingDuration: Int = 0,
     val recordingError: String? = null,
     val recentTranscriptions: List<Transcription> = emptyList(),
-    val viewFilter: ViewFilter = ViewFilter.ALL
+    val viewFilter: ViewFilter = ViewFilter.ALL,
+    val processingMode: PostProcessingType = PostProcessingType.RAW
 )

@@ -1,19 +1,15 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
+import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterMessage
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterRequest
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
-import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-/**
- * Use case for post-processing transcribed text using LLM via OpenRouter.
- */
-@ViewModelScoped
 class PostProcessTextUseCase @Inject constructor(
     private val openRouterApiService: OpenRouterApiService,
     private val repository: TranscriptionRepository
@@ -25,6 +21,8 @@ class PostProcessTextUseCase @Inject constructor(
         llmModel: String,
         apiKey: String
     ) = withContext(Dispatchers.IO) {
+        if (postProcessingType == PostProcessingType.RAW) return@withContext
+
         if (apiKey.isBlank()) {
             throw PostProcessingException("API key cannot be empty")
         }
@@ -38,11 +36,11 @@ class PostProcessTextUseCase @Inject constructor(
             val request = OpenRouterRequest(
                 model = llmModel,
                 messages = listOf(
-                    com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterMessage(
+                    OpenRouterMessage(
                         role = "system",
                         content = systemPrompt
                     ),
-                    com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterMessage(
+                    OpenRouterMessage(
                         role = "user",
                         content = "Here is the transcription:\n\n${transcription.originalText}"
                     )
@@ -79,9 +77,51 @@ class PostProcessTextUseCase @Inject constructor(
         }
     }
 
+    suspend fun generateSummary(
+        transcriptionId: Long,
+        llmModel: String,
+        apiKey: String
+    ) = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank()) return@withContext
+
+        val transcription = repository.getById(transcriptionId) ?: return@withContext
+        val text = transcription.processedText ?: transcription.originalText
+        if (text.isBlank()) return@withContext
+
+        try {
+            val request = OpenRouterRequest(
+                model = llmModel,
+                messages = listOf(
+                    OpenRouterMessage(
+                        role = "system",
+                        content = "Create a concise summary of the transcription in 70 to 80 characters. Output only the summary text with no quotes, labels, or extra commentary."
+                    ),
+                    OpenRouterMessage(
+                        role = "user",
+                        content = text
+                    )
+                )
+            )
+
+            val response = openRouterApiService.processText(
+                authorization = "Bearer $apiKey",
+                request = request
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                val summary = response.body()!!.getContent().trim()
+                if (summary.isNotBlank()) {
+                    repository.updateSummary(transcriptionId, summary)
+                }
+            }
+        } catch (_: Exception) {
+        }
+    }
+
     private fun buildSystemPrompt(type: PostProcessingType): String {
         return when (type) {
-            PostProcessingType.GRAMMAR -> """
+            PostProcessingType.RAW -> ""
+            PostProcessingType.CLEANUP -> """
                 You are a helpful assistant analyzing an audio transcription.
                 IMPORTANT: Output ONLY the requested processed text.
                 Do not include any introductory remarks, explanations,

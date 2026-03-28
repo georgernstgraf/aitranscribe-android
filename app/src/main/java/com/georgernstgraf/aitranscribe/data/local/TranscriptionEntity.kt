@@ -29,7 +29,9 @@ data class TranscriptionEntity(
     @ColumnInfo(name = "played_count")
     val playedCount: Int = 0,
     @ColumnInfo(name = "retry_count")
-    val retryCount: Int = 0
+    val retryCount: Int = 0,
+    @ColumnInfo(name = "summary")
+    val summary: String? = null
 )
 
 fun TranscriptionEntity.toDomain(): Transcription {
@@ -45,6 +47,7 @@ fun TranscriptionEntity.toDomain(): Transcription {
         status = TranscriptionStatus.valueOf(status),
         errorMessage = errorMessage,
         playedCount = playedCount,
-        retryCount = retryCount
+        retryCount = retryCount,
+        summary = summary
     )
 }

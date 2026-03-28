@@ -124,4 +124,7 @@ interface TranscriptionDao {
         AND (:viewFilter = 'ALL' OR played_count = 0)
     """)
     suspend fun getOldCount(cutoffDate: String, viewFilter: String): Int
+
+    @Query("UPDATE transcriptions SET summary = :summary WHERE id = :id")
+    suspend fun updateSummary(id: Long, summary: String)
 }

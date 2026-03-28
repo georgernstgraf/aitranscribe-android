@@ -139,7 +139,7 @@ class TranscriptionWorkerTest {
     @Test
     fun `worker processes post-processing when queued`() {
         val queued = createQueuedTranscription(
-            postProcessingType = "GRAMMAR"
+            postProcessingType = "CLEANUP"
         )
         fakeRepository.queueForOffline(queued)
         fakeGroqService.setTranscriptionText("Transcribed text")
@@ -155,7 +155,7 @@ class TranscriptionWorkerTest {
 
         val transcription = fakeRepository.getById(1)
         assertNotNull("Transcription should be created", transcription)
-        assertEquals("Post-processing type should be stored", "GRAMMAR", transcription?.postProcessingType)
+        assertEquals("Post-processing type should be stored", "CLEANUP", transcription?.postProcessingType)
     }
 
     private fun createQueuedTranscription(

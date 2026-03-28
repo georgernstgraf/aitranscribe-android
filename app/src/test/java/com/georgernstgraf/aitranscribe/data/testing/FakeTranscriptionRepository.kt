@@ -198,6 +198,12 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         return queuedTranscriptions.value.size
     }
 
+    override suspend fun updateSummary(id: Long, summary: String) {
+        transcriptions.value = transcriptions.value.map {
+            if (it.id == id) it.copy(summary = summary) else it
+        }
+    }
+
     fun clear() {
         transcriptions.value = emptyList()
         queuedTranscriptions.value = emptyList()
@@ -216,7 +222,8 @@ class FakeTranscriptionRepository : TranscriptionRepository {
             status = com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.valueOf(status),
             errorMessage = errorMessage,
             playedCount = playedCount,
-            retryCount = retryCount
+            retryCount = retryCount,
+            summary = summary
         )
     }
 }

@@ -30,17 +30,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.georgernstgraf.aitranscribe.ui.components.AudioRecordingButton
+import com.georgernstgraf.aitranscribe.ui.components.BottomControlPanel
 import com.georgernstgraf.aitranscribe.ui.components.ExportDialog
 import com.georgernstgraf.aitranscribe.ui.components.QuickFilters
 import com.georgernstgraf.aitranscribe.ui.components.TranscriptionItem
 import com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel
-import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +47,6 @@ fun MainScreen(
     viewModel: MainViewModel = hiltViewModel()
 ) {
     Log.i("MainScreen", "=== MainScreen: STARTED ===")
-    Log.i("MainScreen", "=== MainScreen: viewModel=$viewModel ===")
 
     val state by viewModel.uiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -112,8 +109,8 @@ fun MainScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(state.recentTranscriptions) { transcription ->
                     TranscriptionItem(
@@ -128,17 +125,19 @@ fun MainScreen(
             QuickFilters(
                 currentFilter = state.viewFilter,
                 onFilterChanged = { viewModel.setViewFilter(it) },
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
             )
 
-            AudioRecordingButton(
+            BottomControlPanel(
+                processingMode = state.processingMode,
+                onModeChanged = { viewModel.setProcessingMode(it) },
                 isRecording = state.isRecording,
                 recordingDuration = state.recordingDuration,
                 onStartRecording = { viewModel.startRecording() },
                 onStopRecording = { viewModel.stopRecording() },
                 modifier = Modifier
-                    .padding(vertical = 12.dp)
-                    .align(Alignment.CenterHorizontally)
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
             )
         }
     }

@@ -110,6 +110,10 @@ class TranscriptionRepositoryImpl @Inject constructor(
         return transcriptionDao.getOldCount(cutoffDate, viewFilter.name)
     }
 
+    override suspend fun updateSummary(id: Long, summary: String) {
+        transcriptionDao.updateSummary(id, summary)
+    }
+
     override suspend fun queueForOffline(queued: QueuedTranscriptionEntity): Long {
         return queuedTranscriptionDao.insert(queued)
     }

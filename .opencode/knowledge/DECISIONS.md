@@ -1,27 +1,38 @@
 # Architectural Decisions
 
+## 2026-03-29: PostProcessingType changed from GRAMMAR/ENGLISH to RAW/CLEANUP/ENGLISH
+- **Reason:** Match original aitranscribe Python project's modes (`raw`, `cleanup`, `english`)
+- **Changed:** `GRAMMAR` renamed to `CLEANUP`, `RAW` added as default (no LLM post-processing)
+
+## 2026-03-29: Summary field added to TranscriptionEntity
+- **Reason:** Original aitranscribe uses LLM to generate 70-80 char summaries as display titles
+- **Changed:** Added `summary TEXT DEFAULT NULL` column, DB version bumped to 2 with migration
+- **Generation:** After transcription, `PostProcessTextUseCase.generateSummary()` calls LLM via OpenRouter
+
+## 2026-03-29: ProcessingMode persisted in SecurePreferences
+- **Reason:** User selects RAW/CLEANUP/ENGLISH on main screen; must persist across restarts
+- **Flow:** MainViewModel → QueuedTranscriptionEntity.postProcessingType → TranscriptionWorker → PostProcessTextUseCase
+
+## 2026-03-29: Bottom control panel layout (radio buttons + mic button)
+- **Reason:** Issue #24 SVG mockup shows processing mode radio buttons and record button in one bottom panel
+- **Layout:** TopAppBar → transcription list → filter pills → bottom control panel
+
+## 2026-03-29: OpenRouterApiService via separate Retrofit instance
+- **Reason:** GROQ and OpenRouter have different base URLs
+- **Changed:** NetworkModule provides both `GroqApiService` and `OpenRouterApiService`
+
 ## 2026-03-04: hiltViewModel() over viewModel() for all Compose screens
-- **Reason:** Plain `viewModel()` bypasses Hilt dependency injection, causing runtime crashes when ViewModels have `@Inject` constructor parameters (repository, database, etc.)
-- **Affected:** MainScreen, TranscriptionDetailScreen, SetupScreen
-- **Rule:** Every `@HiltViewModel` must be obtained via `hiltViewModel()` in Compose, never `viewModel()`
+- **Reason:** Plain `viewModel()` bypasses Hilt DI, causing runtime crashes
+- **Rule:** Every `@HiltViewModel` must use `hiltViewModel()` in Compose
 
 ## 2026-03-04: TranscriptionWorker fetches queued item by ID, not "next in queue"
-- **Reason:** `getNextQueued()` returned arbitrary queued items, causing ID mismatches when multiple recordings were queued. The worker receives a specific `transcription_id` as input data, so it must fetch that exact record.
-- **Changed:** `QueuedTranscriptionDao` now has `getById(id)` query; `TranscriptionRepository` exposes `getQueuedById(id)`
-- **Tradeoff:** Slightly less flexible than a generic queue, but eliminates race conditions
+- **Reason:** Prevents race conditions when multiple recordings queued concurrently
 
 ## 2026-03-04: Navigation route parameter "transcription_id" (not "id")
-- **Reason:** `TranscriptionDetailViewModel` uses `SavedStateHandle` with key `KEY_TRANSCRIPTION_ID = "transcription_id"`. The navigation route must use the same parameter name or the ViewModel gets null.
-- **Route:** `"transcription/{transcription_id}"`
+- **Reason:** Must match SavedStateHandle key used by TranscriptionDetailViewModel
 
 ## 2026-03-04: RECEIVER_NOT_EXPORTED for internal BroadcastReceivers
-- **Reason:** Android 13+ (API 33) requires explicit export flag when registering receivers. Internal broadcasts (recording completion) must use `RECEIVER_NOT_EXPORTED` to avoid SecurityException.
-- **Affected:** MainViewModel's BroadcastReceiver for `RecordingService.ACTION_RECORDING_COMPLETE`
+- **Reason:** Android 13+ (API 33) requires explicit export flag
 
 ## 2026-03-04: audio/mp4 MIME type for .m4a uploads to GROQ
-- **Reason:** RecordingService outputs `.m4a` files (AAC in MP4 container). Initially sent as `audio/mpeg` which is incorrect for M4A. Changed to `audio/mp4` for accurate content-type in multipart upload.
-- **Status:** GROQ accepted it but still returned empty transcription (" .") -- the MIME type was not the root cause; audio content itself needs investigation.
-
-## 2026-03-04: Emulator must use -allow-host-audio flag
-- **Reason:** Default emulator launch with `-no-audio` or no audio flag means the virtual microphone captures silence. The `-allow-host-audio` flag enables host microphone passthrough so recordings contain actual audio data.
-- **Impact:** Without this, all recordings are silent files with valid headers but no speech data, causing GROQ to return empty transcriptions.
+- **Reason:** RecordingService outputs .m4a (AAC in MP4 container), not audio/mpeg

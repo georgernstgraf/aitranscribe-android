@@ -7,12 +7,13 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
+import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
 import com.georgernstgraf.aitranscribe.util.NotificationManager
 import dagger.assisted.Assisted
@@ -27,10 +28,6 @@ import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-/**
- * Worker for processing transcriptions in background.
- * Handles offline queue processing with notifications.
- */
 @HiltWorker
 class TranscriptionWorker @AssistedInject constructor(
     @Assisted private val context: Context,
@@ -39,12 +36,13 @@ class TranscriptionWorker @AssistedInject constructor(
     private val groqApiService: GroqApiService,
     private val networkMonitor: NetworkMonitor,
     private val notificationManager: NotificationManager,
-    private val securePreferences: SecurePreferences
+    private val securePreferences: SecurePreferences,
+    private val postProcessTextUseCase: PostProcessTextUseCase
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val queuedId = inputData.getLong(KEY_QUEUED_ID, -1)
-        Log.e("TranscriptionWorker", "doWork: queuedId=$queuedId")
+        Log.d("TranscriptionWorker", "doWork: queuedId=$queuedId")
 
         if (queuedId == -1L) {
             Log.e("TranscriptionWorker", "doWork: FAILED - invalid queuedId")
@@ -52,8 +50,6 @@ class TranscriptionWorker @AssistedInject constructor(
         }
 
         val queued = repository.getQueuedById(queuedId)
-        Log.e("TranscriptionWorker", "doWork: queued=$queued, expected id=$queuedId")
-        
         if (queued == null) {
             Log.e("TranscriptionWorker", "doWork: FAILED - queued not found with id=$queuedId")
             return@withContext Result.failure()
@@ -68,32 +64,50 @@ class TranscriptionWorker @AssistedInject constructor(
             notificationManager.showTranscriptionProgressNotification(queuedId)
 
             val transcriptionText = transcribeAudio(queued)
-            Log.e("TranscriptionWorker", "doWork: transcriptionText='$transcriptionText', length=${transcriptionText.length}")
+            Log.d("TranscriptionWorker", "doWork: transcriptionText='$transcriptionText', length=${transcriptionText.length}")
+
+            val processingMode = queued.postProcessingType ?: PostProcessingType.RAW.name
 
             val entity = TranscriptionEntity(
                 originalText = transcriptionText,
                 processedText = null,
                 audioFilePath = queued.audioFilePath,
                 createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                postProcessingType = queued.postProcessingType,
+                postProcessingType = processingMode,
                 status = TranscriptionStatus.COMPLETED.name,
                 errorMessage = null,
                 playedCount = 0,
-                retryCount = 0
+                retryCount = 0,
+                summary = null
             )
 
             val transcriptionId = repository.insert(entity)
-            Log.e("TranscriptionWorker", "doWork: Saved transcription with id=$transcriptionId")
-            Log.e("TranscriptionWorker", "doWork: Saved transcription with id=$transcriptionId")
+            Log.d("TranscriptionWorker", "doWork: Saved transcription with id=$transcriptionId")
 
-            if (queued.postProcessingType != null) {
-                notificationManager.showPostProcessingNotification(transcriptionId)
-            } else {
-                notificationManager.showTranscriptionCompleteNotification(transcriptionId)
+            val mode = try {
+                PostProcessingType.valueOf(processingMode)
+            } catch (_: Exception) {
+                PostProcessingType.RAW
             }
 
-            repository.removeQueued(queuedId)
+            if (mode != PostProcessingType.RAW) {
+                val openRouterKey = securePreferences.getOpenRouterApiKey()
+                val llmModel = securePreferences.getLlmModel()
+                if (!openRouterKey.isNullOrBlank()) {
+                    notificationManager.showPostProcessingNotification(transcriptionId)
+                    postProcessTextUseCase(transcriptionId, mode, llmModel, openRouterKey)
+                }
+            }
 
+            val openRouterKey = securePreferences.getOpenRouterApiKey()
+            if (!openRouterKey.isNullOrBlank()) {
+                val llmModel = securePreferences.getLlmModel()
+                postProcessTextUseCase.generateSummary(transcriptionId, llmModel, openRouterKey)
+            }
+
+            notificationManager.showTranscriptionCompleteNotification(transcriptionId)
+
+            repository.removeQueued(queuedId)
             cleanupAudioFile(queued.audioFilePath)
 
             Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
@@ -106,7 +120,7 @@ class TranscriptionWorker @AssistedInject constructor(
         }
     }
 
-    private suspend fun transcribeAudio(queued: QueuedTranscriptionEntity): String {
+    private suspend fun transcribeAudio(queued: com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity): String {
         val audioFile = File(queued.audioFilePath)
         if (!audioFile.exists()) {
             throw Exception("Audio file not found: ${queued.audioFilePath}")
@@ -142,8 +156,7 @@ class TranscriptionWorker @AssistedInject constructor(
     private fun cleanupAudioFile(path: String) {
         try {
             File(path).delete()
-        } catch (e: Exception) {
-            // Ignore cleanup errors
+        } catch (_: Exception) {
         }
     }
 

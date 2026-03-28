@@ -39,4 +39,15 @@ object NetworkModule {
     fun provideGroqApiService(retrofit: Retrofit): GroqApiService {
         return retrofit.create(GroqApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideOpenRouterApiService(okHttpClient: OkHttpClient): OpenRouterApiService {
+        return Retrofit.Builder()
+            .baseUrl(OpenRouterApiService.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(OpenRouterApiService::class.java)
+    }
 }

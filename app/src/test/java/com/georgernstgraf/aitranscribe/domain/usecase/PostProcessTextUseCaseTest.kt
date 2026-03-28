@@ -62,7 +62,7 @@ class PostProcessTextUseCaseTest {
             )
         )
 
-        useCase(id, PostProcessingType.GRAMMAR, "test-model", "test-key")
+        useCase(id, PostProcessingType.CLEANUP, "test-model", "test-key")
 
         val updated = repository.getById(id)
         assertEquals("Processed text", updated?.processedText)
@@ -70,6 +70,6 @@ class PostProcessTextUseCaseTest {
 
     @Test(expected = PostProcessTextUseCase.PostProcessingException::class)
     fun `invoke throws exception when API key is empty`() = runTest {
-        useCase(1L, PostProcessingType.GRAMMAR, "test-model", "")
+        useCase(1L, PostProcessingType.CLEANUP, "test-model", "")
     }
 }

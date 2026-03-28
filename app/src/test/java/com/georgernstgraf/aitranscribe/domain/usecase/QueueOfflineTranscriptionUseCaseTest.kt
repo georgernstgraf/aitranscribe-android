@@ -24,7 +24,7 @@ class QueueOfflineTranscriptionUseCaseTest {
             audioPath = "/test.mp3",
             sttModel = "whisper-large-v3",
             llmModel = "claude-3-haiku",
-            postProcessingType = "GRAMMAR"
+            postProcessingType = "CLEANUP"
         )
 
         assertEquals(1L, id)

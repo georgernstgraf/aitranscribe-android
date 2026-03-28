@@ -52,6 +52,8 @@ interface TranscriptionRepository {
 
     suspend fun getOldCount(cutoffDate: String, viewFilter: ViewFilter): Int
 
+    suspend fun updateSummary(id: Long, summary: String)
+
     suspend fun queueForOffline(queued: QueuedTranscriptionEntity): Long
 
     suspend fun getQueuedById(id: Long): QueuedTranscriptionEntity?

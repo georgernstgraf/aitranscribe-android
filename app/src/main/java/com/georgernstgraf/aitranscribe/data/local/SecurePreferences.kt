@@ -85,9 +85,14 @@ class SecurePreferences @Inject constructor(
         return sharedPreferences.getString(LLM_MODEL, "anthropic/claude-3-haiku") ?: "anthropic/claude-3-haiku"
     }
 
-    /**
-     * Clear all stored preferences.
-     */
+    suspend fun setProcessingMode(mode: String) {
+        sharedPreferences.edit().putString(PROCESSING_MODE, mode).apply()
+    }
+
+    suspend fun getProcessingMode(): String {
+        return sharedPreferences.getString(PROCESSING_MODE, "RAW") ?: "RAW"
+    }
+
     suspend fun clearAll() {
         sharedPreferences.edit().clear().apply()
     }
@@ -97,5 +102,6 @@ class SecurePreferences @Inject constructor(
         private const val OPENROUTER_API_KEY = "openrouter_api_key"
         private const val STT_MODEL = "stt_model"
         private const val LLM_MODEL = "llm_model"
+        private const val PROCESSING_MODE = "processing_mode"
     }
 }

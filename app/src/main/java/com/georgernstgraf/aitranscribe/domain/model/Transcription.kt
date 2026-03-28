@@ -12,7 +12,8 @@ data class Transcription(
     val status: TranscriptionStatus,
     val errorMessage: String?,
     val playedCount: Int = 0,
-    val retryCount: Int = 0
+    val retryCount: Int = 0,
+    val summary: String? = null
 ) {
     val isViewed: Boolean
         get() = playedCount > 0
