@@ -34,7 +34,11 @@ interface TranscriptionRepository {
 
     fun getByStatus(status: String, limit: Int): Flow<List<Transcription>>
 
+    fun getAllTranscriptions(limit: Int): Flow<List<Transcription>>
+
     fun getUnviewed(limit: Int): Flow<List<Transcription>>
+
+    fun getViewed(limit: Int): Flow<List<Transcription>>
 
     suspend fun markAsViewed(id: Long): Int
 

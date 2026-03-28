@@ -2,8 +2,6 @@ package com.georgernstgraf.aitranscribe.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
@@ -11,22 +9,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 
-/**
- * Quick filters for transcription list.
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuickFilters(
-    currentFilter: QuickFilter,
-    onFilterChanged: (QuickFilter) -> Unit,
+    currentFilter: ViewFilter,
+    onFilterChanged: (ViewFilter) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        QuickFilter.values().forEach { filter ->
+        ViewFilter.entries.forEach { filter ->
             FilterChip(
                 selected = currentFilter == filter,
                 onClick = { onFilterChanged(filter) },
@@ -40,10 +35,9 @@ fun QuickFilters(
     }
 }
 
-enum class QuickFilter(val label: String) {
-    ALL("All"),
-    UNVIEWED_ONLY("Unviewed"),
-    VIEWED("Viewed"),
-    PROCESSED("Processed"),
-    UNPROCESSED("Unprocessed")
-}
+private val ViewFilter.label: String
+    get() = when (this) {
+        ViewFilter.ALL -> "All"
+        ViewFilter.UNVIEWED_ONLY -> "Unviewed"
+        ViewFilter.VIEWED -> "Viewed"
+    }

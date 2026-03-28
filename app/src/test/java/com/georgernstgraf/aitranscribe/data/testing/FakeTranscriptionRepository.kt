@@ -99,10 +99,27 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         }
     }
 
+    override fun getAllTranscriptions(limit: Int): Flow<List<Transcription>> {
+        return transcriptions.map { entities ->
+            entities
+                .take(limit)
+                .map { it.toDomain() }
+        }
+    }
+
     override fun getUnviewed(limit: Int): Flow<List<Transcription>> {
         return transcriptions.map { entities ->
             entities
                 .filter { it.playedCount == 0 }
+                .take(limit)
+                .map { it.toDomain() }
+        }
+    }
+
+    override fun getViewed(limit: Int): Flow<List<Transcription>> {
+        return transcriptions.map { entities ->
+            entities
+                .filter { it.playedCount > 0 }
                 .take(limit)
                 .map { it.toDomain() }
         }

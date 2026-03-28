@@ -66,11 +66,26 @@ interface TranscriptionDao {
 
     @Query("""
         SELECT * FROM transcriptions 
+        ORDER BY created_at DESC
+        LIMIT :limit
+    """)
+    fun getAllTranscriptions(limit: Int = 10): Flow<List<TranscriptionEntity>>
+
+    @Query("""
+        SELECT * FROM transcriptions 
         WHERE played_count = 0
         ORDER BY created_at DESC
         LIMIT :limit
     """)
     fun getUnviewed(limit: Int = 10): Flow<List<TranscriptionEntity>>
+
+    @Query("""
+        SELECT * FROM transcriptions 
+        WHERE played_count > 0
+        ORDER BY created_at DESC
+        LIMIT :limit
+    """)
+    fun getViewed(limit: Int = 10): Flow<List<TranscriptionEntity>>
 
     @Query("""
         UPDATE transcriptions 

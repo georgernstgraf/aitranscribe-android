@@ -2,5 +2,6 @@ package com.georgernstgraf.aitranscribe.domain.model
 
 enum class ViewFilter {
     ALL,
-    UNVIEWED_ONLY
+    UNVIEWED_ONLY,
+    VIEWED
 }

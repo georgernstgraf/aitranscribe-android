@@ -71,8 +71,18 @@ class TranscriptionRepositoryImpl @Inject constructor(
             .map { entities -> entities.map { it.toDomain() } }
     }
 
+    override fun getAllTranscriptions(limit: Int): Flow<List<Transcription>> {
+        return transcriptionDao.getAllTranscriptions(limit)
+            .map { entities -> entities.map { it.toDomain() } }
+    }
+
     override fun getUnviewed(limit: Int): Flow<List<Transcription>> {
         return transcriptionDao.getUnviewed(limit)
+            .map { entities -> entities.map { it.toDomain() } }
+    }
+
+    override fun getViewed(limit: Int): Flow<List<Transcription>> {
+        return transcriptionDao.getViewed(limit)
             .map { entities -> entities.map { it.toDomain() } }
     }
 

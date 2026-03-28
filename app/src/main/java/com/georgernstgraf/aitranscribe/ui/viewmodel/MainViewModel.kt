@@ -47,6 +47,8 @@ class MainViewModel @Inject constructor(
     private var recordingTimerJob: Job? = null
     private var recordingResultReceiver: RecordingResultReceiver? = null
 
+    private var transcriptionsJob: Job? = null
+
     init {
         Log.e("MainViewModel", "=== INIT: MainViewModel created ===")
         Log.e("MainViewModel", "=== INIT: context=$context ===")
@@ -210,10 +212,21 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun setViewFilter(filter: ViewFilter) {
+        _uiState.update { it.copy(viewFilter = filter) }
+        loadRecentTranscriptions()
+    }
+
     private fun loadRecentTranscriptions() {
-        viewModelScope.launch {
+        transcriptionsJob?.cancel()
+        transcriptionsJob = viewModelScope.launch {
             try {
-                repository.getUnviewed(limit = 10).collect { transcriptions ->
+                val flow = when (_uiState.value.viewFilter) {
+                    ViewFilter.ALL -> repository.getAllTranscriptions(limit = 50)
+                    ViewFilter.UNVIEWED_ONLY -> repository.getUnviewed(limit = 50)
+                    ViewFilter.VIEWED -> repository.getViewed(limit = 50)
+                }
+                flow.collect { transcriptions ->
                     _uiState.update { it.copy(recentTranscriptions = transcriptions) }
                 }
             } catch (e: Exception) {
@@ -227,5 +240,6 @@ data class MainUiState(
     val isRecording: Boolean = false,
     val recordingDuration: Int = 0,
     val recordingError: String? = null,
-    val recentTranscriptions: List<Transcription> = emptyList()
+    val recentTranscriptions: List<Transcription> = emptyList(),
+    val viewFilter: ViewFilter = ViewFilter.ALL
 )

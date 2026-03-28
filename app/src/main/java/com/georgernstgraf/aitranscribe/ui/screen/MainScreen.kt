@@ -4,17 +4,11 @@ import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
@@ -43,11 +37,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.georgernstgraf.aitranscribe.ui.components.AudioRecordingButton
 import com.georgernstgraf.aitranscribe.ui.components.ExportDialog
-import com.georgernstgraf.aitranscribe.ui.components.QuickFilter
 import com.georgernstgraf.aitranscribe.ui.components.QuickFilters
-import com.georgernstgraf.aitranscribe.ui.components.StatisticsCard
 import com.georgernstgraf.aitranscribe.ui.components.TranscriptionItem
 import com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel
+import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,15 +50,11 @@ fun MainScreen(
 ) {
     Log.i("MainScreen", "=== MainScreen: STARTED ===")
     Log.i("MainScreen", "=== MainScreen: viewModel=$viewModel ===")
-    
+
     val state by viewModel.uiState.collectAsState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     var showExportDialog by remember { mutableStateOf(false) }
-
-    val totalCount = state.recentTranscriptions.size
-    val unviewedCount = state.recentTranscriptions.count { it.isUnviewed }
-    val processedCount = state.recentTranscriptions.count { it.processedText != null }
 
     LaunchedEffect(state.recordingError) {
         state.recordingError?.let { error ->
@@ -87,7 +76,7 @@ fun MainScreen(
                         onClick = { navController.navigate("search") }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Search,
+                            imageVector = androidx.compose.material.icons.Icons.Default.Search,
                             contentDescription = "Search"
                         )
                     }
@@ -96,7 +85,7 @@ fun MainScreen(
                         onClick = { navController.navigate("settings") }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Settings,
+                            imageVector = androidx.compose.material.icons.Icons.Default.Settings,
                             contentDescription = "Settings"
                         )
                     }
@@ -105,7 +94,7 @@ fun MainScreen(
                         onClick = { showExportDialog = true }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Share,
+                            imageVector = androidx.compose.material.icons.Icons.Default.Share,
                             contentDescription = "Export"
                         )
                     }
@@ -119,100 +108,38 @@ fun MainScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            StatisticsCard(
-                totalCount = totalCount,
-                unviewedCount = unviewedCount,
-                processedCount = processedCount,
-                averageLength = 150.0,
-                modifier = Modifier.padding(8.dp)
-            )
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(state.recentTranscriptions) { transcription ->
+                    TranscriptionItem(
+                        transcription = transcription,
+                        onClick = {
+                            navController.navigate("transcription/${transcription.id}")
+                        }
+                    )
+                }
+            }
 
             QuickFilters(
-                currentFilter = QuickFilter.ALL,
-                onFilterChanged = {  },
-                modifier = Modifier.padding(horizontal = 8.dp)
+                currentFilter = state.viewFilter,
+                onFilterChanged = { viewModel.setViewFilter(it) },
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
             )
 
-            Row(
+            AudioRecordingButton(
+                isRecording = state.isRecording,
+                recordingDuration = state.recordingDuration,
+                onStartRecording = { viewModel.startRecording() },
+                onStopRecording = { viewModel.stopRecording() },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AudioRecordingButton(
-                    isRecording = state.isRecording,
-                    recordingDuration = state.recordingDuration,
-                    onStartRecording = { viewModel.startRecording() },
-                    onStopRecording = { viewModel.stopRecording() },
-                    modifier = Modifier
-                )
-
-                Text(
-                    text = if (state.isRecording) {
-                        "Recording... ${state.recordingDuration}s"
-                    } else {
-                        "Push & Hold to Record"
-                    },
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            if (state.recentTranscriptions.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Mic,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.surfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "No transcriptions yet",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Text(
-                        text = "Record your first transcription by pushing & holding the button above",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            } else {
-                Text(
-                    text = "Recent Transcriptions",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-
-                LazyColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    items(state.recentTranscriptions) { transcription ->
-                        TranscriptionItem(
-                            transcription = transcription,
-                            onClick = {
-                                navController.navigate("transcription/${transcription.id}")
-                            }
-                        )
-                    }
-                }
-            }
+                    .padding(vertical = 12.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
         }
     }
 
@@ -220,7 +147,6 @@ fun MainScreen(
         ExportDialog(
             onDismiss = { showExportDialog = false },
             onExport = { _ ->
-                // Export functionality - could be added to MainViewModel later
                 showExportDialog = false
             }
         )
