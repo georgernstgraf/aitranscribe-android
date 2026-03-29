@@ -2,9 +2,11 @@
 
 ## Open Tasks
 
-1. [ ] See #29 — Share transcriptions with summary prepended (uncommitted implementation in working tree: ShareTranscriptionUseCase, MainViewModel, plus tests)
-2. [ ] See #22 — Compose UI tests
-3. [ ] See #12 — Emulator audio captures silence
+1. [ ] See #22 — Compose UI tests
+2. [ ] See #12 — Emulator audio captures silence
+3. [ ] Fix settings: API key validation on save, not on timeout
+4. [ ] Surface post-processing failures to user
+5. [ ] Port authoritative prompts from `../aitranscribe/main.py`
 
 ## Context
 - Knowledge files in `docs/ai/` — canonical knowledge location

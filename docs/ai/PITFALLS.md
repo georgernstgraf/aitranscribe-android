@@ -54,6 +54,9 @@ ViewModels that call `flow.collect {}` in `init` create infinite coroutines. Usi
 ## org.json Android stubs return null in unit tests
 With `isReturnDefaultValues = true` in build.gradle.kts, `JSONObject.getJSONArray()` returns `null` instead of parsing JSON. **Fix:** Add `testImplementation("org.json:json:20231013")` for a real implementation in tests.
 
+## Intent extras return null in JVM unit tests
+`Intent.getStringExtra()` and `Intent.getParcelableExtra()` return null in JVM unit tests because Android framework classes are stubbed. Test share/compose logic on plain data classes or helper functions instead of asserting on Intent contents. For code that constructs Intents, trust the framework and test the logic separately.
+
 ## Cross-test hangs from uncleared viewModelScope
 ViewModel tests must cancel `viewModel.viewModelScope` in `@After` tearDown. Otherwise infinite collectors from one test class leak into the next, causing hangs.
 

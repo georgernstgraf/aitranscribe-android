@@ -215,7 +215,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun shareTranscription(transcription: Transcription): Intent {
-        val text = transcription.processedText ?: transcription.originalText
+        val text = transcription.getShareText()
         val preferredApp = securePreferences.getPreferredShareApp()
 
         val intent = Intent(Intent.ACTION_SEND).apply {

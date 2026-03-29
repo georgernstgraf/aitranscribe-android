@@ -20,4 +20,13 @@ data class Transcription(
 
     val isUnviewed: Boolean
         get() = playedCount == 0
+
+    fun getShareText(): String {
+        val transcriptionText = processedText ?: originalText
+        return if (!summary.isNullOrBlank()) {
+            "$summary: $transcriptionText"
+        } else {
+            transcriptionText
+        }
+    }
 }

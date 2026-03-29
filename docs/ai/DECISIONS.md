@@ -56,6 +56,10 @@
 - **Reason:** Without the guard, `observeActiveTranscription` called `markAsViewed` on every flow emission, creating an infinite loop that incremented `playedCount` forever.
 - **Changed:** `if (!suppressAutoMark)` → `if (!suppressAutoMark && entity.playedCount == 0)` in TranscriptionDetailViewModel
 
+## 2026-03-29: Share text logic lives in Transcription domain model (#29)
+- **Reason:** `MainViewModel.shareTranscription()` and `ShareTranscriptionUseCase` both construct share text. Putting `getShareText()` on the `Transcription` data class avoids duplication and is trivially testable without Android stubs (Intent extras return null in JVM unit tests).
+- **Changed:** `Transcription.getShareText()` prepends `summary: ` when summary is non-blank; `MainViewModel` and `ShareTranscriptionUseCase` call it directly.
+
 ## 2026-03-04: hiltViewModel() over viewModel() for all Compose screens
 - **Reason:** Plain `viewModel()` bypasses Hilt DI, causing runtime crashes
 - **Rule:** Every `@HiltViewModel` must use `hiltViewModel()` in Compose

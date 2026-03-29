@@ -3,6 +3,7 @@ package com.georgernstgraf.aitranscribe.domain.usecase
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
+import com.georgernstgraf.aitranscribe.data.local.toDomain
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import dagger.hilt.android.scopes.ViewModelScoped
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,7 +26,7 @@ class ShareTranscriptionUseCase @Inject constructor(
         val transcription = repository.getById(id)
             ?: throw ShareException("Transcription not found: $id")
 
-        val text = transcription.processedText ?: transcription.originalText
+        val text = transcription.toDomain().getShareText()
         
         Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
@@ -40,7 +41,7 @@ class ShareTranscriptionUseCase @Inject constructor(
         val transcription = repository.getById(id)
             ?: throw ShareException("Transcription not found: $id")
 
-        val text = transcription.processedText ?: transcription.originalText
+        val text = transcription.toDomain().getShareText()
         val fileName = "transcription_${transcription.id}.txt"
         
         val authority = "${context.packageName}.fileprovider"

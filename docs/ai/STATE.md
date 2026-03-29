@@ -3,9 +3,10 @@
 Current status as of 2026-03-29.
 
 ## Current Focus
-Issue #26 closed. Issue #29 (share with summary) has uncommitted implementation in working tree. End-to-end device test passed.
+Issue #29 (share with summary) committed and closed.
 
 ## Completed This Session
+- [x] Issue #29: Share transcriptions with summary prepended — `Transcription.getShareText()` + tests
 - [x] Issue #26: Unit tests, test infrastructure, markAsViewed bug fix — closed
 - [x] Issue #28: Swipe fix (flatMapLatest) committed, deployed, and closed
 - [x] Issue #31: Defined policy for project-specific skills and tool-agnosticism
@@ -22,7 +23,6 @@ Issue #26 closed. Issue #29 (share with summary) has uncommitted implementation 
 - [x] End-to-end device testing on real hardware — passed
 
 ## Pending
-- [ ] Issue #29: Share transcriptions with summary prepended (uncommitted changes in working tree)
 - [ ] Issue #12: Emulator audio captures silence
 - [ ] Issue #22: Compose UI tests
 - [ ] Fix settings: API key validation on save, not on timeout
@@ -33,4 +33,4 @@ Issue #26 closed. Issue #29 (share with summary) has uncommitted implementation 
 - None
 
 ## Next Session Suggestion
-Commit and push Issue #29 changes (share with summary — already implemented in working tree).
+Tackle setup screen flash on startup, or Issue #22 (Compose UI tests).
