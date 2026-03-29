@@ -16,18 +16,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
+import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.ui.theme.Red
 
 @Composable
@@ -38,6 +37,8 @@ fun BottomControlPanel(
     recordingDuration: Int,
     onStartRecording: () -> Unit,
     onStopRecording: () -> Unit,
+    currentFilter: ViewFilter,
+    onFilterChanged: (ViewFilter) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -46,7 +47,7 @@ fun BottomControlPanel(
             .clip(RoundedCornerShape(20.dp))
             .background(Color(0xFF121C26))
             .border(1.dp, Color(0xFF243241), RoundedCornerShape(20.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
     ) {
         Column(
             modifier = Modifier
@@ -55,6 +56,20 @@ fun BottomControlPanel(
                 .padding(end = 100.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                ViewFilter.entries.forEach { filter ->
+                    val isSelected = currentFilter == filter
+                    FilterPill(
+                        label = filter.label,
+                        selected = isSelected,
+                        onClick = { onFilterChanged(filter) }
+                    )
+                }
+            }
+
             RadioButton(
                 label = "Raw Transcription",
                 selected = processingMode == PostProcessingType.RAW,
@@ -172,3 +187,42 @@ private fun formatDuration(seconds: Int): String {
     val s = seconds % 60
     return "%d:%02d".format(m, s)
 }
+
+@Composable
+private fun FilterPill(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bgColor = if (selected) Color(0xFF4B7284) else Color.Transparent
+    val borderColor = if (selected) Color.Transparent else Color(0xFF637381)
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(bgColor)
+            .border(
+                width = if (selected) 0.dp else 2.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            color = Color(0xFFF3F6F8),
+            fontSize = 16.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold
+        )
+    }
+}
+
+private val ViewFilter.label: String
+    get() = when (this) {
+        ViewFilter.ALL -> "All"
+        ViewFilter.UNVIEWED_ONLY -> "Unviewed"
+        ViewFilter.VIEWED -> "Viewed"
+    }

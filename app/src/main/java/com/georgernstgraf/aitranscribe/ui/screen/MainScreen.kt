@@ -36,7 +36,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.georgernstgraf.aitranscribe.ui.components.BottomControlPanel
 import com.georgernstgraf.aitranscribe.ui.components.ExportDialog
-import com.georgernstgraf.aitranscribe.ui.components.QuickFilters
 import com.georgernstgraf.aitranscribe.ui.components.TranscriptionItem
 import com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel
 
@@ -109,7 +108,7 @@ fun MainScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(state.recentTranscriptions) { transcription ->
@@ -122,12 +121,6 @@ fun MainScreen(
                 }
             }
 
-            QuickFilters(
-                currentFilter = state.viewFilter,
-                onFilterChanged = { viewModel.setViewFilter(it) },
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-            )
-
             BottomControlPanel(
                 processingMode = state.processingMode,
                 onModeChanged = { viewModel.setProcessingMode(it) },
@@ -135,9 +128,11 @@ fun MainScreen(
                 recordingDuration = state.recordingDuration,
                 onStartRecording = { viewModel.startRecording() },
                 onStopRecording = { viewModel.stopRecording() },
+                currentFilter = state.viewFilter,
+                onFilterChanged = { viewModel.setViewFilter(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
+                    .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 6.dp)
             )
         }
     }
