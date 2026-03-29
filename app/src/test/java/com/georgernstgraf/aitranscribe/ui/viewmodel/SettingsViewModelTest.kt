@@ -4,10 +4,12 @@ import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
+import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import okhttp3.OkHttpClient
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -26,6 +28,7 @@ class SettingsViewModelTest {
 
     private lateinit var repository: FakeTranscriptionRepository
     private lateinit var deleteUseCase: DeleteTranscriptionUseCase
+    private lateinit var validateApiKeysUseCase: ValidateApiKeysUseCase
     private lateinit var securePreferences: SecurePreferences
     private lateinit var viewModel: SettingsViewModel
     private val testDispatcher = StandardTestDispatcher()
@@ -36,13 +39,14 @@ class SettingsViewModelTest {
         repository = FakeTranscriptionRepository()
         deleteUseCase = DeleteTranscriptionUseCase(repository)
         securePreferences = mockk(relaxed = true)
-        
+        validateApiKeysUseCase = ValidateApiKeysUseCase(OkHttpClient())
+
         coEvery { securePreferences.getGroqApiKey() } returns null
         coEvery { securePreferences.getOpenRouterApiKey() } returns null
         coEvery { securePreferences.getSttModel() } returns "whisper-large-v3-turbo"
         coEvery { securePreferences.getLlmModel() } returns "anthropic/claude-3-haiku"
-        
-        viewModel = SettingsViewModel(deleteUseCase, securePreferences)
+
+        viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase)
     }
 
     @After

@@ -204,6 +204,22 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         }
     }
 
+    override suspend fun getQueuedAudioPaths(): List<String> {
+        return queuedTranscriptions.value.mapNotNull { it.audioFilePath }
+    }
+
+    override suspend fun getNextTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long? {
+        val sorted = transcriptions.value.sortedBy { it.id }
+        val idx = sorted.indexOfFirst { it.id == currentId }
+        return if (idx >= 0 && idx < sorted.lastIndex) sorted[idx + 1].id else null
+    }
+
+    override suspend fun getPrevTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long? {
+        val sorted = transcriptions.value.sortedBy { it.id }
+        val idx = sorted.indexOfFirst { it.id == currentId }
+        return if (idx > 0) sorted[idx - 1].id else null
+    }
+
     fun clear() {
         transcriptions.value = emptyList()
         queuedTranscriptions.value = emptyList()

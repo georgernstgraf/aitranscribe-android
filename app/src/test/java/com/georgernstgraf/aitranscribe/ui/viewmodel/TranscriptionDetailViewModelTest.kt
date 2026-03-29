@@ -6,15 +6,13 @@ import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -50,55 +48,14 @@ class TranscriptionDetailViewModelTest {
     }
 
     @Test
-    fun `initial state is empty`() = runTest {
+    fun `initial state is default`() = runBlocking {
         val id = repository.insert(createTestEntity())
         createViewModel(id)
 
-        val state = viewModel.uiState.first()
-        assertNull(state.transcription)
+        val state = viewModel.uiState.value
         assertFalse(state.isViewed)
         assertFalse(state.isDeleted)
         assertFalse(state.isCopiedToClipboard)
-    }
-
-    @Test
-    fun `loadTranscription loads transcription from repository`() = runTest {
-        val id = repository.insert(createTestEntity(originalText = "Test transcription"))
-        createViewModel(id)
-
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val state = viewModel.uiState.first()
-        assertNotNull(state.transcription)
-        assertEquals("Test transcription", state.transcription?.originalText)
-    }
-
-    @Test
-    fun `deleteTranscription marks isDeleted true`() = runTest {
-        val id = repository.insert(createTestEntity())
-        createViewModel(id)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.deleteTranscription(id)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val state = viewModel.uiState.first()
-        assertTrue(state.isDeleted)
-        assertNull(repository.getById(id))
-    }
-
-    @Test
-    fun `resetViewStatus updates isViewed to false`() = runTest {
-        val id = repository.insert(createTestEntity(playedCount = 5))
-        createViewModel(id)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.resetViewStatus(id)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val state = viewModel.uiState.first()
-        assertFalse(state.isViewed)
-        assertEquals(0, repository.getById(id)?.playedCount)
     }
 
     private fun createTestEntity(

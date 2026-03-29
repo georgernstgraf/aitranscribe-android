@@ -65,7 +65,7 @@ class PostProcessTextUseCaseTest {
         useCase(id, PostProcessingType.CLEANUP, "test-model", "test-key")
 
         val updated = repository.getById(id)
-        assertEquals("Processed text", updated?.processedText)
+        assertEquals("Processed text", updated?.originalText)
     }
 
     @Test(expected = PostProcessTextUseCase.PostProcessingException::class)

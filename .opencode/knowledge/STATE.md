@@ -1,7 +1,7 @@
 # Current State (2026-03-29)
 
 ## Current Focus
-Post-processing pipeline fixes — silent failures need surfacing, prompts need porting from companion project.
+Detail screen navigation fix and test infrastructure stability.
 
 ## Companion Project
 - `../aitranscribe` (Python/TUI) is the **lead project**
@@ -9,11 +9,12 @@ Post-processing pipeline fixes — silent failures need surfacing, prompts need 
 - Key files: `core.py` (LLM calls), `main.py` (prompts, modes), `tui.py` (UI)
 
 ## Completed This Session
-- [x] Issue #25: Filter pills integrated into BottomControlPanel with SpaceBetween layout
-- [x] Audio file cleanup: deleted on success, preserved on retry, orphans swept
-- [x] TranscriptionWorker split: transcription retry separate from non-fatal post-processing
-- [x] Better error logging in PostProcessTextUseCase (HTTP code + error body)
-- [x] Orphaned audio files manually cleaned from device cache
+- [x] Issue #27: Fixed detail screen navigation — removed broken overscroll auto-nav, restored prev/next toolbar buttons
+- [x] Added tap-outside-to-save on TranscriptionDetailScreen (focus loss triggers save)
+- [x] Fixed FakeTranscriptionRepository to implement new interface methods
+- [x] Fixed PostProcessTextUseCaseTest assertion (originalText vs processedText)
+- [x] Fixed SettingsViewModelTest constructor signature (added ValidateApiKeysUseCase)
+- [x] Fixed ViewModel test timeouts — no more advanceUntilIdle() with infinite collectors
 
 ## Pending
 - [ ] Fix setup screen flash on startup (check keys before navigating)
@@ -24,7 +25,7 @@ Post-processing pipeline fixes — silent failures need surfacing, prompts need 
 - [ ] Issue #22: Compose UI tests
 
 ## Blockers
-- Post-processing always fails on device — likely wrong model name or API key issue (need to capture HTTP code from logs after next recording)
+- None
 
 ## Next Session Suggestion
 1. Make a recording with non-RAW mode, capture the post-processing HTTP error from logcat

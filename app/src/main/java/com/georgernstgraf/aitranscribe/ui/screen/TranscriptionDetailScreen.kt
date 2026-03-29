@@ -1,6 +1,8 @@
 package com.georgernstgraf.aitranscribe.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,7 +44,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -85,16 +91,6 @@ fun TranscriptionDetailScreen(
         }
     }
 
-    LaunchedEffect(state.navigateToId) {
-        val targetId = state.navigateToId
-        if (targetId != null) {
-            viewModel.clearNavigation()
-            navController.navigate("transcription/$targetId/${viewFilter.name}") {
-                popUpTo("transcription/$transcriptionId/${viewFilter.name}") { inclusive = true }
-            }
-        }
-    }
-
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
@@ -132,18 +128,31 @@ fun TranscriptionDetailScreen(
         }
     ) { padding ->
         val bgColor = if (state.transcription?.isUnviewed == true) Color(0xFF1E3044) else Color(0xFF172028)
+        val focusManager = LocalFocusManager.current
+
+        var isEditing by remember { mutableStateOf(false) }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(bgColor)
                 .padding(padding)
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null
+                ) {
+                    if (isEditing) {
+                        focusManager.clearFocus()
+                    }
+                }
                 .verticalScroll(scrollState)
         ) {
             state.transcription?.let { transcription ->
                 var editText by remember(transcription.id) {
                     mutableStateOf(transcription.originalText)
                 }
+
+                val hasUnsavedChanges = editText != transcription.originalText
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -170,7 +179,18 @@ fun TranscriptionDetailScreen(
                         OutlinedTextField(
                             value = editText,
                             onValueChange = { editText = it },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .onFocusEvent { focusState ->
+                                    if (focusState.hasFocus) {
+                                        isEditing = true
+                                    } else if (isEditing) {
+                                        if (editText != transcription.originalText) {
+                                            viewModel.updateText(transcription.id, editText)
+                                        }
+                                        isEditing = false
+                                    }
+                                },
                             minLines = 3,
                             textStyle = MaterialTheme.typography.bodyLarge
                         )
@@ -194,8 +214,11 @@ fun TranscriptionDetailScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Button(
-                        onClick = { viewModel.updateText(transcription.id, editText) },
-                        enabled = editText != transcription.originalText
+                        onClick = {
+                            viewModel.updateText(transcription.id, editText)
+                            isEditing = false
+                        },
+                        enabled = hasUnsavedChanges
                     ) {
                         Text("Save")
                     }

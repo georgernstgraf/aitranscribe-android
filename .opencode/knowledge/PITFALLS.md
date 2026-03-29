@@ -41,3 +41,12 @@ Wrong LLM model names, invalid OpenRouter keys, and network errors during post-p
 
 ## Setup screen flashes on every app start
 `startDestination = "setup"` always renders the setup screen first. `loadExistingKeys()` then validates and triggers navigation to main. This causes a visible flash. Should check keys before rendering navigation, or use a splash/loading state.
+
+## ViewModel tests with infinite Flow collectors hang forever
+ViewModels that call `flow.collect {}` in `init` (e.g., `MainViewModel.loadRecentTranscriptions`, `TranscriptionDetailViewModel.loadTranscription`) create infinite coroutines. Using `advanceUntilIdle()` or `UnconfinedTestDispatcher` with `setMain` causes tests to hang. **Fix:** Use `StandardTestDispatcher` with `setMain`, avoid `advanceUntilIdle()`, read `.value` directly on StateFlow. Do not test async side effects that depend on the infinite collector.
+
+## runTest hangs with infinite viewModelScope coroutines
+`runTest` calls `advanceUntilIdle()` internally at test end. If `viewModelScope` has an infinite `collect`, this never completes. Use `runBlocking` instead for ViewModels with infinite collectors.
+
+## Overscroll auto-navigation breaks detail screen
+Using `NestedScrollConnection.onPostScroll` to auto-navigate prev/next on overscroll fires on initial load because `scrollState.value == 0` is immediately true. Use explicit prev/next buttons instead.

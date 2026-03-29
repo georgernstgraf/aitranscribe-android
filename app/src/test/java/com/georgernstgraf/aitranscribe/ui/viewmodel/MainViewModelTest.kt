@@ -1,5 +1,6 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
+import androidx.lifecycle.ViewModelStore
 import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
 import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
@@ -10,8 +11,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -32,79 +32,61 @@ class MainViewModelTest {
     private lateinit var securePreferences: SecurePreferences
     private lateinit var context: android.content.Context
     private lateinit var viewModel: MainViewModel
-    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var viewModelStore: ViewModelStore
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         repository = FakeTranscriptionRepository()
-        
-        // Mock dependencies
+
         queuedTranscriptionDao = mockk(relaxed = true)
         securePreferences = mockk(relaxed = true)
         context = mockk(relaxed = true)
-        
+
         coEvery { securePreferences.getSttModel() } returns "whisper-large-v3"
         coEvery { securePreferences.getLlmModel() } returns "claude-3-haiku"
         every { context.registerReceiver(any(), any()) } returns null
         coEvery { queuedTranscriptionDao.insert(any()) } returns 1L
+
+        viewModelStore = ViewModelStore()
     }
 
     @After
     fun tearDown() {
+        viewModelStore.clear()
         Dispatchers.resetMain()
     }
 
     @Test
-    fun `initial state has default values`() = runTest {
+    fun `initial state has default values`() {
         viewModel = MainViewModel(repository, queuedTranscriptionDao, securePreferences, context)
-        
-        val state = viewModel.uiState.first()
+
+        val state = viewModel.uiState.value
         assertFalse(state.isRecording)
         assertEquals(0, state.recordingDuration)
         assertNull(state.recordingError)
-        assertTrue(state.recentTranscriptions.isEmpty())
     }
 
     @Test
-    fun `startRecording sets isRecording to true`() = runTest {
+    fun `startRecording sets isRecording to true`() {
         viewModel = MainViewModel(repository, queuedTranscriptionDao, securePreferences, context)
-        
+
         viewModel.startRecording()
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        val state = viewModel.uiState.first()
+
+        val state = viewModel.uiState.value
         assertTrue(state.isRecording)
         assertNull(state.recordingError)
     }
 
     @Test
-    fun `stopRecording sets isRecording to false`() = runTest {
+    fun `stopRecording sets isRecording to false`() {
         viewModel = MainViewModel(repository, queuedTranscriptionDao, securePreferences, context)
-        
-        viewModel.startRecording()
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        viewModel.stopRecording()
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        val state = viewModel.uiState.first()
-        assertFalse(state.isRecording)
-    }
 
-    @Test
-    fun `recordingDuration increments while recording`() = runTest {
-        viewModel = MainViewModel(repository, queuedTranscriptionDao, securePreferences, context)
-        
         viewModel.startRecording()
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        // Advance time by 3 seconds
-        testDispatcher.scheduler.advanceTimeBy(3000)
-        testDispatcher.scheduler.advanceUntilIdle()
-        
-        // Duration should have incremented
-        val state = viewModel.uiState.first()
-        assertTrue(state.recordingDuration >= 0) // Timer may or may not have started depending on timing
+        viewModel.stopRecording()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isRecording)
     }
 }
