@@ -113,7 +113,7 @@ fun SettingsScreen(
             Text(
                 text = "API Keys",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 10.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -123,7 +123,7 @@ fun SettingsScreen(
                 onValueChange = { viewModel.onGroqApiKeyChanged(if (it.isBlank()) null else it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 10.dp),
                 label = { Text("GROQ API Key") },
                 singleLine = true
             )
@@ -135,7 +135,7 @@ fun SettingsScreen(
                 onValueChange = { viewModel.onOpenRouterApiKeyChanged(if (it.isBlank()) null else it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 10.dp),
                 label = { Text("OpenRouter API Key") },
                 singleLine = true
             )
@@ -145,7 +145,7 @@ fun SettingsScreen(
             Text(
                 text = "Models",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 10.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -155,7 +155,7 @@ fun SettingsScreen(
                 onValueChange = { viewModel.onSttModelChanged(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 10.dp),
                 label = { Text("STT Model") },
                 singleLine = true
             )
@@ -167,7 +167,7 @@ fun SettingsScreen(
                 onValueChange = { viewModel.onLlmModelChanged(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 10.dp),
                 label = { Text("LLM Model") },
                 singleLine = true
             )
@@ -178,7 +178,7 @@ fun SettingsScreen(
                 onClick = { viewModel.saveSettings() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 10.dp),
                 enabled = !state.groqApiKey.isNullOrBlank() &&
                           !state.openRouterApiKey.isNullOrBlank() &&
                           !state.isValidating
@@ -197,7 +197,7 @@ fun SettingsScreen(
             Text(
                 text = "Data Management",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 10.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -206,7 +206,7 @@ fun SettingsScreen(
                 onClick = { showDeleteDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 10.dp)
             ) {
                 Text("Delete Old Transcriptions")
             }
@@ -216,7 +216,7 @@ fun SettingsScreen(
             Text(
                 text = "Sharing",
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(horizontal = 10.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -225,7 +225,7 @@ fun SettingsScreen(
                 onClick = { viewModel.resetPreferredShareApp() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 10.dp)
             ) {
                 Text("Reset Preferred Share App")
             }

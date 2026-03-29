@@ -44,10 +44,10 @@ fun BottomControlPanel(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(Color(0xFF121C26))
-            .border(1.dp, Color(0xFF243241), RoundedCornerShape(20.dp))
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .border(1.dp, Color(0xFF243241), RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(
@@ -210,7 +210,7 @@ private fun FilterPill(
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 10.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(

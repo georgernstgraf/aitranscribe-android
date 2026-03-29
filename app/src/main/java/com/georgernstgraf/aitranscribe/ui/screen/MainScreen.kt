@@ -112,7 +112,7 @@ fun MainScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 12.dp),
+                contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(state.recentTranscriptions) { transcription ->
@@ -140,7 +140,7 @@ fun MainScreen(
                 onFilterChanged = { viewModel.setViewFilter(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 6.dp)
+                    .padding(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 6.dp)
             )
         }
     }
