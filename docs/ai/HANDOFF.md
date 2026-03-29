@@ -5,7 +5,6 @@
 1. [ ] Issue #26: Improve detail screen, settings validation, post-processing pipeline, and card redesign (OPEN)
 2. [ ] Issue #29: Share transcriptions with a summary prepended, separated by a colon (OPEN)
 3. [ ] Issue #22: Review and fix instrumentation tests + add Compose UI tests (OPEN)
-4. [ ] Write TranscriptionDetailViewModel unit tests for `flatMapLatest` architecture (follow-up from closed #28)
 
 ## Context
 - Knowledge files in `docs/ai/` — canonical knowledge location

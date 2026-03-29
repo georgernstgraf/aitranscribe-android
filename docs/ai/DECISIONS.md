@@ -44,6 +44,18 @@
 - **Reason:** GROQ and OpenRouter have different base URLs
 - **Changed:** NetworkModule provides both `GroqApiService` and `OpenRouterApiService`
 
+## 2026-03-29: ViewModel test pattern: runBlocking + runCurrent + viewModelScope.cancel
+- **Reason:** `runTest` calls `advanceUntilIdle()` at teardown which hangs with infinite collectors. `advanceUntilIdle()` burns CPU polling pending work that never ends.
+- **Fix:** Use `runBlocking` + `StandardTestDispatcher` + `testDispatcher.scheduler.runCurrent()` to flush work once. Cancel `viewModel.viewModelScope` in `@After` tearDown.
+
+## 2026-03-29: org.json:json added as test dependency
+- **Reason:** Android's stub `org.json` returns null for all methods in unit tests (with `isReturnDefaultValues = true`). Integration tests that parse JSON API responses need a real implementation.
+- **Changed:** `testImplementation("org.json:json:20231013")`
+
+## 2026-03-29: Guard markAsViewed with playedCount == 0 check
+- **Reason:** Without the guard, `observeActiveTranscription` called `markAsViewed` on every flow emission, creating an infinite loop that incremented `playedCount` forever.
+- **Changed:** `if (!suppressAutoMark)` → `if (!suppressAutoMark && entity.playedCount == 0)` in TranscriptionDetailViewModel
+
 ## 2026-03-04: hiltViewModel() over viewModel() for all Compose screens
 - **Reason:** Plain `viewModel()` bypasses Hilt DI, causing runtime crashes
 - **Rule:** Every `@HiltViewModel` must use `hiltViewModel()` in Compose

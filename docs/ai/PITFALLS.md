@@ -46,10 +46,19 @@ Wrong LLM model names, invalid OpenRouter keys, and network errors during post-p
 `startDestination = "setup"` always renders the setup screen first. `loadExistingKeys()` then validates and triggers navigation to main. This causes a visible flash. Should check keys before rendering navigation, or use a splash/loading state.
 
 ## ViewModel tests with infinite Flow collectors hang forever
-ViewModels that call `flow.collect {}` in `init` create infinite coroutines. Using `advanceUntilIdle()` or `UnconfinedTestDispatcher` with `setMain` causes tests to hang. **Fix:** Use `StandardTestDispatcher` with `setMain`, avoid `advanceUntilIdle()`, read `.value` directly on StateFlow.
+ViewModels that call `flow.collect {}` in `init` create infinite coroutines. Using `advanceUntilIdle()` or `UnconfinedTestDispatcher` with `setMain` causes tests to hang. **Fix:** Use `StandardTestDispatcher` with `setMain`, avoid `advanceUntilIdle()`, use `runCurrent()` instead, read `.value` directly on StateFlow.
 
 ## runTest hangs with infinite viewModelScope coroutines
 `runTest` calls `advanceUntilIdle()` internally at test end. If `viewModelScope` has an infinite `collect`, this never completes. Use `runBlocking` instead for ViewModels with infinite collectors.
+
+## org.json Android stubs return null in unit tests
+With `isReturnDefaultValues = true` in build.gradle.kts, `JSONObject.getJSONArray()` returns `null` instead of parsing JSON. **Fix:** Add `testImplementation("org.json:json:20231013")` for a real implementation in tests.
+
+## Cross-test hangs from uncleared viewModelScope
+ViewModel tests must cancel `viewModel.viewModelScope` in `@After` tearDown. Otherwise infinite collectors from one test class leak into the next, causing hangs.
+
+## Infinite markAsViewed loop in TranscriptionDetailViewModel (FIXED)
+`observeActiveTranscription` called `markAsViewed` on every flow emission without checking `playedCount`. This caused a cycle: markAsViewed → DB update → flow re-emit → markAsViewed again, incrementing playedCount forever. **Fix:** Guard with `entity.playedCount == 0`.
 
 ## Overscroll auto-navigation breaks detail screen
 Using `NestedScrollConnection.onPostScroll` to auto-navigate prev/next on overscroll fires on initial load because `scrollState.value == 0` is immediately true. Use HorizontalPager with explicit prev/next buttons instead.
