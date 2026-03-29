@@ -97,6 +97,24 @@ android {
         }
     }
 
+    tasks.withType<Test>().configureEach {
+        val envFile = rootProject.file(".env")
+        if (envFile.exists()) {
+            envFile.readLines()
+                .filter { it.isNotBlank() && !it.startsWith("#") && "=" in it }
+                .forEach { line ->
+                    val idx = line.indexOf('=')
+                    val key = line.substring(0, idx).trim()
+                    var value = line.substring(idx + 1).trim()
+                    if (value.startsWith("\"") && value.endsWith("\"")) value = value.substring(1, value.length - 1)
+                    if (value.startsWith("'") && value.endsWith("'")) value = value.substring(1, value.length - 1)
+                    if (key.isNotEmpty()) {
+                        systemProperty(key, value)
+                    }
+                }
+        }
+    }
+
     sourceSets {
         getByName("test") {
             resources.srcDirs("src/test/resources")
