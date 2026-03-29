@@ -69,6 +69,39 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Key file in companion: `core.py` (LLM call function), `main.py` (prompts, modes, pipeline), `tui.py` (UI behavior)
 - When adding or changing post-processing behavior, always check `../aitranscribe/main.py` first
 
+## Knowledge Persistence
+- Use the persistent workflow in `docs/ai/` — this is the canonical knowledge location
+- Use the `knowledge-persistence` skill when available
+
+### Persistence Triggers
+1. **End of productive session** — always update STATE.md and HANDOFF.md
+2. **After an architectural or technical decision** — add to DECISIONS.md immediately
+3. **After discovering a bug, constraint, or non-obvious behavior** — add to PITFALLS.md
+4. **After establishing a coding pattern or naming rule** — add to CONVENTIONS.md
+5. **When the user asks to "save context" or "persist knowledge"** — full persistence run
+
+### Knowledge File Content Guide
+
+| File | Contains | Disambiguation Test |
+|------|----------|---------------------|
+| DECISIONS.md | One-time choices with rationale | "Is this a past choice I made?" |
+| CONVENTIONS.md | Ongoing rules to follow every time | "Must I follow this on every change?" |
+| PITFALLS.md | Things that don't work, subtle bugs | "Would a new agent repeat this mistake?" |
+| STATE.md | Current project status (overwritten entirely) | "What's happening right now?" |
+| HANDOFF.md | Pending tasks for next agent | "What's unfinished?" |
+| DOMAIN.md | Business rules not obvious from code | "Would a developer miss this from code alone?" |
+
+### Fallback Protocol
+If the `knowledge-persistence` skill is not available:
+1. Read all existing `docs/ai/` files
+2. Identify new facts, decisions, patterns from this session not yet recorded
+3. Append to the correct file using the content guide above (do not duplicate)
+4. Overwrite STATE.md entirely with current status
+5. Update HANDOFF.md: clear if done, or list pending tasks with context
+6. Report which files were changed and how many entries were added
+
+Keep each knowledge file under 200 lines. Split by topic if needed.
+
 ## Testing Strategy
 
 ### Test Pyramid

@@ -3,19 +3,21 @@
 Current status as of 2026-03-29.
 
 ## Current Focus
-Issue #28 closed. Knowledge migration to `docs/ai/` complete.
+Issue #31 closed. Tool-agnostic cleanup and knowledge persistence policy established.
 
 ## Completed This Session
-- [x] Issue #28: Root cause analysis and fix — replaced uncancelled Flow collectors with `flatMapLatest`
-- [x] Issue #28: Fix committed, pushed, and deployed to physical device
-- [x] Knowledge migrated from `.opencode/knowledge/` to `docs/ai/` (persistent workflow)
-- [x] AGENTS.md updated to reference `docs/ai/` bootstrap sequence
-- [x] Added auto-deploy convention (adb install after build if device present)
-- [x] Added trunk-based workflow convention (git pull before work)
-- [x] Assessed companion AGENTS.md knowledge persistence — identified gaps, documented in our conventions
+- [x] Issue #28: Swipe fix (flatMapLatest) committed, deployed, and closed
+- [x] Issue #31: Defined policy for project-specific skills and tool-agnosticism
+- [x] Rewrote AGENTS.md — positive project instructions, no anti-tool framing
+- [x] Moved `.opencode/skills/orchestrator/` → `skills/orchestrator/` (project root)
+- [x] Removed `.opencode/knowledge/` (superseded by `docs/ai/`)
+- [x] Removed `memory/` (tool session artifact)
+- [x] Updated `.gitignore` to ignore `.opencode/`, `memory/`, persona files
+- [x] Added persistence triggers and content guide to `docs/ai/CONVENTIONS.md`
+- [x] Cleaned all tool-specific references from tracked files
 
 ## Pending
-- [ ] Issue #28 follow-up: Write new TranscriptionDetailViewModel tests for flatMapLatest architecture
+- [ ] Issue #28 follow-up: Write TranscriptionDetailViewModel tests for flatMapLatest architecture
 - [ ] Fix setup screen flash on startup
 - [ ] Fix settings: API key validation on save, not on timeout
 - [ ] Surface post-processing failures to user
@@ -27,4 +29,4 @@ Issue #28 closed. Knowledge migration to `docs/ai/` complete.
 - None
 
 ## Next Session Suggestion
-Write TranscriptionDetailViewModel unit tests for the new `flatMapLatest` architecture. Then tackle setup screen flash.
+Write TranscriptionDetailViewModel unit tests for the `flatMapLatest` architecture. Then tackle setup screen flash.

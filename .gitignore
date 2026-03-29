@@ -113,8 +113,11 @@ emulator-logs.txt
 # secrets
 .env
 
-# Symlinked skills from opencode-helpers (not tracked)
-skills/
+# Agent tool artifacts (local only, not tracked)
+.opencode/
+memory/
+
+# Agent persona files (not used in this project)
 HEARTBEAT.md
 IDENTITY.md
 SOUL.md

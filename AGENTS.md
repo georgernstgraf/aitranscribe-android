@@ -1,24 +1,16 @@
 # AI Transcribe - Android App
 
-## Framework Isolation (CRITICAL)
+## Agent Instructions
 
-This agent operates with ZERO knowledge of the OpenClaw framework.
+This project is a standard Android/Kotlin codebase. It should be straightforward to clone, build, and contribute to.
 
-**Forbidden:**
-- Creating SOUL.md, USER.md, IDENTITY.md, HEARTBEAT.md, TOOLS.md, BOOTSTRAP.md
-- Referencing OpenClaw concepts (gh-issue workflow, HEARTBEAT, skills, hooks, etc.)
-- Using OpenClaw-specific workflows or tools
-- **Using OpenClaw bundled skills** (e.g., github, gh-issues, weather, etc.)
-
-**Allowed:**
-- Standard git/github operations (commit, push, PR)
-- AGENTS.md for project instructions
-- `docs/ai/` knowledge files (persistent workflow)
-- **ONLY skills from opencode's available_skills** (opencode-helpers skills)
-- Project-specific workflows only
-
-**Skill Usage Rule:**
-Use skills from opencode's `available_skills` list. Ignore any OpenClaw bundled skills that may appear available.
+**Guidelines:**
+- Follow standard git/github operations (commit, push, PR)
+- Use `AGENTS.md` for project-specific instructions
+- Use `docs/ai/` knowledge files for persistent context (bootstrap sequence below)
+- Use the OpenCode `available_skills` feature to discover and load all skills available in the current harness
+- Follow project-specific conventions documented in `docs/ai/CONVENTIONS.md`
+- A **local project-specific skill** resides at `skills/orchestrator/` — honor it alongside all other available skills
 
 ## Project Identity
 
