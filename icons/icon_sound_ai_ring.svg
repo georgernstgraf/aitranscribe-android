@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg4" x1="0" y1="0" x2="512" y2="512">
+      <stop offset="0%" stop-color="#0D1B2A"/>
+      <stop offset="100%" stop-color="#1A3044"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4FC3F7"/>
+      <stop offset="100%" stop-color="#0288D1"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg4)"/>
+  
+  <!-- Outer ring glow -->
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#4FC3F7" stroke-width="3" opacity="0.2"/>
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#4FC3F7" stroke-width="1.5" opacity="0.1"/>
+  
+  <!-- Central waveform circle - sound waves emanating -->
+  <circle cx="256" cy="256" r="50" fill="url(#glow)" opacity="0.9"/>
+  
+  <!-- Sound wave arcs -->
+  <path d="M 190 190 Q 150 256 190 322" fill="none" stroke="#4FC3F7" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+  <path d="M 322 190 Q 362 256 322 322" fill="none" stroke="#4FC3F7" stroke-width="8" stroke-linecap="round" opacity="0.7"/>
+  
+  <path d="M 156 160 Q 100 256 156 352" fill="none" stroke="#4FC3F7" stroke-width="6" stroke-linecap="round" opacity="0.45"/>
+  <path d="M 356 160 Q 412 256 356 352" fill="none" stroke="#4FC3F7" stroke-width="6" stroke-linecap="round" opacity="0.45"/>
+  
+  <path d="M 130 130 Q 60 256 130 382" fill="none" stroke="#4FC3F7" stroke-width="4" stroke-linecap="round" opacity="0.25"/>
+  <path d="M 382 130 Q 452 256 382 382" fill="none" stroke="#4FC3F7" stroke-width="4" stroke-linecap="round" opacity="0.25"/>
+  
+  <!-- AI brain dots inside center circle -->
+  <circle cx="256" cy="240" r="4" fill="#0D1B2A" opacity="0.6"/>
+  <circle cx="240" cy="260" r="4" fill="#0D1B2A" opacity="0.6"/>
+  <circle cx="272" cy="260" r="4" fill="#0D1B2A" opacity="0.6"/>
+  <circle cx="256" cy="272" r="4" fill="#0D1B2A" opacity="0.6"/>
+  <line x1="256" y1="240" x2="240" y2="260" stroke="#0D1B2A" stroke-width="1.5" opacity="0.4"/>
+  <line x1="256" y1="240" x2="272" y2="260" stroke="#0D1B2A" stroke-width="1.5" opacity="0.4"/>
+  <line x1="240" y1="260" x2="256" y2="272" stroke="#0D1B2A" stroke-width="1.5" opacity="0.4"/>
+  <line x1="272" y1="260" x2="256" y2="272" stroke="#0D1B2A" stroke-width="1.5" opacity="0.4"/>
+</svg>

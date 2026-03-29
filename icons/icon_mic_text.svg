@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="512" y2="512">
+      <stop offset="0%" stop-color="#0D1B2A"/>
+      <stop offset="100%" stop-color="#172028"/>
+    </linearGradient>
+    <linearGradient id="mic" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4FC3F7"/>
+      <stop offset="100%" stop-color="#0288D1"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg3)"/>
+  
+  <!-- Large centered mic -->
+  <rect x="210" y="90" width="92" height="160" rx="46" fill="url(#mic)"/>
+  
+  <!-- Mic grille -->
+  <line x1="228" y1="126" x2="284" y2="126" stroke="#0D1B2A" stroke-width="3" opacity="0.35"/>
+  <line x1="228" y1="150" x2="284" y2="150" stroke="#0D1B2A" stroke-width="3" opacity="0.35"/>
+  <line x1="228" y1="174" x2="284" y2="174" stroke="#0D1B2A" stroke-width="3" opacity="0.35"/>
+  <line x1="228" y1="198" x2="284" y2="198" stroke="#0D1B2A" stroke-width="3" opacity="0.35"/>
+  
+  <!-- Mic holder arc -->
+  <path d="M 164 190 Q 164 310 256 310 Q 348 310 348 190" fill="none" stroke="#4FC3F7" stroke-width="14" stroke-linecap="round"/>
+  
+  <!-- Stand -->
+  <line x1="256" y1="310" x2="256" y2="370" stroke="#4FC3F7" stroke-width="14" stroke-linecap="round"/>
+  <line x1="196" y1="370" x2="316" y2="370" stroke="#4FC3F7" stroke-width="14" stroke-linecap="round"/>
+  
+  <!-- Transcription text lines flowing from mic -->
+  <rect x="140" y="400" width="100" height="8" rx="4" fill="#80DEEA" opacity="0.4"/>
+  <rect x="140" y="420" width="160" height="8" rx="4" fill="#80DEEA" opacity="0.3"/>
+  <rect x="140" y="440" width="70" height="8" rx="4" fill="#80DEEA" opacity="0.2"/>
+  
+  <!-- Text lines right side -->
+  <rect x="272" y="400" width="100" height="8" rx="4" fill="#80DEEA" opacity="0.4"/>
+  <rect x="272" y="420" width="60" height="8" rx="4" fill="#80DEEA" opacity="0.3"/>
+</svg>

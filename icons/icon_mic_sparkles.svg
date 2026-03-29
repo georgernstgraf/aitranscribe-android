@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#1A2B3C"/>
+  
+  <!-- Microphone body -->
+  <rect x="216" y="100" width="80" height="140" rx="40" fill="#4FC3F7" opacity="0.9"/>
+  
+  <!-- Microphone grille lines -->
+  <line x1="232" y1="130" x2="280" y2="130" stroke="#1A2B3C" stroke-width="3" opacity="0.4"/>
+  <line x1="232" y1="150" x2="280" y2="150" stroke="#1A2B3C" stroke-width="3" opacity="0.4"/>
+  <line x1="232" y1="170" x2="280" y2="170" stroke="#1A2B3C" stroke-width="3" opacity="0.4"/>
+  <line x1="232" y1="190" x2="280" y2="190" stroke="#1A2B3C" stroke-width="3" opacity="0.4"/>
+  <line x1="232" y1="210" x2="280" y2="210" stroke="#1A2B3C" stroke-width="3" opacity="0.4"/>
+  
+  <!-- Microphone arc -->
+  <path d="M 176 180 Q 176 280 256 280 Q 336 280 336 180" fill="none" stroke="#4FC3F7" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- Stand -->
+  <line x1="256" y1="280" x2="256" y2="340" stroke="#4FC3F7" stroke-width="12" stroke-linecap="round"/>
+  <line x1="200" y1="340" x2="312" y2="340" stroke="#4FC3F7" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- AI sparkle top-left -->
+  <path d="M 120 120 L 126 108 L 132 120 L 144 126 L 132 132 L 126 144 L 120 132 L 108 126 Z" fill="#80DEEA" opacity="0.8"/>
+  
+  <!-- AI sparkle bottom-right -->
+  <path d="M 370 370 L 376 358 L 382 370 L 394 376 L 382 382 L 376 394 L 370 382 L 358 376 Z" fill="#80DEEA" opacity="0.6"/>
+  
+  <!-- Small sparkle -->
+  <path d="M 380 140 L 384 132 L 388 140 L 396 144 L 388 148 L 384 156 L 380 148 L 372 144 Z" fill="#80DEEA" opacity="0.5"/>
+</svg>

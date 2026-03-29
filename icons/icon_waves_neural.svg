@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512">
+      <stop offset="0%" stop-color="#0D1B2A"/>
+      <stop offset="100%" stop-color="#1B3A4B"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4FC3F7"/>
+      <stop offset="100%" stop-color="#0288D1"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  
+  <!-- Sound wave bars -->
+  <rect x="140" y="200" width="24" height="112" rx="12" fill="url(#wave)" opacity="0.5"/>
+  <rect x="180" y="160" width="24" height="192" rx="12" fill="url(#wave)" opacity="0.65"/>
+  <rect x="220" y="120" width="24" height="272" rx="12" fill="url(#wave)" opacity="0.8"/>
+  <rect x="260" y="140" width="24" height="232" rx="12" fill="url(#wave)" opacity="0.9"/>
+  <rect x="300" y="170" width="24" height="172" rx="12" fill="url(#wave)" opacity="0.7"/>
+  <rect x="340" y="210" width="24" height="92" rx="12" fill="url(#wave)" opacity="0.5"/>
+  
+  <!-- AI circuit/node overlay -->
+  <circle cx="256" cy="256" r="60" fill="none" stroke="#80DEEA" stroke-width="2" opacity="0.3"/>
+  <circle cx="256" cy="256" r="90" fill="none" stroke="#80DEEA" stroke-width="1.5" opacity="0.15"/>
+  
+  <!-- Neural dots -->
+  <circle cx="220" cy="220" r="5" fill="#4FC3F7" opacity="0.7"/>
+  <circle cx="292" cy="220" r="5" fill="#4FC3F7" opacity="0.7"/>
+  <circle cx="256" cy="292" r="5" fill="#4FC3F7" opacity="0.7"/>
+  <circle cx="256" cy="256" r="7" fill="#80DEEA" opacity="0.9"/>
+  
+  <!-- Neural connections -->
+  <line x1="220" y1="220" x2="256" y2="256" stroke="#4FC3F7" stroke-width="1.5" opacity="0.4"/>
+  <line x1="292" y1="220" x2="256" y2="256" stroke="#4FC3F7" stroke-width="1.5" opacity="0.4"/>
+  <line x1="256" y1="292" x2="256" y2="256" stroke="#4FC3F7" stroke-width="1.5" opacity="0.4"/>
+  <line x1="220" y1="220" x2="292" y2="220" stroke="#4FC3F7" stroke-width="1" opacity="0.25"/>
+</svg>
