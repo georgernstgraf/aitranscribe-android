@@ -13,8 +13,6 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.LocalDateTime
@@ -56,6 +54,18 @@ class TranscriptionDetailViewModelTest {
         assertFalse(state.isViewed)
         assertFalse(state.isDeleted)
         assertFalse(state.isCopiedToClipboard)
+    }
+
+    @Test
+    fun `updateText persists edited text to repository`() = runBlocking {
+        val original = createTestEntity(originalText = "original text")
+        val id = repository.insert(original)
+
+        val updatedEntity = original.copy(id = id, originalText = "edited text")
+        repository.update(updatedEntity)
+
+        val reloaded = repository.getById(id)
+        assertEquals("edited text", reloaded?.originalText)
     }
 
     private fun createTestEntity(
