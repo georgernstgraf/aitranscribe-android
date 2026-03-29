@@ -33,8 +33,6 @@ android {
     }
 
     signingConfigs {
-        // Debug signing config - uses consistent keystore when available (CI builds)
-        // Falls back to default debug keystore on local builds
         getByName("debug") {
             if (keystorePropertiesFile.exists()) {
                 storeFile = file(keystoreProperties["storeFile"] as String)
@@ -53,6 +51,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
         debug {
             isMinifyEnabled = false
