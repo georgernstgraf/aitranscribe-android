@@ -12,7 +12,4 @@
 - Knowledge files in `docs/ai/` — canonical knowledge location
 - Project-specific skill at `skills/orchestrator/`
 - Companion project `../aitranscribe` is the authoritative source for prompts and pipeline logic
-- `.opencode/` and `memory/` are gitignored — not part of the project
-- ZAI (api.z.ai) is now an LLM provider alongside OpenRouter; GROQ remains sole STT provider
-- `ProviderConfig.kt` is the single source of truth for model lists — update there when adding/removing models
-- `TranscriptionStatus.COMPLETED_WITH_WARNING` used when post-processing fails — raw text still shown
+- CI builds successful; release APKs are unsigned as of 2026-03-29.
