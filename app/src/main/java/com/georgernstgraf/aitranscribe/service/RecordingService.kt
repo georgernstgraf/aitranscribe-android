@@ -103,12 +103,13 @@ class RecordingService : Service() {
         mediaRecorder?.release()
         mediaRecorder = null
 
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        notificationManager.cancel(NOTIFICATION_ID_RECORDING)
-
         val audioPath = currentAudioFile?.absolutePath
         Log.d(TAG, "stopRecording: audioPath=$audioPath, duration=$recordingDuration")
         broadcastRecordingResult(audioPath, recordingDuration, wasCancelled = false)
+
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        notificationManager.cancel(NOTIFICATION_ID_RECORDING)
+        stopSelf()
     }
 
     private fun cancelRecording() {
@@ -128,10 +129,11 @@ class RecordingService : Service() {
 
         currentAudioFile?.delete()
 
+        broadcastRecordingResult(null, recordingDuration, wasCancelled = true)
+
         stopForeground(STOP_FOREGROUND_REMOVE)
         notificationManager.cancel(NOTIFICATION_ID_RECORDING)
-
-        broadcastRecordingResult(null, recordingDuration, wasCancelled = true)
+        stopSelf()
     }
 
     private fun initializeMediaRecorder() {
