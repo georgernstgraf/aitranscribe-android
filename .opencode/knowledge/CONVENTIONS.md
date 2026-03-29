@@ -63,3 +63,25 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - This Android app is the companion/follower — prompts, modes, and workflow must mirror the Python project
 - Key file in companion: `core.py` (LLM call function), `main.py` (prompts, modes, pipeline), `tui.py` (UI behavior)
 - When adding or changing post-processing behavior, always check `../aitranscribe/main.py` first
+
+## Testing Strategy
+
+### Test Pyramid
+```
+     /  UI Tests  \         ← Critical flows only (record→transcribe, settings, search)
+    /  Integration \        ← DAOs, Services, Workers (androidTest)
+   /    Unit Tests   \      ← ViewModels, UseCases, Repositories (test/)
+  /____________________\
+```
+
+### ViewModel Testing Rules
+- Use `StandardTestDispatcher` + `setMain()` — never `UnconfinedTestDispatcher`
+- Never call `advanceUntilIdle()` — infinite Flow collectors will hang
+- Use `runBlocking` instead of `runTest` for ViewModels with infinite collectors
+- Read `.value` directly on `StateFlow` for assertions
+- Use `FakeTranscriptionRepository` from `data/testing/`
+
+### Known Testing Pitfalls
+- See `.opencode/knowledge/PITFALLS.md` for the full list
+- Key: infinite `collect {}` in ViewModel init hangs `runTest`/`advanceUntilIdle()`
+- Key: Hilt stale builds require `./gradlew clean` before instrumentation tests

@@ -65,3 +65,45 @@ any new work unless the user explicitly says otherwise.
 - Android Emulator: `Medium_Phone_API_36.1` (Pixel-style, API 36)
 - Emulator must be started with `-allow-host-audio` for microphone input
 - ADB used for install (`adb install -r`) and log inspection (`adb logcat`)
+
+## Testing Policy
+
+### Build Gate
+Every commit must pass `./gradlew test` before push. If unit tests fail, fix them before committing.
+
+### Required Tests
+| Component | Requirement |
+|-----------|-------------|
+| **ViewModels** | Every `*ViewModel.kt` must have a corresponding `*ViewModelTest.kt` |
+| **UseCases** | Every `*UseCase.kt` must have a corresponding `*UseCaseTest.kt` |
+| **Bug fixes** | Must include a regression test that would have caught the bug |
+
+### When to Write Tests
+- **New feature:** Write tests alongside the implementation, not after
+- **Refactor:** Existing tests must still pass; update if interfaces change
+- **Bug fix:** Add failing test first, then fix the bug
+
+### Test Structure
+- **Unit tests** (`app/src/test/`): ViewModels, UseCases, Repositories, utilities
+- **Instrumentation tests** (`app/src/androidTest/`): DAOs, Services, database migrations
+- **Compose UI tests** (`app/src/androidTest/`): Critical user flows (record → transcribe → display, settings, search)
+- Use `FakeTranscriptionRepository` from `data/testing/` for ViewModel tests
+- Use `MainDispatcherRule` for ViewModel coroutine testing
+
+### Naming Convention
+- Test class: `<ClassUnderTest>Test.kt` (e.g., `MainViewModelTest.kt`)
+- Test method: backtick descriptive name (e.g., `` `toggling view status marks as unread` ``)
+- Place tests mirroring source structure under `app/src/test/` or `app/src/androidTest/`
+
+### Running Tests
+```bash
+./gradlew test                          # All unit tests
+./gradlew testDebugUnitTest             # Debug unit tests only
+./gradlew connectedAndroidTest          # Instrumentation tests (requires emulator/device)
+./gradlew test --tests "*MainViewModel*"  # Single test class
+```
+
+### What Not to Test
+- Compose framework internals (state management, recomposition)
+- Third-party library behavior (Retrofit, Room generated code)
+- Simple data classes or enums
