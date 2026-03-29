@@ -35,12 +35,33 @@ class TranscriptionDetailViewModel @Inject constructor(
     private var suppressAutoMark = false
     private var viewFilter: ViewFilter = ViewFilter.ALL
 
+    // Pager data: list of IDs and current index
+    private val _filteredIds = MutableStateFlow<List<Long>>(emptyList())
+    val filteredIds: StateFlow<List<Long>> = _filteredIds.asStateFlow()
+
+    private val _currentIndex = MutableStateFlow(0)
+    val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
+
     init {
         val filterName = savedStateHandle.get<String>(KEY_VIEW_FILTER)
         if (filterName != null) {
             viewFilter = ViewFilter.valueOf(filterName)
         }
-        loadTranscription(transcriptionId)
+        loadFilteredIds()
+    }
+
+    private fun loadFilteredIds() {
+        viewModelScope.launch {
+            repository.getFilteredIds(viewFilter).collect { ids ->
+                _filteredIds.value = ids
+                val idx = ids.indexOf(transcriptionId)
+                if (idx >= 0) {
+                    _currentIndex.value = idx
+                }
+                // Load transcription for current index
+                loadTranscription(ids.getOrElse(_currentIndex.value) { transcriptionId })
+            }
+        }
     }
 
     private fun loadTranscription(id: Long) {
@@ -48,14 +69,12 @@ class TranscriptionDetailViewModel @Inject constructor(
             repository.getByIdFlow(id).collect { entity ->
                 if (entity != null) {
                     val transcription = entity.toDomain()
-
                     _uiState.update {
                         it.copy(
                             transcription = transcription,
                             isViewed = transcription.isViewed
                         )
                     }
-
                     if (!suppressAutoMark) {
                         markAsViewed(id)
                     }
@@ -67,6 +86,15 @@ class TranscriptionDetailViewModel @Inject constructor(
     private fun markAsViewed(id: Long) {
         viewModelScope.launch {
             repository.markAsViewed(id)
+        }
+    }
+
+    fun onPageChanged(index: Int) {
+        val ids = _filteredIds.value
+        if (index in ids.indices) {
+            _currentIndex.value = index
+            suppressAutoMark = false
+            loadTranscription(ids[index])
         }
     }
 
@@ -108,30 +136,13 @@ class TranscriptionDetailViewModel @Inject constructor(
 
     fun deleteTranscription(id: Long) {
         viewModelScope.launch {
-            val nextId = repository.getNextTranscriptionId(id, viewFilter)
+            val ids = _filteredIds.value
+            val currentIdx = _currentIndex.value
+            // Pick next or prev as fallback
+            val nextId = ids.getOrNull(currentIdx + 1) ?: ids.getOrNull(currentIdx - 1)
             repository.deleteById(id)
             _uiState.update { it.copy(isDeleted = true, nextTranscriptionId = nextId) }
         }
-    }
-
-    fun navigateToNext() {
-        viewModelScope.launch {
-            val id = _uiState.value.transcription?.id ?: return@launch
-            val nextId = repository.getNextTranscriptionId(id, viewFilter)
-            _uiState.update { it.copy(navigateToId = nextId) }
-        }
-    }
-
-    fun navigateToPrev() {
-        viewModelScope.launch {
-            val id = _uiState.value.transcription?.id ?: return@launch
-            val prevId = repository.getPrevTranscriptionId(id, viewFilter)
-            _uiState.update { it.copy(navigateToId = prevId) }
-        }
-    }
-
-    fun clearNavigation() {
-        _uiState.update { it.copy(navigateToId = null) }
     }
 
     fun copyToClipboard() {
@@ -164,6 +175,5 @@ data class TranscriptionDetailUiState(
     val isViewed: Boolean = false,
     val isDeleted: Boolean = false,
     val isCopiedToClipboard: Boolean = false,
-    val nextTranscriptionId: Long? = null,
-    val navigateToId: Long? = null
+    val nextTranscriptionId: Long? = null
 )

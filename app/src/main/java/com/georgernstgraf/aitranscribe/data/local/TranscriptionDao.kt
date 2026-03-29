@@ -161,4 +161,15 @@ interface TranscriptionDao {
         LIMIT 1
     """)
     suspend fun getPrevId(currentId: Long, viewFilter: String): Long?
+
+    @Query("""
+        SELECT id FROM transcriptions
+        WHERE (
+            :viewFilter = 'ALL'
+            OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0)
+            OR (:viewFilter = 'VIEWED' AND played_count > 0)
+        )
+        ORDER BY created_at DESC
+    """)
+    fun getFilteredIds(viewFilter: String): Flow<List<Long>>
 }

@@ -71,4 +71,6 @@ interface TranscriptionRepository {
     suspend fun getNextTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long?
 
     suspend fun getPrevTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long?
+
+    fun getFilteredIds(viewFilter: ViewFilter): Flow<List<Long>>
 }

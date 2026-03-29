@@ -1,27 +1,26 @@
 package com.georgernstgraf.aitranscribe.ui.screen
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -42,10 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -56,7 +53,7 @@ import androidx.navigation.NavController
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.ui.viewmodel.TranscriptionDetailViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TranscriptionDetailScreen(
     transcriptionId: Long,
@@ -65,7 +62,7 @@ fun TranscriptionDetailScreen(
     viewModel: TranscriptionDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
-    val scrollState = rememberScrollState()
+    val filteredIds by viewModel.filteredIds.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state.isCopiedToClipboard) {
@@ -73,21 +70,14 @@ fun TranscriptionDetailScreen(
             snackbarHostState.showSnackbar(
                 message = "Copied to clipboard",
                 actionLabel = "OK",
-                duration = androidx.compose.material3.SnackbarDuration.Short
+                duration = SnackbarDuration.Short
             )
         }
     }
 
     LaunchedEffect(state.isDeleted) {
         if (state.isDeleted) {
-            val nextId = state.nextTranscriptionId
-            if (nextId != null) {
-                navController.navigate("transcription/$nextId/${viewFilter.name}") {
-                    popUpTo("transcription/$transcriptionId/${viewFilter.name}") { inclusive = true }
-                }
-            } else {
-                navController.navigateUp()
-            }
+            navController.navigateUp()
         }
     }
 
@@ -104,22 +94,17 @@ fun TranscriptionDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.navigateToPrev() }) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous")
-                    }
-                    IconButton(onClick = { viewModel.navigateToNext() }) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next")
-                    }
                     IconButton(onClick = { viewModel.copyToClipboard() }) {
                         Icon(Icons.Default.ContentCopy, contentDescription = "Copy to clipboard")
                     }
-                    IconButton(onClick = { viewModel.toggleViewStatus(transcriptionId) }) {
+                    val currentId = state.transcription?.id ?: transcriptionId
+                    IconButton(onClick = { viewModel.toggleViewStatus(currentId) }) {
                         Icon(
                             if (state.isViewed) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                             contentDescription = if (state.isViewed) "Mark as unread" else "Mark as read"
                         )
                     }
-                    IconButton(onClick = { viewModel.deleteTranscription(transcriptionId) }) {
+                    IconButton(onClick = { viewModel.deleteTranscription(currentId) }) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete")
                     }
                 },
@@ -127,105 +112,98 @@ fun TranscriptionDetailScreen(
             )
         }
     ) { padding ->
-        val bgColor = if (state.transcription?.isUnviewed == true) Color(0xFF1E3044) else Color(0xFF172028)
-        val focusManager = LocalFocusManager.current
 
-        var isEditing by remember { mutableStateOf(false) }
+        if (filteredIds.isEmpty()) {
+            return@Scaffold
+        }
 
-        Column(
+        val initialIndex = filteredIds.indexOf(transcriptionId).coerceAtLeast(0)
+        val pagerState = rememberPagerState(
+            initialPage = initialIndex,
+            pageCount = { filteredIds.size }
+        )
+
+        LaunchedEffect(pagerState.settledPage) {
+            viewModel.onPageChanged(pagerState.settledPage)
+        }
+
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier
                 .fillMaxSize()
-                .background(bgColor)
                 .padding(padding)
-                .clickable(
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                    indication = null
-                ) {
-                    if (isEditing) {
-                        focusManager.clearFocus()
-                    }
-                }
-                .verticalScroll(scrollState)
-        ) {
-            state.transcription?.let { transcription ->
-                var editText by remember(transcription.id) {
-                    mutableStateOf(transcription.originalText)
-                }
+        ) { page ->
+            val pageId = filteredIds.getOrElse(page) { transcriptionId }
+            val isCurrentPage = page == pagerState.settledPage
+            val transcription = if (isCurrentPage) state.transcription else null
 
-                val hasUnsavedChanges = editText != transcription.originalText
+            val bgColor = if (transcription?.isUnviewed == true) Color(0xFF1E3044) else Color(0xFF172028)
+            val focusManager = LocalFocusManager.current
+            var isEditing by remember { mutableStateOf(false) }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(bgColor)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
                     ) {
-                        transcription.summary?.let { summary ->
-                            Text(
-                                text = summary,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                        if (isEditing) {
+                            focusManager.clearFocus()
+                        }
+                    }
+                    .verticalScroll(rememberScrollState())
+            ) {
+                transcription?.let { trans ->
+                    var editText by remember(trans.id) {
+                        mutableStateOf(trans.originalText)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Card(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            trans.summary?.let { summary ->
+                                Text(
+                                    text = summary,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            OutlinedTextField(
+                                value = editText,
+                                onValueChange = { editText = it },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onFocusEvent { focusState ->
+                                        if (focusState.hasFocus) {
+                                            isEditing = true
+                                        } else if (isEditing) {
+                                            if (editText != trans.originalText) {
+                                                viewModel.updateText(trans.id, editText)
+                                            }
+                                            isEditing = false
+                                        }
+                                    },
+                                minLines = 3,
+                                textStyle = MaterialTheme.typography.bodyLarge
                             )
                         }
-
-                        OutlinedTextField(
-                            value = editText,
-                            onValueChange = { editText = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .onFocusEvent { focusState ->
-                                    if (focusState.hasFocus) {
-                                        isEditing = true
-                                    } else if (isEditing) {
-                                        if (editText != transcription.originalText) {
-                                            viewModel.updateText(transcription.id, editText)
-                                        }
-                                        isEditing = false
-                                    }
-                                },
-                            minLines = 3,
-                            textStyle = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Button(
-                        onClick = { viewModel.toggleViewStatus(transcriptionId) }
-                    ) {
-                        Text(if (state.isViewed) "Mark Unread" else "Mark Read")
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Button(
-                        onClick = {
-                            viewModel.updateText(transcription.id, editText)
-                            isEditing = false
-                        },
-                        enabled = hasUnsavedChanges
-                    ) {
-                        Text("Save")
-                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

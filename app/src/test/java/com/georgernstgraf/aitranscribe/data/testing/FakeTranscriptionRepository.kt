@@ -242,4 +242,8 @@ class FakeTranscriptionRepository : TranscriptionRepository {
             summary = summary
         )
     }
+
+    override fun getFilteredIds(viewFilter: ViewFilter): Flow<List<Long>> {
+        return kotlinx.coroutines.flow.flowOf(emptyList())
+    }
 }

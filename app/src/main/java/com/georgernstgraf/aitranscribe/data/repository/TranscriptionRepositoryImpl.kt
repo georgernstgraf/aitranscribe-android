@@ -149,4 +149,8 @@ class TranscriptionRepositoryImpl @Inject constructor(
     override suspend fun getPrevTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long? {
         return transcriptionDao.getPrevId(currentId, viewFilter.name)
     }
+
+    override fun getFilteredIds(viewFilter: ViewFilter): Flow<List<Long>> {
+        return transcriptionDao.getFilteredIds(viewFilter.name)
+    }
 }
