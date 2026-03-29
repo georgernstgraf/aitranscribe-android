@@ -43,8 +43,16 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Use `android.util.Log` with class-name tags (e.g., `Log.d("TranscriptionWorker", ...)`)
 - Add logging at key pipeline stages: recording start/stop, file creation, API request/response, DB writes
 
+## Testing
+- Use `StandardTestDispatcher` with `setMain` for ViewModel tests that have infinite Flow collectors
+- Never use `advanceUntilIdle()` with ViewModels that collect Flows in `init` — it hangs forever
+- Use `runBlocking` + `.value` (not `first()`) to read StateFlow in ViewModel tests
+- Repository-level tests use `runBlocking` with `FakeTranscriptionRepository`
+- Run tests in background with `nohup` + `tail` to avoid CLI timeouts
+
 ## Build & Deploy
 - Build: `./gradlew assembleDebug`
+- **Auto-deploy:** After every successful build, always run `adb devices` to check for a connected physical device. If one is present, immediately run `adb install -r app/build/outputs/apk/debug/app-debug.apk`. Do not wait for the user to ask.
 - Install preserving data: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 - Never use `adb uninstall` + `adb install` (loses API keys and preferences)
 - Device package name for `run-as`: `com.georgernstgraf.aitranscribe.debug` (debug build has `.debug` suffix)

@@ -12,13 +12,16 @@ import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class TranscriptionDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
@@ -35,12 +38,13 @@ class TranscriptionDetailViewModel @Inject constructor(
     private var suppressAutoMark = false
     private var viewFilter: ViewFilter = ViewFilter.ALL
 
-    // Pager data: list of IDs and current index
     private val _filteredIds = MutableStateFlow<List<Long>>(emptyList())
     val filteredIds: StateFlow<List<Long>> = _filteredIds.asStateFlow()
 
     private val _currentIndex = MutableStateFlow(0)
     val currentIndex: StateFlow<Int> = _currentIndex.asStateFlow()
+
+    private val _activeTranscriptionId = MutableStateFlow(transcriptionId)
 
     init {
         val filterName = savedStateHandle.get<String>(KEY_VIEW_FILTER)
@@ -48,6 +52,7 @@ class TranscriptionDetailViewModel @Inject constructor(
             viewFilter = ViewFilter.valueOf(filterName)
         }
         loadFilteredIds()
+        observeActiveTranscription()
     }
 
     private fun loadFilteredIds() {
@@ -58,15 +63,15 @@ class TranscriptionDetailViewModel @Inject constructor(
                 if (idx >= 0) {
                     _currentIndex.value = idx
                 }
-                // Load transcription for current index
-                loadTranscription(ids.getOrElse(_currentIndex.value) { transcriptionId })
             }
         }
     }
 
-    private fun loadTranscription(id: Long) {
+    private fun observeActiveTranscription() {
         viewModelScope.launch {
-            repository.getByIdFlow(id).collect { entity ->
+            _activeTranscriptionId.flatMapLatest { id ->
+                repository.getByIdFlow(id)
+            }.collect { entity ->
                 if (entity != null) {
                     val transcription = entity.toDomain()
                     _uiState.update {
@@ -76,7 +81,7 @@ class TranscriptionDetailViewModel @Inject constructor(
                         )
                     }
                     if (!suppressAutoMark) {
-                        markAsViewed(id)
+                        markAsViewed(transcription.id)
                     }
                 }
             }
@@ -94,7 +99,7 @@ class TranscriptionDetailViewModel @Inject constructor(
         if (index in ids.indices) {
             _currentIndex.value = index
             suppressAutoMark = false
-            loadTranscription(ids[index])
+            _activeTranscriptionId.value = ids[index]
         }
     }
 
