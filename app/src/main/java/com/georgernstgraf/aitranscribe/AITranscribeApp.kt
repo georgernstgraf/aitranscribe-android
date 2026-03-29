@@ -33,16 +33,7 @@ class AITranscribeApp : Application(), Configuration.Provider {
                 description = "Foreground notification for recording"
             }
 
-            val transcriptionChannel = NotificationChannel(
-                CHANNEL_ID_TRANSCRIPTION,
-                getString(R.string.notification_channel_transcription),
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Notifications for transcription progress"
-            }
-
             notificationManager.createNotificationChannel(recordingChannel)
-            notificationManager.createNotificationChannel(transcriptionChannel)
         }
     }
 
@@ -53,6 +44,5 @@ class AITranscribeApp : Application(), Configuration.Provider {
 
     companion object {
         const val CHANNEL_ID_RECORDING = "recording_channel"
-        const val CHANNEL_ID_TRANSCRIPTION = "transcription_channel"
     }
 }

@@ -15,7 +15,6 @@ import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
-import com.georgernstgraf.aitranscribe.util.NotificationManager
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +34,6 @@ class TranscriptionWorker @AssistedInject constructor(
     private val repository: TranscriptionRepository,
     private val groqApiService: GroqApiService,
     private val networkMonitor: NetworkMonitor,
-    private val notificationManager: NotificationManager,
     private val securePreferences: SecurePreferences,
     private val postProcessTextUseCase: PostProcessTextUseCase
 ) : CoroutineWorker(context, params) {
@@ -56,19 +54,13 @@ class TranscriptionWorker @AssistedInject constructor(
         }
 
         if (!networkMonitor.isConnected()) {
-            notificationManager.showOfflineNotification()
             return@withContext Result.retry()
         }
-
-        notificationManager.showTranscriptionProgressNotification(queuedId)
 
         val transcriptionText = try {
             transcribeAudio(queued)
         } catch (e: Exception) {
             Log.e("TranscriptionWorker", "transcribeAudio failed", e)
-            notificationManager.showTranscriptionErrorNotification(
-                e.message ?: "Transcription failed"
-            )
             return@withContext Result.retry()
         }
         Log.d("TranscriptionWorker", "doWork: transcriptionText='$transcriptionText', length=${transcriptionText.length}")
@@ -106,7 +98,6 @@ class TranscriptionWorker @AssistedInject constructor(
                 val openRouterKey = securePreferences.getOpenRouterApiKey()
                 val llmModel = securePreferences.getLlmModel()
                 if (!openRouterKey.isNullOrBlank()) {
-                    notificationManager.showPostProcessingNotification(transcriptionId)
                     postProcessTextUseCase(transcriptionId, mode, llmModel, openRouterKey)
                 }
             }
@@ -118,13 +109,7 @@ class TranscriptionWorker @AssistedInject constructor(
             }
         } catch (e: Exception) {
             Log.e("TranscriptionWorker", "Post-processing failed (non-fatal)", e)
-            val errorMsg = e.message?.take(100) ?: "Post-processing failed"
-            notificationManager.showTranscriptionErrorNotification(
-                "Post-processing: $errorMsg"
-            )
         }
-
-        notificationManager.showTranscriptionCompleteNotification(transcriptionId)
 
         Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
     }
