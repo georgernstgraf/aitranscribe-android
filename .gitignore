@@ -115,3 +115,8 @@ emulator-logs.txt
 
 # Symlinked skills from opencode-helpers (not tracked)
 skills/
+HEARTBEAT.md
+IDENTITY.md
+SOUL.md
+TOOLS.md
+USER.md
