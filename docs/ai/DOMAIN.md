@@ -58,7 +58,21 @@ Output only the summary text with no quotes, labels, or extra commentary.
 - Default: OpenRouter (`https://openrouter.ai/api/v1`)
 - Default model: `anthropic/claude-3-haiku`
 - Also supports: Cohere (`command-r`), z.ai (`glm-5`)
-- Android currently only supports OpenRouter
+- Android now supports OpenRouter and ZAI as LLM providers
+
+## LLM Providers (Android)
+- **OpenRouter:** `https://openrouter.ai/api/v1/chat/completions` — 8 curated models (mercury, gemini-2.5-flash-lite, gemini-2.0-flash, claude-3-haiku, mistral-small-3.1-24b, gemma-3-12b, llama-3.3-70b, llama-4-scout)
+- **ZAI:** `https://api.z.ai/api/paas/v4/chat/completions` — 6 models (glm-4.7-flash free, glm-4.5-flash free, glm-4-32b-0414-128k, glm-4.7-flashx, glm-4.5-air, glm-4.7)
+- **Routing:** `PostProcessTextUseCase.callLlmApi()` dispatches to `OpenRouterApiService` or `ZaiApiService` based on `llmProvider` string stored in `SecurePreferences`
+- **STT:** GROQ only (whisper-large-v3-turbo, whisper-large-v3)
+
+## ZAI (ZhipuAI) API
+- **Base URL:** `https://api.z.ai/api/`
+- **Chat:** `paas/v4/chat/completions` — OpenAI-compatible request/response shape (reuses `OpenRouterRequest`/`OpenRouterResponse` DTOs)
+- **ASR:** `paas/v4/audio/transcriptions` — multipart, same shape as GROQ, but rejects `.m4a` format
+- **Auth:** `Authorization: Bearer <key>` (same header pattern)
+- **Key format:** hex string + dot + base64 suffix (e.g., `a116a2e064fd4a68aa5f33bfbee3c9f7.V5OqBIoBBqm9yWj0`)
+- **Pricing:** glm-4.7-flash and glm-4.5-flash are **free**; others range $0.07-$2.20/M tokens
 
 ## Data Model
 - **QueuedTranscription:** Pending transcription job (audio file path, STT model, processing mode)

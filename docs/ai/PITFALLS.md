@@ -39,8 +39,8 @@ Without explicit `@ColumnInfo(name = "...")`, Room uses the Kotlin property name
 ## Device package name has .debug suffix
 The debug build's package name is `com.georgernstgraf.aitranscribe.debug` (not `com.georgernstgraf.aitranscribe`). Use this for `run-as`, `adb shell pm`, etc.
 
-## Post-processing failures must be surfaced to user
-Wrong LLM model names, invalid OpenRouter keys, and network errors during post-processing fail silently. The transcription is saved but the user never knows cleanup/translation/summary failed. Must show feedback (e.g., status field, notification, or UI indicator).
+## Post-processing failures are surfaced via COMPLETED_WITH_WARNING (IMPLEMENTED)
+When LLM post-processing fails (wrong model, insufficient credits, network error), the transcription is saved with `COMPLETED_WITH_WARNING` status. The detail screen shows an amber warning banner with the error message. The raw transcription text is still displayed. Implemented in #32.
 
 ## Setup screen flashes on every app start
 `startDestination = "setup"` always renders the setup screen first. `loadExistingKeys()` then validates and triggers navigation to main. This causes a visible flash. Should check keys before rendering navigation, or use a splash/loading state.
@@ -56,6 +56,24 @@ With `isReturnDefaultValues = true` in build.gradle.kts, `JSONObject.getJSONArra
 
 ## Intent extras return null in JVM unit tests
 `Intent.getStringExtra()` and `Intent.getParcelableExtra()` return null in JVM unit tests because Android framework classes are stubbed. Test share/compose logic on plain data classes or helper functions instead of asserting on Intent contents. For code that constructs Intents, trust the framework and test the logic separately.
+
+## ZAI ASR does not accept .m4a files
+ZAI's `glm-asr-2512` rejects `.m4a` with error code 1214 (`format not supported`). Only `.mp3` and `.wav` are listed as supported. GROQ accepts `.m4a` with `audio/mp4` MIME. Do not add ZAI as an STT provider without client-side audio conversion.
+
+## ZAI has two base URLs — use api.z.ai for international
+`open.bigmodel.cn/api/` is the Chinese endpoint. `api.z.ai/api/` is the international one. Both accept the same key format and return identical responses. Use `api.z.ai` as the base URL in `ZaiApiService`.
+
+## ZAI API key format: hex string + dot + base64
+ZAI keys look like `a116a2e0344312a8aa5f33bfbee3c9f7.V5OqBIoBBqm9yWj0`. Validate: `length >= 20 && contains(".")`. No prefix like GROQ's `gsk_` or OpenRouter's `sk-or-`.
+
+## ZAI response includes reasoning_content field
+ZAI's `glm-4.7-flash` returns `reasoning_content` in the message object alongside `content`. This is a thinking/reasoning field. The DTO (`OpenRouterMessage`) ignores it via Gson — no `@SerializedName` match. Don't add it unless needed.
+
+## Material3 ExposedDropdownMenuBox uses Modifier.menuAnchor() without args
+In the M3 version used by this project, `Modifier.menuAnchor()` takes no arguments (no `MenuAnchorPoint`). Passing `MenuAnchorPoint.PrimaryNotEditable` causes compilation error.
+
+## return keyword not allowed inside withContext lambda
+Using `return` inside `withContext(Dispatchers.IO) { ... }` causes "return is not allowed here" compilation error. Use bare expressions or `return@withContext` instead.
 
 ## Cross-test hangs from uncleared viewModelScope
 ViewModel tests must cancel `viewModel.viewModelScope` in `@After` tearDown. Otherwise infinite collectors from one test class leak into the next, causing hangs.

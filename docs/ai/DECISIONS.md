@@ -60,6 +60,22 @@
 - **Reason:** `MainViewModel.shareTranscription()` and `ShareTranscriptionUseCase` both construct share text. Putting `getShareText()` on the `Transcription` data class avoids duplication and is trivially testable without Android stubs (Intent extras return null in JVM unit tests).
 - **Changed:** `Transcription.getShareText()` prepends `summary: ` when summary is non-blank; `MainViewModel` and `ShareTranscriptionUseCase` call it directly.
 
+## 2026-03-29: ZAI added as LLM provider, not STT (#32)
+- **Choice:** ZAI (ZhipuAI / api.z.ai) as LLM provider only; GROQ remains sole STT provider
+- **Reason:** ZAI ASR rejects `.m4a` format (`format not supported`). Adding `.m4a`→`.mp3` conversion was deemed too complex for initial integration.
+- **Tested:** `.mp3` accepted by ZAI ASR (billing error, not format), `.m4a` rejected. `glm-4.7-flash` chat completions confirmed working.
+- **Changed:** `ZaiApiService` (reuses OpenRouter DTOs), `ProviderConfig` hardcoded registry, settings UI with provider+model dropdowns
+
+## 2026-03-29: Post-processing failures surfaced via COMPLETED_WITH_WARNING (#32)
+- **Choice:** New `TranscriptionStatus.COMPLETED_WITH_WARNING` status + amber warning banner in detail screen
+- **Reason:** LLM failures (wrong model, insufficient credits) were silently swallowed. User saw raw transcription with no feedback that cleanup/translation failed.
+- **Changed:** `TranscriptionWorker` sets `COMPLETED_WITH_WARNING` + error message on post-processing failure. `TranscriptionDetailScreen` shows amber card with error detail.
+
+## 2026-03-29: Provider dropdown + model dropdown pattern in settings (#32)
+- **Choice:** Two dropdowns per section — pick provider first, then filtered model list
+- **Changed:** `ExposedDropdownMenuBox` for STT model (GROQ only), LLM provider (OpenRouter/ZAI), LLM model (filtered by provider). Free-text model fields replaced entirely.
+- **Model lists:** OpenRouter 8 models (mercury, gemini-2.5-flash-lite, gemini-2.0-flash, claude-3-haiku, mistral-small-3.1-24b, gemma-3-12b, llama-3.3-70b, llama-4-scout). ZAI 6 models (glm-4.7-flash free, glm-4.5-flash free, glm-4-32b-0414-128k, glm-4.7-flashx, glm-4.5-air, glm-4.7).
+
 ## 2026-03-04: hiltViewModel() over viewModel() for all Compose screens
 - **Reason:** Plain `viewModel()` bypasses Hilt DI, causing runtime crashes
 - **Rule:** Every `@HiltViewModel` must use `hiltViewModel()` in Compose
