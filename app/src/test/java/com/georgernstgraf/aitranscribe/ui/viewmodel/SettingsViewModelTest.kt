@@ -1,25 +1,24 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
-import okhttp3.OkHttpClient
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -51,62 +50,64 @@ class SettingsViewModelTest {
 
     @After
     fun tearDown() {
+        viewModel.viewModelScope.cancel()
         Dispatchers.resetMain()
     }
 
     @Test
-    fun `initial state loads settings from preferences`() = runTest {
-        val state = viewModel.uiState.first()
-        
+    fun `initial state loads settings from preferences`() = runBlocking {
+        testDispatcher.scheduler.runCurrent()
+        val state = viewModel.uiState.value
+
         assertEquals("whisper-large-v3-turbo", state.sttModel)
         assertEquals("anthropic/claude-3-haiku", state.llmModel)
     }
 
     @Test
-    fun `onSttModelChanged updates state`() = runTest {
+    fun `onSttModelChanged updates state`() = runBlocking {
         viewModel.onSttModelChanged("whisper-large-v3")
-        
-        val state = viewModel.uiState.first()
+
+        val state = viewModel.uiState.value
         assertEquals("whisper-large-v3", state.sttModel)
     }
 
     @Test
-    fun `onLlmModelChanged updates state`() = runTest {
+    fun `onLlmModelChanged updates state`() = runBlocking {
         viewModel.onLlmModelChanged("gpt-4")
-        
-        val state = viewModel.uiState.first()
+
+        val state = viewModel.uiState.value
         assertEquals("gpt-4", state.llmModel)
     }
 
     @Test
-    fun `onGroqApiKeyChanged updates state`() = runTest {
+    fun `onGroqApiKeyChanged updates state`() = runBlocking {
         viewModel.onGroqApiKeyChanged("test-key")
-        
-        val state = viewModel.uiState.first()
+
+        val state = viewModel.uiState.value
         assertEquals("test-key", state.groqApiKey)
     }
 
     @Test
-    fun `onOpenRouterApiKeyChanged updates state`() = runTest {
+    fun `onOpenRouterApiKeyChanged updates state`() = runBlocking {
         viewModel.onOpenRouterApiKeyChanged("or-key")
-        
-        val state = viewModel.uiState.first()
+
+        val state = viewModel.uiState.value
         assertEquals("or-key", state.openRouterApiKey)
     }
 
     @Test
-    fun `onDaysToDeleteChanged updates state`() = runTest {
+    fun `onDaysToDeleteChanged updates state`() = runBlocking {
         viewModel.onDaysToDeleteChanged(60)
-        
-        val state = viewModel.uiState.first()
+
+        val state = viewModel.uiState.value
         assertEquals(60, state.daysToDelete)
     }
 
     @Test
-    fun `onDeleteViewFilterChanged updates state`() = runTest {
+    fun `onDeleteViewFilterChanged updates state`() = runBlocking {
         viewModel.onDeleteViewFilterChanged(ViewFilter.ALL)
-        
-        val state = viewModel.uiState.first()
+
+        val state = viewModel.uiState.value
         assertEquals(ViewFilter.ALL, state.deleteViewFilter)
     }
 }

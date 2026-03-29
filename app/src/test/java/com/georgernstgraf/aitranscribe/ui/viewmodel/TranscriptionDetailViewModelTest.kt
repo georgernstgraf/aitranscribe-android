@@ -3,12 +3,14 @@ package com.georgernstgraf.aitranscribe.ui.viewmodel
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -43,6 +45,9 @@ class TranscriptionDetailViewModelTest {
 
     @After
     fun tearDown() {
+        if (::viewModel.isInitialized) {
+            viewModel.viewModelScope.cancel()
+        }
         Dispatchers.resetMain()
     }
 
@@ -80,6 +85,7 @@ class TranscriptionDetailViewModelTest {
     fun `initial state loads transcription by id`() = runBlocking {
         val id = insertTestEntity(originalText = "Hello world")
         createViewModel(id)
+        testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.uiState.value
         assertNotNull(state.transcription)
@@ -89,6 +95,7 @@ class TranscriptionDetailViewModelTest {
     @Test
     fun `initial state has no transcription for unknown id`() = runBlocking {
         createViewModel(999L)
+        testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.uiState.value
         assertNull(state.transcription)
@@ -98,33 +105,25 @@ class TranscriptionDetailViewModelTest {
     fun `auto-marks transcription as viewed on load`() = runBlocking {
         val id = insertTestEntity(playedCount = 0)
         createViewModel(id)
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         val entity = repository.getById(id)
         assertTrue(entity!!.playedCount > 0)
     }
 
     @Test
-    fun `toggleViewStatus marks viewed as unread`() = runBlocking {
+    fun `toggleViewStatus viewed to unread and back to viewed`() = runBlocking {
         val id = insertTestEntity(playedCount = 1)
         createViewModel(id)
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         viewModel.toggleViewStatus(id)
-        testDispatcher.scheduler.advanceUntilIdle()
-
+        testDispatcher.scheduler.runCurrent()
         assertFalse(viewModel.uiState.value.isViewed)
-    }
-
-    @Test
-    fun `toggleViewStatus marks unread as viewed`() = runBlocking {
-        val id = insertTestEntity(playedCount = 0)
-        createViewModel(id)
-        testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.toggleViewStatus(id)
-        testDispatcher.scheduler.advanceUntilIdle()
-
+        testDispatcher.scheduler.runCurrent()
+        testDispatcher.scheduler.runCurrent()
         assertTrue(viewModel.uiState.value.isViewed)
     }
 
@@ -133,10 +132,10 @@ class TranscriptionDetailViewModelTest {
         val id1 = insertTestEntity(originalText = "First")
         insertTestEntity(originalText = "Second")
         createViewModel(id1)
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         viewModel.deleteTranscription(id1)
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.uiState.value
         assertTrue(state.isDeleted)
@@ -147,10 +146,10 @@ class TranscriptionDetailViewModelTest {
     fun `updateText updates transcription in repository`() = runBlocking {
         val id = insertTestEntity(originalText = "Old text")
         createViewModel(id)
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         viewModel.updateText(id, "New text")
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         val entity = repository.getById(id)
         assertEquals("New text", entity?.originalText)
@@ -160,10 +159,10 @@ class TranscriptionDetailViewModelTest {
     fun `copyToClipboard sets isCopiedToClipboard flag`() = runBlocking {
         val id = insertTestEntity(originalText = "Copy me")
         createViewModel(id)
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         viewModel.copyToClipboard()
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         assertTrue(viewModel.uiState.value.isCopiedToClipboard)
     }

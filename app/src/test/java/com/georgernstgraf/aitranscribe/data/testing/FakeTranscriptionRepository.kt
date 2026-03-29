@@ -244,6 +244,9 @@ class FakeTranscriptionRepository : TranscriptionRepository {
     }
 
     override fun getFilteredIds(viewFilter: ViewFilter): Flow<List<Long>> {
-        return kotlinx.coroutines.flow.flowOf(emptyList())
+        val ids = transcriptions.value
+            .filter { viewFilter == ViewFilter.ALL || it.playedCount == 0 }
+            .map { it.id }
+        return kotlinx.coroutines.flow.flowOf(ids)
     }
 }

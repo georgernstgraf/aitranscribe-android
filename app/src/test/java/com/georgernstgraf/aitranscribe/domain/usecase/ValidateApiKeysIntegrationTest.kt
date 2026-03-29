@@ -66,9 +66,9 @@ class ValidateApiKeysIntegrationTest {
 
         val result = useCase.validateModels(groqKey, openRouterKey, sttModel, llmModel)
 
+        assertNull("STT model error: ${result.sttModelError}", result.sttModelError)
+        assertNull("LLM model error: ${result.llmModelError}", result.llmModelError)
         assertTrue("Model validation failed. Check GROQ_STT_MODEL and OPENROUTER_LLM_MODEL in .env.", result.isValid)
-        assertNull(result.sttModelError)
-        assertNull(result.llmModelError)
     }
 
     @Test

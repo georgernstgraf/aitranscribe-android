@@ -1,11 +1,13 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
+import androidx.lifecycle.viewModelScope
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.domain.usecase.ApiKeyError
 import com.georgernstgraf.aitranscribe.domain.usecase.ApiKeyValidationResult
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -38,6 +40,9 @@ class SetupViewModelTest {
 
     @After
     fun tearDown() {
+        if (::viewModel.isInitialized) {
+            viewModel.viewModelScope.cancel()
+        }
         Dispatchers.resetMain()
     }
 
@@ -45,7 +50,7 @@ class SetupViewModelTest {
         coEvery { securePreferences.getGroqApiKey() } returns null
         coEvery { securePreferences.getOpenRouterApiKey() } returns null
         val vm = SetupViewModel(securePreferences, validateApiKeysUseCase)
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
         return vm
     }
 
@@ -78,7 +83,7 @@ class SetupViewModelTest {
         )
 
         viewModel = SetupViewModel(securePreferences, validateApiKeysUseCase)
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.uiState.value
         assertEquals("gsk_test1234567890123456", state.groqApiKey)
@@ -129,7 +134,7 @@ class SetupViewModelTest {
         viewModel.onGroqApiKeyChanged("gsk_test1234567890123456")
         viewModel.onOpenRouterApiKeyChanged("sk-or-test1234567890123")
         viewModel.validateAndSave()
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.uiState.value
         assertTrue(state.isSetupComplete)
@@ -151,7 +156,7 @@ class SetupViewModelTest {
         viewModel = createViewModel()
 
         viewModel.validateAndSave()
-        testDispatcher.scheduler.advanceUntilIdle()
+        testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.uiState.value
         assertFalse(state.isSetupComplete)
