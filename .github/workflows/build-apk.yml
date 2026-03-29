@@ -24,12 +24,16 @@ jobs:
         cache: gradle
     
     - name: Setup debug keystore for consistent signing
+      env:
+        KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
       run: |
-        echo "DEBUG_KEYSTORE_BASE64=${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > debug.keystore
-        echo "storeFile=../debug.keystore" > keystore.properties
-        echo "storePassword=android" >> keystore.properties
-        echo "keyAlias=androiddebugkey" >> keystore.properties
-        echo "keyPassword=android" >> keystore.properties
+        if [ -n "$KEYSTORE_BASE64" ]; then
+          echo "$KEYSTORE_BASE64" | base64 -d > debug.keystore
+          echo "storeFile=../debug.keystore" > keystore.properties
+          echo "storePassword=android" >> keystore.properties
+          echo "keyAlias=androiddebugkey" >> keystore.properties
+          echo "keyPassword=android" >> keystore.properties
+        fi
     
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
