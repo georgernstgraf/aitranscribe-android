@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONObject
 import javax.inject.Inject
 
 /**
@@ -129,6 +130,60 @@ class ValidateApiKeysUseCase @Inject constructor(
         }.getOrElse { false }
     }
 
+    suspend fun validateModels(
+        groqKey: String,
+        openRouterKey: String,
+        sttModel: String,
+        llmModel: String
+    ): ModelValidationResult = withContext(Dispatchers.IO) {
+        val sttError = validateSttModel(groqKey, sttModel)
+        val llmError = validateLlmModel(openRouterKey, llmModel)
+        ModelValidationResult(
+            sttModelError = sttError,
+            llmModelError = llmError,
+            isValid = sttError == null && llmError == null
+        )
+    }
+
+    private fun validateSttModel(apiKey: String, model: String): String? {
+        val request = Request.Builder()
+            .url("https://api.groq.com/openai/v1/models")
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Accept", "application/json")
+            .get()
+            .build()
+
+        return runCatching {
+            okHttpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return "Could not verify STT model (API error)"
+                val body = response.body?.string() ?: return "Could not verify STT model (empty response)"
+                val models = JSONObject(body).getJSONArray("data")
+                val ids = (0 until models.length()).map { models.getJSONObject(it).getString("id") }
+                if (model in ids) null else "Unknown STT model: $model"
+            }
+        }.getOrElse { "Could not verify STT model: ${it.message}" }
+    }
+
+    private fun validateLlmModel(apiKey: String, model: String): String? {
+        val request = Request.Builder()
+            .url("https://openrouter.ai/api/v1/models")
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Accept", "application/json")
+            .addHeader("User-Agent", "AITranscribe/1.0")
+            .get()
+            .build()
+
+        return runCatching {
+            okHttpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return "Could not verify LLM model (API error)"
+                val body = response.body?.string() ?: return "Could not verify LLM model (empty response)"
+                val models = JSONObject(body).getJSONArray("data")
+                val ids = (0 until models.length()).map { models.getJSONObject(it).getString("id") }
+                if (model in ids) null else "Unknown LLM model: $model"
+            }
+        }.getOrElse { "Could not verify LLM model: ${it.message}" }
+    }
+
     private fun isValidGroqKeyFormat(key: String): Boolean {
         return key.length >= 20 && key.startsWith("gsk_")
     }
@@ -143,6 +198,12 @@ data class ApiKeyValidationResult(
     val isOpenRouterKeyValid: Boolean,
     val groqKeyError: ApiKeyError?,
     val openRouterKeyError: ApiKeyError?,
+    val isValid: Boolean
+)
+
+data class ModelValidationResult(
+    val sttModelError: String?,
+    val llmModelError: String?,
     val isValid: Boolean
 )
 

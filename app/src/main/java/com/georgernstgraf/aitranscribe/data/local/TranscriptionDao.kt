@@ -25,7 +25,11 @@ interface TranscriptionDao {
     @Query("""
         DELETE FROM transcriptions 
         WHERE created_at < :cutoffDate 
-        AND (:viewFilter = 'ALL' OR played_count = 0)
+        AND (
+            :viewFilter = 'ALL' 
+            OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0)
+            OR (:viewFilter = 'VIEWED' AND played_count > 0)
+        )
     """)
     suspend fun deleteOld(cutoffDate: String, viewFilter: String): Int
 
@@ -121,10 +125,40 @@ interface TranscriptionDao {
     @Query("""
         SELECT COUNT(*) FROM transcriptions 
         WHERE created_at < :cutoffDate 
-        AND (:viewFilter = 'ALL' OR played_count = 0)
+        AND (
+            :viewFilter = 'ALL' 
+            OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0)
+            OR (:viewFilter = 'VIEWED' AND played_count > 0)
+        )
     """)
     suspend fun getOldCount(cutoffDate: String, viewFilter: String): Int
 
     @Query("UPDATE transcriptions SET summary = :summary WHERE id = :id")
     suspend fun updateSummary(id: Long, summary: String)
+
+    @Query("""
+        SELECT id FROM transcriptions 
+        WHERE created_at < (SELECT created_at FROM transcriptions WHERE id = :currentId)
+        AND (
+            :viewFilter = 'ALL' 
+            OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0)
+            OR (:viewFilter = 'VIEWED' AND played_count > 0)
+        )
+        ORDER BY created_at DESC
+        LIMIT 1
+    """)
+    suspend fun getNextId(currentId: Long, viewFilter: String): Long?
+
+    @Query("""
+        SELECT id FROM transcriptions 
+        WHERE created_at > (SELECT created_at FROM transcriptions WHERE id = :currentId)
+        AND (
+            :viewFilter = 'ALL' 
+            OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0)
+            OR (:viewFilter = 'VIEWED' AND played_count > 0)
+        )
+        ORDER BY created_at ASC
+        LIMIT 1
+    """)
+    suspend fun getPrevId(currentId: Long, viewFilter: String): Long?
 }

@@ -41,59 +41,61 @@ fun BottomControlPanel(
     onFilterChanged: (ViewFilter) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(Color(0xFF121C26))
             .border(1.dp, Color(0xFF243241), RoundedCornerShape(20.dp))
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.CenterStart)
-                .padding(end = 100.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                ViewFilter.entries.forEach { filter ->
-                    val isSelected = currentFilter == filter
-                    FilterPill(
-                        label = filter.label,
-                        selected = isSelected,
-                        onClick = { onFilterChanged(filter) }
-                    )
-                }
+            ViewFilter.entries.forEach { filter ->
+                val isSelected = currentFilter == filter
+                FilterPill(
+                    label = filter.label,
+                    selected = isSelected,
+                    onClick = { onFilterChanged(filter) }
+                )
             }
-
-            RadioButton(
-                label = "Raw Transcription",
-                selected = processingMode == PostProcessingType.RAW,
-                onClick = { onModeChanged(PostProcessingType.RAW) }
-            )
-            RadioButton(
-                label = "Cleanup & Preserve Language",
-                selected = processingMode == PostProcessingType.CLEANUP,
-                onClick = { onModeChanged(PostProcessingType.CLEANUP) }
-            )
-            RadioButton(
-                label = "Cleanup & Translate English",
-                selected = processingMode == PostProcessingType.ENGLISH,
-                onClick = { onModeChanged(PostProcessingType.ENGLISH) }
-            )
         }
 
-        RecordButton(
-            isRecording = isRecording,
-            recordingDuration = recordingDuration,
-            onStartRecording = onStartRecording,
-            onStopRecording = onStopRecording,
-            modifier = Modifier.align(Alignment.CenterEnd)
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                RadioButton(
+                    label = "Raw Transcription",
+                    selected = processingMode == PostProcessingType.RAW,
+                    onClick = { onModeChanged(PostProcessingType.RAW) }
+                )
+                RadioButton(
+                    label = "Cleanup & Preserve",
+                    selected = processingMode == PostProcessingType.CLEANUP,
+                    onClick = { onModeChanged(PostProcessingType.CLEANUP) }
+                )
+                RadioButton(
+                    label = "Cleanup & English",
+                    selected = processingMode == PostProcessingType.ENGLISH,
+                    onClick = { onModeChanged(PostProcessingType.ENGLISH) }
+                )
+            }
+
+            RecordButton(
+                isRecording = isRecording,
+                recordingDuration = recordingDuration,
+                onStartRecording = onStartRecording,
+                onStopRecording = onStopRecording
+            )
+        }
     }
 }
 
@@ -222,7 +224,7 @@ private fun FilterPill(
 
 private val ViewFilter.label: String
     get() = when (this) {
+        ViewFilter.UNVIEWED_ONLY -> "Unread"
         ViewFilter.ALL -> "All"
-        ViewFilter.UNVIEWED_ONLY -> "Unviewed"
-        ViewFilter.VIEWED -> "Viewed"
+        ViewFilter.VIEWED -> "Read"
     }

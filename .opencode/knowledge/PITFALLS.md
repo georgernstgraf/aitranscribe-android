@@ -26,3 +26,18 @@ Always use `adb install -r` (replace). `adb uninstall` + `adb install` wipes API
 
 ## Room DB migration with fallbackToDestructiveMigration
 When `exportSchema = false`, `fallbackToDestructiveMigration()` will wipe all data on schema mismatch. Existing transcriptions will be lost after a migration. Use `adb install -r` to preserve data when possible.
+
+## TranscriptionWorker: single try-catch causes infinite duplicate transcriptions
+If post-processing throws inside the same try-catch as transcription, `Result.retry()` re-runs the whole worker — re-transcribing and inserting duplicate DB entries in a loop. **Fix:** Separate error handling so only transcription failure triggers retry.
+
+## Room column names use Kotlin field name by default (camelCase)
+Without explicit `@ColumnInfo(name = "...")`, Room uses the Kotlin property name as the SQL column name (e.g., `audioFilePath`, not `audio_file_path`). Writing SQL queries with snake_case will fail at KSP time.
+
+## Device package name has .debug suffix
+The debug build's package name is `com.georgernstgraf.aitranscribe.debug` (not `com.georgernstgraf.aitranscribe`). Use this for `run-as`, `adb shell pm`, etc.
+
+## Post-processing failures must be surfaced to user
+Wrong LLM model names, invalid OpenRouter keys, and network errors during post-processing fail silently. The transcription is saved but the user never knows cleanup/translation/summary failed. Must show feedback (e.g., status field, notification, or UI indicator).
+
+## Setup screen flashes on every app start
+`startDestination = "setup"` always renders the setup screen first. `loadExistingKeys()` then validates and triggers navigation to main. This causes a visible flash. Should check keys before rendering navigation, or use a splash/loading state.

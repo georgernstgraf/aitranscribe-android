@@ -1,25 +1,32 @@
 # Current State (2026-03-29)
 
 ## Current Focus
-Issue #24 complete — full UI redesign matching SVG mockup, processing modes wired through pipeline.
+Post-processing pipeline fixes — silent failures need surfacing, prompts need porting from companion project.
+
+## Companion Project
+- `../aitranscribe` (Python/TUI) is the **lead project**
+- This Android app mirrors its prompts, modes, and pipeline
+- Key files: `core.py` (LLM calls), `main.py` (prompts, modes), `tui.py` (UI)
 
 ## Completed This Session
-- [x] Issue #24: UI redesign — TranscriptionItem with pill badges, accent bar, summary title
-- [x] BottomControlPanel with radio buttons + mic button
-- [x] ProcessingMode (RAW/CLEANUP/ENGLISH) persisted and wired to Worker
-- [x] Summary field added to TranscriptionEntity, DB migration v1→v2
-- [x] PostProcessTextUseCase.generateSummary() for LLM-generated titles
-- [x] OpenRouterApiService DI provider added to NetworkModule
-- [x] HiltSmokeTest instrumentation test added
-- [x] All GRAMMAR references renamed to CLEANUP
-- [x] Tested on physical device
+- [x] Issue #25: Filter pills integrated into BottomControlPanel with SpaceBetween layout
+- [x] Audio file cleanup: deleted on success, preserved on retry, orphans swept
+- [x] TranscriptionWorker split: transcription retry separate from non-fatal post-processing
+- [x] Better error logging in PostProcessTextUseCase (HTTP code + error body)
+- [x] Orphaned audio files manually cleaned from device cache
 
 ## Pending
-- [ ] Issue #12: Emulator audio captures silence (use physical device instead)
-- [ ] Issue #22: Compose UI tests (lower priority)
+- [ ] Fix setup screen flash on startup (check keys before navigating)
+- [ ] Fix settings: API key validation on save, not on timeout
+- [ ] Surface post-processing failures to user (currently silent)
+- [ ] Port authoritative prompts from `../aitranscribe/main.py` to Android
+- [ ] Issue #12: Emulator audio captures silence (use physical device)
+- [ ] Issue #22: Compose UI tests
 
 ## Blockers
-- None
+- Post-processing always fails on device — likely wrong model name or API key issue (need to capture HTTP code from logs after next recording)
 
 ## Next Session Suggestion
-Test full recording → transcription → post-processing → summary generation pipeline on physical device with real audio.
+1. Make a recording with non-RAW mode, capture the post-processing HTTP error from logcat
+2. Port prompts from `../aitranscribe/main.py` to `PostProcessTextUseCase.kt`
+3. Surface post-processing failures in the UI (status indicator or notification)

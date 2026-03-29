@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,6 +54,16 @@ fun SettingsScreen(
                 message = "Settings saved",
                 actionLabel = "OK",
                 duration = SnackbarDuration.Short
+            )
+        }
+    }
+
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                actionLabel = "OK",
+                duration = SnackbarDuration.Long
             )
         }
     }
@@ -162,6 +173,26 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            Button(
+                onClick = { viewModel.saveSettings() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                enabled = !state.groqApiKey.isNullOrBlank() &&
+                          !state.openRouterApiKey.isNullOrBlank() &&
+                          !state.isValidating
+            ) {
+                if (state.isValidating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.padding(end = 8.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+                Text("Save Settings")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Text(
                 text = "Data Management",
                 style = MaterialTheme.typography.titleMedium,
@@ -177,18 +208,6 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp)
             ) {
                 Text("Delete Old Transcriptions")
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = { viewModel.saveSettings() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                enabled = !state.groqApiKey.isNullOrBlank() && !state.openRouterApiKey.isNullOrBlank()
-            ) {
-                Text("Save Settings")
             }
 
             Spacer(modifier = Modifier.height(16.dp))

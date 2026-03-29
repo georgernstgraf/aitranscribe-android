@@ -65,4 +65,10 @@ interface TranscriptionRepository {
     suspend fun clearQueue(): Int
 
     suspend fun getQueueCount(): Int
+
+    suspend fun getQueuedAudioPaths(): List<String>
+
+    suspend fun getNextTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long?
+
+    suspend fun getPrevTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long?
 }

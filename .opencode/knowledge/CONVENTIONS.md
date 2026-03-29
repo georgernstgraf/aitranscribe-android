@@ -47,3 +47,11 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Build: `./gradlew assembleDebug`
 - Install preserving data: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 - Never use `adb uninstall` + `adb install` (loses API keys and preferences)
+- Device package name for `run-as`: `com.georgernstgraf.aitranscribe.debug` (debug build has `.debug` suffix)
+- No `sqlite3` binary on device — use `run-as` + file ops or log-based debugging for DB inspection
+
+## Companion Project
+- `../aitranscribe` (Python/TUI) is the **lead and authoritative project** for pipeline logic, prompts, and feature design
+- This Android app is the companion/follower — prompts, modes, and workflow must mirror the Python project
+- Key file in companion: `core.py` (LLM call function), `main.py` (prompts, modes, pipeline), `tui.py` (UI behavior)
+- When adding or changing post-processing behavior, always check `../aitranscribe/main.py` first

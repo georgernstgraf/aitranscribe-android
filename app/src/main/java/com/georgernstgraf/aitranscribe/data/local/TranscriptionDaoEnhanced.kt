@@ -28,7 +28,7 @@ interface TranscriptionDaoEnhanced {
     @Query("DELETE FROM transcriptions WHERE id = :id")
     suspend fun deleteById(id: Long): Int
 
-    @Query("DELETE FROM transcriptions WHERE created_at < :cutoffDate AND (:viewFilter = 'ALL' OR played_count = 0)")
+    @Query("DELETE FROM transcriptions WHERE created_at < :cutoffDate AND (:viewFilter = 'ALL' OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0) OR (:viewFilter = 'VIEWED' AND played_count > 0))")
     suspend fun deleteOld(cutoffDate: String, viewFilter: String): Int
 
     @Query("SELECT * FROM transcriptions WHERE id = :id")
@@ -76,7 +76,7 @@ interface TranscriptionDaoEnhanced {
     @Query("SELECT COUNT(*) FROM transcriptions")
     suspend fun getCount(): Int
 
-    @Query("SELECT COUNT(*) FROM transcriptions WHERE created_at < :cutoffDate AND (:viewFilter = 'ALL' OR played_count = 0)")
+    @Query("SELECT COUNT(*) FROM transcriptions WHERE created_at < :cutoffDate AND (:viewFilter = 'ALL' OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0) OR (:viewFilter = 'VIEWED' AND played_count > 0))")
     suspend fun getOldCount(cutoffDate: String, viewFilter: String): Int
 
     @Query("UPDATE transcriptions SET played_count = played_count + 1 WHERE played_count = 0 LIMIT :limit")

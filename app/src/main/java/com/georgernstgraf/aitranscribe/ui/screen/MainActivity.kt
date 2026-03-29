@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -19,6 +21,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.ui.theme.AITranscribeTheme
 import com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -69,11 +73,17 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainNavigation() {
+    val context = LocalContext.current
+    val hasKeys = remember {
+        val prefs = SecurePreferences(context)
+        !prefs.peekGroqApiKey().isNullOrBlank() && !prefs.peekOpenRouterApiKey().isNullOrBlank()
+    }
+    val startDestination = if (hasKeys) "main" else "setup"
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = "setup"
+        startDestination = startDestination
     ) {
         composable("setup") {
             SetupScreen(
@@ -92,12 +102,17 @@ fun MainNavigation() {
         }
 
         composable(
-            route = "transcription/{transcription_id}",
-            arguments = listOf(navArgument("transcription_id") { type = NavType.LongType })
+            route = "transcription/{transcription_id}/{view_filter}",
+            arguments = listOf(
+                navArgument("transcription_id") { type = NavType.LongType },
+                navArgument("view_filter") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
             val transcriptionId = backStackEntry.arguments?.getLong("transcription_id") ?: return@composable
+            val viewFilter = backStackEntry.arguments?.getString("view_filter") ?: return@composable
             TranscriptionDetailScreen(
                 transcriptionId = transcriptionId,
+                viewFilter = viewFilter?.let { ViewFilter.valueOf(it) } ?: ViewFilter.ALL,
                 navController = navController
             )
         }

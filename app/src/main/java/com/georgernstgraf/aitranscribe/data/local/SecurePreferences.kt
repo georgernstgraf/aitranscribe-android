@@ -97,6 +97,10 @@ class SecurePreferences @Inject constructor(
         sharedPreferences.edit().clear().apply()
     }
 
+    fun peekGroqApiKey(): String? = sharedPreferences.getString(GROQ_API_KEY, null)
+
+    fun peekOpenRouterApiKey(): String? = sharedPreferences.getString(OPENROUTER_API_KEY, null)
+
     companion object {
         private const val GROQ_API_KEY = "groq_api_key"
         private const val OPENROUTER_API_KEY = "openrouter_api_key"

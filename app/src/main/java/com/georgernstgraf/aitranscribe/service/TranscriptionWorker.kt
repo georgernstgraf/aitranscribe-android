@@ -55,41 +55,53 @@ class TranscriptionWorker @AssistedInject constructor(
             return@withContext Result.failure()
         }
 
-        try {
-            if (!networkMonitor.isConnected()) {
-                notificationManager.showOfflineNotification()
-                return@withContext Result.retry()
-            }
+        if (!networkMonitor.isConnected()) {
+            notificationManager.showOfflineNotification()
+            return@withContext Result.retry()
+        }
 
-            notificationManager.showTranscriptionProgressNotification(queuedId)
+        notificationManager.showTranscriptionProgressNotification(queuedId)
 
-            val transcriptionText = transcribeAudio(queued)
-            Log.d("TranscriptionWorker", "doWork: transcriptionText='$transcriptionText', length=${transcriptionText.length}")
-
-            val processingMode = queued.postProcessingType ?: PostProcessingType.RAW.name
-
-            val entity = TranscriptionEntity(
-                originalText = transcriptionText,
-                processedText = null,
-                audioFilePath = queued.audioFilePath,
-                createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                postProcessingType = processingMode,
-                status = TranscriptionStatus.COMPLETED.name,
-                errorMessage = null,
-                playedCount = 0,
-                retryCount = 0,
-                summary = null
+        val transcriptionText = try {
+            transcribeAudio(queued)
+        } catch (e: Exception) {
+            Log.e("TranscriptionWorker", "transcribeAudio failed", e)
+            notificationManager.showTranscriptionErrorNotification(
+                e.message ?: "Transcription failed"
             )
+            return@withContext Result.retry()
+        }
+        Log.d("TranscriptionWorker", "doWork: transcriptionText='$transcriptionText', length=${transcriptionText.length}")
 
-            val transcriptionId = repository.insert(entity)
-            Log.d("TranscriptionWorker", "doWork: Saved transcription with id=$transcriptionId")
+        val processingMode = queued.postProcessingType ?: PostProcessingType.RAW.name
 
-            val mode = try {
-                PostProcessingType.valueOf(processingMode)
-            } catch (_: Exception) {
-                PostProcessingType.RAW
-            }
+        val entity = TranscriptionEntity(
+            originalText = transcriptionText,
+            processedText = null,
+            audioFilePath = null,
+            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            postProcessingType = processingMode,
+            status = TranscriptionStatus.COMPLETED.name,
+            errorMessage = null,
+            playedCount = 0,
+            retryCount = 0,
+            summary = null
+        )
 
+        val transcriptionId = repository.insert(entity)
+        Log.d("TranscriptionWorker", "doWork: Saved transcription with id=$transcriptionId")
+
+        repository.removeQueued(queuedId)
+        cleanupAudioFile(queued.audioFilePath)
+        cleanupOrphanedAudioFiles()
+
+        val mode = try {
+            PostProcessingType.valueOf(processingMode)
+        } catch (_: Exception) {
+            PostProcessingType.RAW
+        }
+
+        try {
             if (mode != PostProcessingType.RAW) {
                 val openRouterKey = securePreferences.getOpenRouterApiKey()
                 val llmModel = securePreferences.getLlmModel()
@@ -104,20 +116,17 @@ class TranscriptionWorker @AssistedInject constructor(
                 val llmModel = securePreferences.getLlmModel()
                 postProcessTextUseCase.generateSummary(transcriptionId, llmModel, openRouterKey)
             }
-
-            notificationManager.showTranscriptionCompleteNotification(transcriptionId)
-
-            repository.removeQueued(queuedId)
-            cleanupAudioFile(queued.audioFilePath)
-
-            Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
         } catch (e: Exception) {
-            Log.e("TranscriptionWorker", "doWork: ERROR", e)
+            Log.e("TranscriptionWorker", "Post-processing failed (non-fatal)", e)
+            val errorMsg = e.message?.take(100) ?: "Post-processing failed"
             notificationManager.showTranscriptionErrorNotification(
-                e.message ?: "Transcription failed"
+                "Post-processing: $errorMsg"
             )
-            Result.retry()
         }
+
+        notificationManager.showTranscriptionCompleteNotification(transcriptionId)
+
+        Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
     }
 
     private suspend fun transcribeAudio(queued: com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity): String {
@@ -156,6 +165,17 @@ class TranscriptionWorker @AssistedInject constructor(
     private fun cleanupAudioFile(path: String) {
         try {
             File(path).delete()
+        } catch (_: Exception) {
+        }
+    }
+
+    private suspend fun cleanupOrphanedAudioFiles() {
+        try {
+            val queuedPaths = repository.getQueuedAudioPaths().toSet()
+            context.cacheDir.listFiles()?.filter {
+                it.name.startsWith("recording_") && it.name.endsWith(".m4a")
+                        && it.absolutePath !in queuedPaths
+            }?.forEach { it.delete() }
         } catch (_: Exception) {
         }
     }

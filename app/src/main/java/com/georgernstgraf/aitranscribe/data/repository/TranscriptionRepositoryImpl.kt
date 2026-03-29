@@ -137,4 +137,16 @@ class TranscriptionRepositoryImpl @Inject constructor(
     override suspend fun getQueueCount(): Int {
         return queuedTranscriptionDao.getCount()
     }
+
+    override suspend fun getQueuedAudioPaths(): List<String> {
+        return queuedTranscriptionDao.getAllAudioPaths()
+    }
+
+    override suspend fun getNextTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long? {
+        return transcriptionDao.getNextId(currentId, viewFilter.name)
+    }
+
+    override suspend fun getPrevTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long? {
+        return transcriptionDao.getPrevId(currentId, viewFilter.name)
+    }
 }

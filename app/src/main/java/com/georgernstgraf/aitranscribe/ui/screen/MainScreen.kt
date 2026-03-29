@@ -115,7 +115,7 @@ fun MainScreen(
                     TranscriptionItem(
                         transcription = transcription,
                         onClick = {
-                            navController.navigate("transcription/${transcription.id}")
+                            navController.navigate("transcription/${transcription.id}/${state.viewFilter.name}")
                         }
                     )
                 }

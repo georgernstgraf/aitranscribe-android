@@ -1,5 +1,23 @@
 # Architectural Decisions
 
+## 2026-03-29: Filter pills integrated into BottomControlPanel
+- **Reason:** Issue #25 — unified bottom panel instead of separate QuickFilters row above the panel
+- **Layout:** Column: filter pill row (SpaceBetween) → Row: radio buttons (weight 1f) + record button
+- **Changed:** `QuickFilters` composable no longer called from `MainScreen`; pills inlined into `BottomControlPanel` with `currentFilter`/`onFilterChanged` params
+
+## 2026-03-29: Audio files deleted immediately after successful transcription
+- **Reason:** No audio files shall be stored on the device per user requirement
+- **Flow:** TranscriptionWorker saves entity with `audioFilePath = null`, deletes audio, sweeps orphans
+- **Safety:** `cleanupOrphanedAudioFiles()` excludes files still referenced by queued (pending retry) items
+
+## 2026-03-29: Post-processing failures are non-fatal (no retry)
+- **Reason:** PostProcessingException was caught by same try-catch as transcription, causing `Result.retry()` which re-ran the entire worker, creating infinite duplicate transcriptions in DB
+- **Fix:** Transcription and post-processing have separate error handling. Only transcription failure triggers retry. Post-processing failure is logged but worker returns `Result.success()`
+
+## 2026-03-29: Companion project `../aitranscribe` is the authoritative source
+- **Reason:** Python project is the lead; Android follows its prompts, modes, and pipeline
+- **Implication:** Always check `../aitranscribe/main.py` and `core.py` when changing post-processing behavior
+
 ## 2026-03-29: PostProcessingType changed from GRAMMAR/ENGLISH to RAW/CLEANUP/ENGLISH
 - **Reason:** Match original aitranscribe Python project's modes (`raw`, `cleanup`, `english`)
 - **Changed:** `GRAMMAR` renamed to `CLEANUP`, `RAW` added as default (no LLM post-processing)

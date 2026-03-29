@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
+import com.georgernstgraf.aitranscribe.domain.usecase.ApiKeyError
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
+import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val deleteTranscriptionUseCase: DeleteTranscriptionUseCase,
-    private val securePreferences: SecurePreferences
+    private val securePreferences: SecurePreferences,
+    private val validateApiKeysUseCase: ValidateApiKeysUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -55,12 +58,50 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val state = _uiState.value
 
+            _uiState.update { it.copy(isValidating = true, errorMessage = null, isSaved = false) }
+
+            val errors = mutableListOf<String>()
+            if (state.groqApiKey.isNullOrBlank()) errors.add("GROQ API key is required")
+            if (state.openRouterApiKey.isNullOrBlank()) errors.add("OpenRouter API key is required")
+            if (state.sttModel.isBlank()) errors.add("STT model cannot be empty")
+            if (state.sttModel.contains(' ')) errors.add("STT model name must not contain spaces")
+            if (state.llmModel.isBlank()) errors.add("LLM model cannot be empty")
+            if (state.llmModel.contains(' ')) errors.add("LLM model name must not contain spaces")
+
+            if (errors.isNotEmpty()) {
+                _uiState.update { it.copy(isValidating = false, errorMessage = errors.joinToString("\n")) }
+                return@launch
+            }
+
+            val result = validateApiKeysUseCase(state.groqApiKey, state.openRouterApiKey)
+            if (!result.isValid) {
+                val apiErrors = mutableListOf<String>()
+                if (!result.isGroqKeyValid) apiErrors.add("GROQ API key: " + (result.groqKeyError?.name?.lowercase() ?: "invalid"))
+                if (!result.isOpenRouterKeyValid) apiErrors.add("OpenRouter API key: " + (result.openRouterKeyError?.name?.lowercase() ?: "invalid"))
+                _uiState.update { it.copy(isValidating = false, errorMessage = apiErrors.joinToString("\n")) }
+                return@launch
+            }
+
+            val modelResult = validateApiKeysUseCase.validateModels(
+                state.groqApiKey!!,
+                state.openRouterApiKey!!,
+                state.sttModel,
+                state.llmModel
+            )
+            if (!modelResult.isValid) {
+                val modelErrors = mutableListOf<String>()
+                modelResult.sttModelError?.let { modelErrors.add(it) }
+                modelResult.llmModelError?.let { modelErrors.add(it) }
+                _uiState.update { it.copy(isValidating = false, errorMessage = modelErrors.joinToString("\n")) }
+                return@launch
+            }
+
             state.groqApiKey?.let { securePreferences.setGroqApiKey(it) }
             state.openRouterApiKey?.let { securePreferences.setOpenRouterApiKey(it) }
             securePreferences.setSttModel(state.sttModel)
             securePreferences.setLlmModel(state.llmModel)
 
-            _uiState.update { it.copy(isSaved = true) }
+            _uiState.update { it.copy(isValidating = false, isSaved = true) }
         }
     }
 
@@ -126,5 +167,7 @@ data class SettingsUiState(
     val deleteViewFilter: ViewFilter = ViewFilter.UNVIEWED_ONLY,
     val isSaved: Boolean = false,
     val deletedCount: Int? = null,
-    val oldCount: Int? = null
+    val oldCount: Int? = null,
+    val isValidating: Boolean = false,
+    val errorMessage: String? = null
 )

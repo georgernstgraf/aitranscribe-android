@@ -37,6 +37,9 @@ interface QueuedTranscriptionDao {
     @Query("SELECT COUNT(*) FROM queued_transcriptions")
     suspend fun getCount(): Int
 
+    @Query("SELECT audioFilePath FROM queued_transcriptions")
+    suspend fun getAllAudioPaths(): List<String>
+
     @Query("DELETE FROM queued_transcriptions")
     suspend fun clearAll(): Int
 }

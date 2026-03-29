@@ -22,6 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 
@@ -32,6 +34,32 @@ fun DeleteOldDialog(
 ) {
     var daysOld by remember { mutableStateOf(30) }
     var viewFilter by remember { mutableStateOf(ViewFilter.UNVIEWED_ONLY) }
+    var confirmDeleteAll by remember { mutableStateOf(false) }
+
+    if (confirmDeleteAll) {
+        AlertDialog(
+            onDismissRequest = { confirmDeleteAll = false },
+            title = { Text("Delete Everything?") },
+            text = { Text("This will delete ALL matching transcriptions regardless of age. This cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete(0, viewFilter)
+                        confirmDeleteAll = false
+                        onDismiss()
+                    }
+                ) {
+                    Text("Delete All")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDeleteAll = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+        return
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -45,20 +73,52 @@ fun DeleteOldDialog(
                 Slider(
                     value = daysOld.toFloat(),
                     onValueChange = { daysOld = it.toInt() },
-                    valueRange = 7f..365f,
+                    valueRange = 0f..365f,
                     steps = 11,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
-                    text = "$daysOld days",
+                    text = if (daysOld == 0) "All time" else "$daysOld days",
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
 
+                if (daysOld == 0) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "This will delete ALL matching transcriptions!",
+                        color = Color(0xFFE53935),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text("Delete:")
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = viewFilter == ViewFilter.VIEWED,
+                        onClick = { viewFilter = ViewFilter.VIEWED }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Read")
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = viewFilter == ViewFilter.UNVIEWED_ONLY,
+                        onClick = { viewFilter = ViewFilter.UNVIEWED_ONLY }
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Unread")
+                }
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -70,24 +130,17 @@ fun DeleteOldDialog(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("All")
                 }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = viewFilter == ViewFilter.UNVIEWED_ONLY,
-                        onClick = { viewFilter = ViewFilter.UNVIEWED_ONLY }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Only Unviewed")
-                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    onDelete(daysOld, viewFilter)
-                    onDismiss()
+                    if (daysOld == 0) {
+                        confirmDeleteAll = true
+                    } else {
+                        onDelete(daysOld, viewFilter)
+                        onDismiss()
+                    }
                 }
             ) {
                 Text("Delete")

@@ -1,18 +1,14 @@
 package com.georgernstgraf.aitranscribe.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
@@ -48,90 +44,41 @@ fun TranscriptionItem(
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = if (isUnviewed) {
-                Color(0xFF203040)
+                Color(0xFF1E3044)
             } else {
-                Color(0xFF1A2733)
+                Color(0xFF172028)
             }
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Box(
-            modifier = Modifier.fillMaxWidth()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isUnviewed) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .width(5.dp)
-                        .height(72.dp)
-                        .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
-                        .background(Color(0xFFD7A928))
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = if (isUnviewed) 13.dp else 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = transcription.summary ?: getPreviewText(transcription),
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp
-                        ),
-                        color = Color(0xFFF3F6F8),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    Text(
-                        text = formatDateTime(transcription.createdAt),
-                        style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp),
-                        color = Color(0xFF9FB0BE)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                ViewedBadge(isViewed = transcription.isViewed)
-
-                Spacer(modifier = Modifier.width(4.dp))
-
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = "View details",
-                    tint = Color(0xFF8FA2B2),
-                    modifier = Modifier.size(20.dp)
+                Text(
+                    text = transcription.summary ?: getPreviewText(transcription),
+                    style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp),
+                    color = if (isUnviewed) Color(0xFFF3F6F8) else Color(0xFFB0BEC5),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = "View details",
+                tint = Color(0xFF8FA2B2),
+                modifier = Modifier.size(20.dp)
+            )
         }
-    }
-}
-
-@Composable
-private fun ViewedBadge(isViewed: Boolean, modifier: Modifier = Modifier) {
-    val bgColor = if (isViewed) Color(0xFF2D6A4F) else Color(0xFF8A6A16)
-    val textColor = if (isViewed) Color(0xFFEAF7EF) else Color(0xFFFFF7DA)
-    val label = if (isViewed) "Viewed" else "Unviewed"
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(13.dp))
-            .background(bgColor)
-            .padding(horizontal = 12.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = label,
-            color = textColor,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
-        )
     }
 }
 
