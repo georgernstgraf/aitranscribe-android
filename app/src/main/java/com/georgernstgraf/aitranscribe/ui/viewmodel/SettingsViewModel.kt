@@ -133,6 +133,12 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun resetPreferredShareApp() {
+        viewModelScope.launch {
+            securePreferences.setPreferredShareApp(null)
+        }
+    }
+
     private fun loadSettings() {
         viewModelScope.launch {
             try {

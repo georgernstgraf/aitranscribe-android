@@ -93,6 +93,14 @@ class SecurePreferences @Inject constructor(
         return sharedPreferences.getString(PROCESSING_MODE, "RAW") ?: "RAW"
     }
 
+    suspend fun setPreferredShareApp(packageName: String?) {
+        sharedPreferences.edit().putString(PREFERRED_SHARE_APP, packageName).apply()
+    }
+
+    fun getPreferredShareApp(): String? {
+        return sharedPreferences.getString(PREFERRED_SHARE_APP, null)
+    }
+
     suspend fun clearAll() {
         sharedPreferences.edit().clear().apply()
     }
@@ -107,5 +115,6 @@ class SecurePreferences @Inject constructor(
         private const val STT_MODEL = "stt_model"
         private const val LLM_MODEL = "llm_model"
         private const val PROCESSING_MODE = "processing_mode"
+        private const val PREFERRED_SHARE_APP = "preferred_share_app"
     }
 }

@@ -31,9 +31,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.ui.components.BottomControlPanel
 import com.georgernstgraf.aitranscribe.ui.components.ExportDialog
 import com.georgernstgraf.aitranscribe.ui.components.TranscriptionItem
@@ -61,6 +63,8 @@ fun MainScreen(
             )
         }
     }
+
+    val context = LocalContext.current
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -116,6 +120,10 @@ fun MainScreen(
                         transcription = transcription,
                         onClick = {
                             navController.navigate("transcription/${transcription.id}/${state.viewFilter.name}")
+                        },
+                        onLongClick = {
+                            val shareIntent = viewModel.shareTranscription(transcription)
+                            context.startActivity(shareIntent)
                         }
                     )
                 }

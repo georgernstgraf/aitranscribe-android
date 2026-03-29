@@ -214,6 +214,39 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    fun shareTranscription(transcription: Transcription): Intent {
+        val text = transcription.processedText ?: transcription.originalText
+        val preferredApp = securePreferences.getPreferredShareApp()
+
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+            if (preferredApp != null) {
+                setPackage(preferredApp)
+            }
+        }
+
+        return if (preferredApp != null) {
+            // Try the preferred app directly; fall back to chooser if it's gone
+            try {
+                context.packageManager.getPackageInfo(preferredApp, 0)
+                intent
+            } catch (_: Exception) {
+                // App uninstalled, clear preference
+                viewModelScope.launch { securePreferences.setPreferredShareApp(null) }
+                Intent.createChooser(Intent(intent).setPackage(null), "Share transcription")
+            }
+        } else {
+            Intent.createChooser(intent, "Share transcription")
+        }
+    }
+
+    fun savePreferredShareApp(packageName: String?) {
+        viewModelScope.launch {
+            securePreferences.setPreferredShareApp(packageName)
+        }
+    }
+
     fun setViewFilter(filter: ViewFilter) {
         _uiState.update { it.copy(viewFilter = filter) }
         loadRecentTranscriptions()
