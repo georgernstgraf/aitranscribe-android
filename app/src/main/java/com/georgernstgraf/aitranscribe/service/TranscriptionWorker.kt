@@ -112,6 +112,8 @@ class TranscriptionWorker @AssistedInject constructor(
             }
         } catch (e: Exception) {
             Log.e("TranscriptionWorker", "Post-processing failed (non-fatal)", e)
+            repository.updateStatus(transcriptionId, TranscriptionStatus.COMPLETED_WITH_WARNING.name)
+            repository.recordError(transcriptionId, "Post-processing skipped: ${e.message}")
         }
 
         Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))

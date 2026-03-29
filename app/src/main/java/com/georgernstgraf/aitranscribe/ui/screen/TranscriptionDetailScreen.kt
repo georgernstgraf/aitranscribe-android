@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.ui.viewmodel.TranscriptionDetailViewModel
 
@@ -180,6 +181,31 @@ fun TranscriptionDetailScreen(
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
+                            }
+
+                            if (trans.status == TranscriptionStatus.COMPLETED_WITH_WARNING) {
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0x33FFA000)
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Text(
+                                            text = "Post-processing incomplete",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = Color(0xFFFFA000),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        trans.errorMessage?.let { error ->
+                                            Text(
+                                                text = error,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = Color(0xFFCC8000)
+                                            )
+                                        }
+                                    }
+                                }
                             }
 
                             OutlinedTextField(
