@@ -33,8 +33,8 @@ android {
     }
 
     signingConfigs {
-        getByName("debug") {
-            if (keystorePropertiesFile.exists()) {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
                 storeFile = file(keystoreProperties["storeFile"] as String)
                 storePassword = keystoreProperties["storePassword"] as String
                 keyAlias = keystoreProperties["keyAlias"] as String
@@ -52,7 +52,7 @@ android {
                 "proguard-rules.pro"
             )
             if (keystorePropertiesFile.exists()) {
-                signingConfig = signingConfigs.getByName("debug")
+                signingConfig = signingConfigs.getByName("release")
             }
         }
         debug {
