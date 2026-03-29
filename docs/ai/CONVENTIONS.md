@@ -11,6 +11,7 @@
 - Room DAOs return `Flow<List<T>>` for observable queries, suspend functions for writes
 - Coroutines for async work in ViewModels (viewModelScope)
 - Repository pattern wraps both local (Room) and remote (Retrofit) data sources
+- Use `flatMapLatest` for reactive chains that switch between data sources (e.g., paging through transcriptions)
 
 ## File Layout
 ```
@@ -62,40 +63,6 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Device package name for `run-as`: `com.georgernstgraf.aitranscribe.debug` (debug build has `.debug` suffix)
 - No `sqlite3` binary on device — use `run-as` + file ops or log-based debugging for DB inspection
 
-## Knowledge Persistence
-- **Do NOT use `.opencode/knowledge/`** — this is not our persistence mechanism
-- Use the persistent workflow documented in `./docs/ai/` (HANDOFF.md, CONVENTIONS.md, DECISIONS.md, PITFALLS.md, STATE.md, DOMAIN.md)
-- Always honor the knowledge-persistence skill and the `./docs/ai/` structure
-
-### Persistence Triggers
-1. **End of productive session** — always update STATE.md and HANDOFF.md
-2. **After an architectural or technical decision** — add to DECISIONS.md immediately
-3. **After discovering a bug, constraint, or non-obvious behavior** — add to PITFALLS.md
-4. **After establishing a coding pattern or naming rule** — add to CONVENTIONS.md
-5. **When the user asks to "save context" or "persist knowledge"** — full persistence run
-
-### Knowledge File Content Guide
-
-| File | Contains | Disambiguation Test |
-|------|----------|---------------------|
-| DECISIONS.md | One-time choices with rationale | "Is this a past choice I made?" |
-| CONVENTIONS.md | Ongoing rules to follow every time | "Must I follow this on every change?" |
-| PITFALLS.md | Things that don't work, subtle bugs | "Would a new agent repeat this mistake?" |
-| STATE.md | Current project status (overwritten entirely) | "What's happening right now?" |
-| HANDOFF.md | Pending tasks for next agent | "What's unfinished?" |
-| DOMAIN.md | Business rules not obvious from code | "Would a developer miss this from code alone?" |
-
-### Fallback Protocol
-If the `knowledge-persistence` skill is not available:
-1. Read all existing `docs/ai/` files
-2. Identify new facts, decisions, patterns from this session not yet recorded
-3. Append to the correct file using the content guide above (do not duplicate)
-4. Overwrite STATE.md entirely with current status
-5. Update HANDOFF.md: clear if done, or list pending tasks with context
-6. Report which files were changed and how many entries were added
-
-Keep each knowledge file under 200 lines. Split by topic if needed.
-
 ## Companion Project
 - `../aitranscribe` (Python/TUI) is the **lead and authoritative project** for pipeline logic, prompts, and feature design
 - This Android app is the companion/follower — prompts, modes, and workflow must mirror the Python project
@@ -120,6 +87,6 @@ Keep each knowledge file under 200 lines. Split by topic if needed.
 - Use `FakeTranscriptionRepository` from `data/testing/`
 
 ### Known Testing Pitfalls
-- See `.opencode/knowledge/PITFALLS.md` for the full list
+- See `docs/ai/PITFALLS.md` for the full list
 - Key: infinite `collect {}` in ViewModel init hangs `runTest`/`advanceUntilIdle()`
 - Key: Hilt stale builds require `./gradlew clean` before instrumentation tests

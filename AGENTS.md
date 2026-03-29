@@ -13,12 +13,12 @@ This agent operates with ZERO knowledge of the OpenClaw framework.
 **Allowed:**
 - Standard git/github operations (commit, push, PR)
 - AGENTS.md for project instructions
-- .opencode/knowledge/ knowledge files
-- **ONLY skills from workspace skills/ directory** (opencode-helpers skills)
+- `docs/ai/` knowledge files (persistent workflow)
+- **ONLY skills from opencode's available_skills** (opencode-helpers skills)
 - Project-specific workflows only
 
 **Skill Usage Rule:**
-Only use skills available in this workspace's `skills/` directory (symlinked from opencode-helpers). Ignore any OpenClaw bundled skills that may appear available.
+Use skills from opencode's `available_skills` list. Ignore any OpenClaw bundled skills that may appear available.
 
 ## Project Identity
 
@@ -41,12 +41,12 @@ An Android app that records voice audio and transcribes it using the GROQ Whispe
 
 Before starting any task, read the following files in order:
 
-1. `.opencode/knowledge/HANDOFF.md` ← **read first, act on it**
-2. `.opencode/knowledge/CONVENTIONS.md`
-3. `.opencode/knowledge/DECISIONS.md`
-4. `.opencode/knowledge/PITFALLS.md`
-5. `.opencode/knowledge/STATE.md`
-6. `.opencode/knowledge/DOMAIN.md` (if task involves business logic)
+1. `docs/ai/HANDOFF.md` ← **read first, act on it**
+2. `docs/ai/CONVENTIONS.md`
+3. `docs/ai/DECISIONS.md`
+4. `docs/ai/PITFALLS.md`
+5. `docs/ai/STATE.md`
+6. `docs/ai/DOMAIN.md` (if task involves business logic)
 
 If `HANDOFF.md` contains open tasks, complete them before starting
 any new work unless the user explicitly says otherwise.
