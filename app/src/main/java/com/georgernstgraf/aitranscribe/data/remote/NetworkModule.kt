@@ -50,4 +50,15 @@ object NetworkModule {
             .build()
             .create(OpenRouterApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideZaiApiService(okHttpClient: OkHttpClient): ZaiApiService {
+        return Retrofit.Builder()
+            .baseUrl(ZaiApiService.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ZaiApiService::class.java)
+    }
 }

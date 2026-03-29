@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
+import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.ApiKeyError
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
@@ -38,12 +39,23 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(openRouterApiKey = apiKey) }
     }
 
+    fun onLlmModelChanged(model: String) {
+        _uiState.update { it.copy(llmModel = model) }
+    }
+
+    fun onZaiApiKeyChanged(apiKey: String?) {
+        _uiState.update { it.copy(zaiApiKey = apiKey) }
+    }
+
     fun onSttModelChanged(model: String) {
         _uiState.update { it.copy(sttModel = model) }
     }
 
-    fun onLlmModelChanged(model: String) {
-        _uiState.update { it.copy(llmModel = model) }
+    fun onLlmProviderChanged(provider: String) {
+        val models = ProviderConfig.getLlmModelsForProvider(provider)
+        val currentModel = _uiState.value.llmModel
+        val newModel = if (currentModel in models) currentModel else models.firstOrNull() ?: currentModel
+        _uiState.update { it.copy(llmProvider = provider, llmModel = newModel) }
     }
 
     fun onDaysToDeleteChanged(days: Int) {
@@ -62,47 +74,62 @@ class SettingsViewModel @Inject constructor(
 
             val errors = mutableListOf<String>()
             if (state.groqApiKey.isNullOrBlank()) errors.add("GROQ API key is required")
-            if (state.openRouterApiKey.isNullOrBlank()) errors.add("OpenRouter API key is required")
             if (state.sttModel.isBlank()) errors.add("STT model cannot be empty")
             if (state.sttModel.contains(' ')) errors.add("STT model name must not contain spaces")
             if (state.llmModel.isBlank()) errors.add("LLM model cannot be empty")
-            if (state.llmModel.contains(' ')) errors.add("LLM model name must not contain spaces")
+
+            when (state.llmProvider) {
+                "openrouter" -> {
+                    if (state.openRouterApiKey.isNullOrBlank()) errors.add("OpenRouter API key is required when using OpenRouter")
+                }
+                "zai" -> {
+                    if (state.zaiApiKey.isNullOrBlank()) errors.add("ZAI API key is required when using ZAI")
+                }
+            }
 
             if (errors.isNotEmpty()) {
                 _uiState.update { it.copy(isValidating = false, errorMessage = errors.joinToString("\n")) }
                 return@launch
             }
 
-            val result = validateApiKeysUseCase(state.groqApiKey, state.openRouterApiKey)
-            if (!result.isValid) {
-                val apiErrors = mutableListOf<String>()
-                if (!result.isGroqKeyValid) apiErrors.add("GROQ API key: " + (result.groqKeyError?.name?.lowercase() ?: "invalid"))
-                if (!result.isOpenRouterKeyValid) apiErrors.add("OpenRouter API key: " + (result.openRouterKeyError?.name?.lowercase() ?: "invalid"))
-                _uiState.update { it.copy(isValidating = false, errorMessage = apiErrors.joinToString("\n")) }
+            val groqResult = if (!state.groqApiKey.isNullOrBlank()) {
+                validateApiKeysUseCase.validateGroqKey(state.groqApiKey)
+            } else false
+
+            if (!groqResult) {
+                _uiState.update { it.copy(isValidating = false, errorMessage = "GROQ API key validation failed") }
                 return@launch
             }
 
-            val modelResult = validateApiKeysUseCase.validateModels(
-                state.groqApiKey!!,
-                state.openRouterApiKey!!,
-                state.sttModel,
-                state.llmModel
-            )
-            if (!modelResult.isValid) {
-                val modelErrors = mutableListOf<String>()
-                modelResult.sttModelError?.let { modelErrors.add(it) }
-                modelResult.llmModelError?.let { modelErrors.add(it) }
-                _uiState.update { it.copy(isValidating = false, errorMessage = modelErrors.joinToString("\n")) }
-                return@launch
+            when (state.llmProvider) {
+                "openrouter" -> {
+                    val orResult = validateApiKeysUseCase.validateOpenRouterKey(state.openRouterApiKey!!)
+                    if (!orResult) {
+                        _uiState.update { it.copy(isValidating = false, errorMessage = "OpenRouter API key validation failed") }
+                        return@launch
+                    }
+                }
+                "zai" -> {
+                    if (!isValidZaiKeyFormat(state.zaiApiKey!!)) {
+                        _uiState.update { it.copy(isValidating = false, errorMessage = "ZAI API key format is invalid") }
+                        return@launch
+                    }
+                }
             }
 
             state.groqApiKey?.let { securePreferences.setGroqApiKey(it) }
             state.openRouterApiKey?.let { securePreferences.setOpenRouterApiKey(it) }
+            state.zaiApiKey?.let { securePreferences.setZaiApiKey(it) }
             securePreferences.setSttModel(state.sttModel)
             securePreferences.setLlmModel(state.llmModel)
+            securePreferences.setLlmProvider(state.llmProvider)
 
             _uiState.update { it.copy(isValidating = false, isSaved = true) }
         }
+    }
+
+    private fun isValidZaiKeyFormat(key: String): Boolean {
+        return key.length >= 20 && key.contains(".")
     }
 
     fun getOldCount(daysOld: Int) {
@@ -144,15 +171,19 @@ class SettingsViewModel @Inject constructor(
             try {
                 val groqKey = securePreferences.getGroqApiKey()
                 val openRouterKey = securePreferences.getOpenRouterApiKey()
+                val zaiKey = securePreferences.getZaiApiKey()
                 val sttModel = securePreferences.getSttModel()
                 val llmModel = securePreferences.getLlmModel()
+                val llmProvider = securePreferences.getLlmProvider()
 
                 _uiState.update {
                     SettingsUiState(
                         groqApiKey = groqKey,
                         openRouterApiKey = openRouterKey,
+                        zaiApiKey = zaiKey,
                         sttModel = sttModel,
-                        llmModel = llmModel
+                        llmModel = llmModel,
+                        llmProvider = llmProvider
                     )
                 }
             } catch (e: Exception) {
@@ -167,8 +198,10 @@ class SettingsViewModel @Inject constructor(
 data class SettingsUiState(
     val groqApiKey: String? = null,
     val openRouterApiKey: String? = null,
+    val zaiApiKey: String? = null,
     val sttModel: String = "whisper-large-v3-turbo",
-    val llmModel: String = "anthropic/claude-3-haiku",
+    val llmProvider: String = "openrouter",
+    val llmModel: String = "inception/mercury",
     val daysToDelete: Int = 30,
     val deleteViewFilter: ViewFilter = ViewFilter.UNVIEWED_ONLY,
     val isSaved: Boolean = false,

@@ -109,11 +109,31 @@ class SecurePreferences @Inject constructor(
 
     fun peekOpenRouterApiKey(): String? = sharedPreferences.getString(OPENROUTER_API_KEY, null)
 
+    fun peekZaiApiKey(): String? = sharedPreferences.getString(ZAI_API_KEY, null)
+
+    suspend fun setZaiApiKey(apiKey: String) {
+        sharedPreferences.edit().putString(ZAI_API_KEY, apiKey).apply()
+    }
+
+    suspend fun getZaiApiKey(): String? {
+        return sharedPreferences.getString(ZAI_API_KEY, null)
+    }
+
+    suspend fun setLlmProvider(provider: String) {
+        sharedPreferences.edit().putString(LLM_PROVIDER, provider).apply()
+    }
+
+    suspend fun getLlmProvider(): String {
+        return sharedPreferences.getString(LLM_PROVIDER, "openrouter") ?: "openrouter"
+    }
+
     companion object {
         private const val GROQ_API_KEY = "groq_api_key"
         private const val OPENROUTER_API_KEY = "openrouter_api_key"
+        private const val ZAI_API_KEY = "zai_api_key"
         private const val STT_MODEL = "stt_model"
         private const val LLM_MODEL = "llm_model"
+        private const val LLM_PROVIDER = "llm_provider"
         private const val PROCESSING_MODE = "processing_mode"
         private const val PREFERRED_SHARE_APP = "preferred_share_app"
     }

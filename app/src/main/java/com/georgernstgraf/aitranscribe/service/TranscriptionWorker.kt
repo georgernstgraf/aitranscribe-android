@@ -94,18 +94,21 @@ class TranscriptionWorker @AssistedInject constructor(
         }
 
         try {
+            val llmProvider = securePreferences.getLlmProvider()
+            val llmApiKey = when (llmProvider) {
+                "zai" -> securePreferences.getZaiApiKey()
+                else -> securePreferences.getOpenRouterApiKey()
+            }
+            val llmModel = securePreferences.getLlmModel()
+
             if (mode != PostProcessingType.RAW) {
-                val openRouterKey = securePreferences.getOpenRouterApiKey()
-                val llmModel = securePreferences.getLlmModel()
-                if (!openRouterKey.isNullOrBlank()) {
-                    postProcessTextUseCase(transcriptionId, mode, llmModel, openRouterKey)
+                if (!llmApiKey.isNullOrBlank()) {
+                    postProcessTextUseCase(transcriptionId, mode, llmModel, llmApiKey, llmProvider)
                 }
             }
 
-            val openRouterKey = securePreferences.getOpenRouterApiKey()
-            if (!openRouterKey.isNullOrBlank()) {
-                val llmModel = securePreferences.getLlmModel()
-                postProcessTextUseCase.generateSummary(transcriptionId, llmModel, openRouterKey)
+            if (!llmApiKey.isNullOrBlank()) {
+                postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
             }
         } catch (e: Exception) {
             Log.e("TranscriptionWorker", "Post-processing failed (non-fatal)", e)

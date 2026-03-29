@@ -99,7 +99,7 @@ class ValidateApiKeysUseCase @Inject constructor(
         )
     }
 
-    private fun validateGroqKey(apiKey: String): Boolean {
+    suspend fun validateGroqKey(apiKey: String): Boolean = withContext(Dispatchers.IO) {
         val request = Request.Builder()
             .url("https://api.groq.com/openai/v1/models")
             .addHeader("Authorization", "Bearer $apiKey")
@@ -107,14 +107,14 @@ class ValidateApiKeysUseCase @Inject constructor(
             .get()
             .build()
 
-        return runCatching {
+        runCatching {
             okHttpClient.newCall(request).execute().use { response ->
                 response.isSuccessful
             }
         }.getOrElse { false }
     }
 
-    private fun validateOpenRouterKey(apiKey: String): Boolean {
+    suspend fun validateOpenRouterKey(apiKey: String): Boolean = withContext(Dispatchers.IO) {
         val request = Request.Builder()
             .url("https://openrouter.ai/api/v1/auth/key")
             .addHeader("Authorization", "Bearer $apiKey")
@@ -123,7 +123,7 @@ class ValidateApiKeysUseCase @Inject constructor(
             .get()
             .build()
 
-        return runCatching {
+        runCatching {
             okHttpClient.newCall(request).execute().use { response ->
                 response.isSuccessful
             }

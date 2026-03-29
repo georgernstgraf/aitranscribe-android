@@ -13,6 +13,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.ui.components.DeleteOldDialog
 import com.georgernstgraf.aitranscribe.ui.viewmodel.SettingsViewModel
 
@@ -140,48 +143,81 @@ fun SettingsScreen(
                 singleLine = true
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = state.zaiApiKey ?: "",
+                onValueChange = { viewModel.onZaiApiKeyChanged(if (it.isBlank()) null else it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
+                label = { Text("ZAI API Key") },
+                singleLine = true
+            )
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Models",
+                text = "Speech-to-Text",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 10.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = state.sttModel,
-                onValueChange = { viewModel.onSttModelChanged(it) },
+            SttModelDropdown(
+                selectedModel = state.sttModel,
+                onModelSelected = { viewModel.onSttModelChanged(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                label = { Text("STT Model") },
-                singleLine = true
+                    .padding(horizontal = 10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "LLM Post-Processing",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 10.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = state.llmModel,
-                onValueChange = { viewModel.onLlmModelChanged(it) },
+            LlmProviderDropdown(
+                selectedProvider = state.llmProvider,
+                onProviderSelected = { viewModel.onLlmProviderChanged(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                label = { Text("LLM Model") },
-                singleLine = true
+                    .padding(horizontal = 10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            LlmModelDropdown(
+                selectedProvider = state.llmProvider,
+                selectedModel = state.llmModel,
+                onModelSelected = { viewModel.onLlmModelChanged(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            val canSave = !state.groqApiKey.isNullOrBlank() &&
+                !state.isValidating &&
+                when (state.llmProvider) {
+                    "openrouter" -> !state.openRouterApiKey.isNullOrBlank()
+                    "zai" -> !state.zaiApiKey.isNullOrBlank()
+                    else -> false
+                }
 
             Button(
                 onClick = { viewModel.saveSettings() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 10.dp),
-                enabled = !state.groqApiKey.isNullOrBlank() &&
-                          !state.openRouterApiKey.isNullOrBlank() &&
-                          !state.isValidating
+                enabled = canSave
             ) {
                 if (state.isValidating) {
                     CircularProgressIndicator(
@@ -242,5 +278,126 @@ fun SettingsScreen(
                 showDeleteDialog = false
             }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SttModelDropdown(
+    selectedModel: String,
+    onModelSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val models = ProviderConfig.sttModels
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedModel,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("STT Model") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            models.forEach { model ->
+                androidx.compose.material3.DropdownMenuItem(
+                    text = { Text(model) },
+                    onClick = {
+                        onModelSelected(model)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LlmProviderDropdown(
+    selectedProvider: String,
+    onProviderSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val providers = ProviderConfig.llmProviders
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = ProviderConfig.getLlmProviderDisplayName(selectedProvider),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("LLM Provider") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            providers.forEach { provider ->
+                androidx.compose.material3.DropdownMenuItem(
+                    text = { Text(provider.displayName) },
+                    onClick = {
+                        onProviderSelected(provider.id)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LlmModelDropdown(
+    selectedProvider: String,
+    selectedModel: String,
+    onModelSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val models = ProviderConfig.getLlmModelsForProvider(selectedProvider)
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedModel,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("LLM Model") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            models.forEach { model ->
+                androidx.compose.material3.DropdownMenuItem(
+                    text = { Text(model) },
+                    onClick = {
+                        onModelSelected(model)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }

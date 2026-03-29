@@ -5,6 +5,7 @@ import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterResponse
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterChoice
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterMessage
+import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import io.mockk.coEvery
@@ -21,13 +22,15 @@ class PostProcessTextUseCaseTest {
 
     private lateinit var repository: FakeTranscriptionRepository
     private lateinit var apiService: OpenRouterApiService
+    private lateinit var zaiApiService: ZaiApiService
     private lateinit var useCase: PostProcessTextUseCase
 
     @Before
     fun setup() {
         repository = FakeTranscriptionRepository()
         apiService = mockk()
-        useCase = PostProcessTextUseCase(apiService, repository)
+        zaiApiService = mockk()
+        useCase = PostProcessTextUseCase(apiService, zaiApiService, repository)
     }
 
     @Test
