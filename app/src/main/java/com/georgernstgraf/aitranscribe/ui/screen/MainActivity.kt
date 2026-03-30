@@ -29,6 +29,7 @@ import com.georgernstgraf.aitranscribe.ui.screen.SearchScreen
 import com.georgernstgraf.aitranscribe.ui.screen.SettingsScreen
 import com.georgernstgraf.aitranscribe.ui.screen.SetupScreen
 import com.georgernstgraf.aitranscribe.ui.screen.TranscriptionDetailScreen
+import com.georgernstgraf.aitranscribe.ui.screen.auth.ProviderAuthScreen
 import com.georgernstgraf.aitranscribe.ui.theme.AITranscribeTheme
 import com.georgernstgraf.aitranscribe.util.ToastManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -138,6 +139,17 @@ fun MainNavigation() {
 
         composable("settings") {
             SettingsScreen(
+                navController = navController
+            )
+        }
+
+        composable(
+            route = "auth/{provider_id}",
+            arguments = listOf(navArgument("provider_id") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val providerId = backStackEntry.arguments?.getString("provider_id") ?: return@composable
+            ProviderAuthScreen(
+                providerId = providerId,
                 navController = navController
             )
         }

@@ -180,13 +180,29 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun saveProviderAuth(providerId: String, token: String) {
+        viewModelScope.launch {
+            securePreferences.setProviderAuthToken(providerId, token)
+            // Refresh state to update auth status
+            loadSettings()
+        }
+    }
+
     private fun loadSettings() {
         viewModelScope.launch {
             try {
                 val sttProvider = securePreferences.getSttProvider()
                 val llmProvider = securePreferences.getLlmProvider()
+                
+                val activeProviders = listOf("groq", "openrouter", "zai")
+                val authStatus = activeProviders.associateWith { provider ->
+                    securePreferences.getActiveAuthToken(provider) != null
+                }
+                
                 _uiState.update {
                     SettingsUiState(
+                        activeProviders = activeProviders,
+                        providerAuthStatus = authStatus,
                         groqApiKey = securePreferences.getGroqApiKey(),
                         openRouterApiKey = securePreferences.getProviderApiKey("openrouter"),
                         zaiApiKey = securePreferences.getProviderApiKey("zai"),

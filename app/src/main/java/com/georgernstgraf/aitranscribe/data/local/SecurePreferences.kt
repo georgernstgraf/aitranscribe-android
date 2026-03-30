@@ -25,11 +25,31 @@ class SecurePreferences @Inject constructor(
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
+    suspend fun setProviderAuthToken(providerId: String, token: String?) {
+        sharedPreferences.edit().putString("${providerId}_auth_token", token).apply()
+    }
+
+    suspend fun getActiveAuthToken(providerId: String): String? {
+        // Priority: New token system > Legacy individual keys
+        val newToken = getProviderAuthToken(providerId)
+        if (newToken != null) return newToken
+        
+        return when (providerId) {
+            "groq" -> getGroqApiKey()
+            "openrouter" -> getOpenRouterApiKey()
+            "zai" -> getZaiApiKey()
+            else -> null
+        }
+    }
+
+    suspend fun getProviderAuthToken(providerId: String): String? = sharedPreferences.getString("${providerId}_auth_token", null)
+
     suspend fun setProviderSettings(providerId: String, apiKey: String?, model: String) {
         sharedPreferences.edit()
             .putString("${providerId}_api_key", apiKey)
             .putString("${providerId}_llm_model", model)
             .apply()
+        // Backward compatibility: maintain old keys if needed
     }
 
     suspend fun getProviderApiKey(providerId: String): String? = sharedPreferences.getString("${providerId}_api_key", null)

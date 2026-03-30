@@ -1,5 +1,6 @@
 package com.georgernstgraf.aitranscribe.ui.screen
 
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -34,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,14 +52,14 @@ fun ProviderStatusItem(
     onManage: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    androidx.compose.material3.Card(
+    Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 10.dp)
     ) {
-        androidx.compose.foundation.layout.Row(
+        Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = providerId.replaceFirstChar { it.uppercase() },
@@ -160,55 +163,13 @@ fun SettingsScreen(
                 ProviderStatusItem(
                     providerId = providerId,
                     isAuthed = isAuthed,
-                    onManage = { /* TODO */ }
+                    onManage = { navController.navigate("auth/$providerId") }
                 )
                 Spacer(modifier = Modifier.height(4.dp))
             }
-
-            Text(
-                text = "API Keys (Configuration)",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 16.dp, start = 10.dp, end = 10.dp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = state.groqApiKey ?: "",
-                onValueChange = { viewModel.onGroqApiKeyChanged(if (it.isBlank()) null else it) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                label = { Text("GROQ API Key") },
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = state.openRouterApiKey ?: "",
-                onValueChange = { viewModel.onOpenRouterApiKeyChanged(if (it.isBlank()) null else it) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                label = { Text("OpenRouter API Key") },
-                singleLine = true
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = state.zaiApiKey ?: "",
-                onValueChange = { viewModel.onZaiApiKeyChanged(if (it.isBlank()) null else it) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                label = { Text("ZAI API Key") },
-                singleLine = true
-            )
-
+            
             Spacer(modifier = Modifier.height(24.dp))
-
+            
             Text(
                 text = "Speech-to-Text",
                 style = MaterialTheme.typography.titleMedium,
@@ -267,20 +228,11 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            val canSave = !state.groqApiKey.isNullOrBlank() &&
-                !state.isValidating &&
-                when (state.llmProvider) {
-                    "openrouter" -> !state.openRouterApiKey.isNullOrBlank()
-                    "zai" -> !state.zaiApiKey.isNullOrBlank()
-                    else -> false
-                }
-
             Button(
                 onClick = { viewModel.saveSettings() },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                enabled = canSave
+                    .padding(horizontal = 10.dp)
             ) {
                 if (state.isValidating) {
                     CircularProgressIndicator(
