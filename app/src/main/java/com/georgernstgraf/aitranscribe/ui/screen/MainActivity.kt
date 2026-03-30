@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -15,7 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,12 +23,22 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
+import com.georgernstgraf.aitranscribe.ui.components.CenteredToastHost
+import com.georgernstgraf.aitranscribe.ui.screen.MainScreen
+import com.georgernstgraf.aitranscribe.ui.screen.SearchScreen
+import com.georgernstgraf.aitranscribe.ui.screen.SettingsScreen
+import com.georgernstgraf.aitranscribe.ui.screen.SetupScreen
+import com.georgernstgraf.aitranscribe.ui.screen.TranscriptionDetailScreen
 import com.georgernstgraf.aitranscribe.ui.theme.AITranscribeTheme
-import com.georgernstgraf.aitranscribe.ui.viewmodel.MainViewModel
+import com.georgernstgraf.aitranscribe.util.ToastManager
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var toastManager: ToastManager
     
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
@@ -47,7 +57,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainNavigation()
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        MainNavigation()
+                        CenteredToastHost(toastManager = toastManager)
+                    }
                 }
             }
         }

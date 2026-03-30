@@ -13,6 +13,7 @@ import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
+import com.georgernstgraf.aitranscribe.util.ToastManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -31,6 +32,7 @@ class TranscriptionDetailViewModel @Inject constructor(
     private val repository: TranscriptionRepository,
     private val securePreferences: SecurePreferences,
     private val postProcessTextUseCase: PostProcessTextUseCase,
+    private val toastManager: ToastManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -80,11 +82,13 @@ class TranscriptionDetailViewModel @Inject constructor(
             val llmModel = securePreferences.getLlmModel()
 
             if (apiKey.isNullOrBlank()) {
-                _uiState.update { it.copy(errorMessage = "LLM API key is required for translation") }
+                viewModelScope.launch {
+                    toastManager.showToast("LLM API key is required for translation", isError = true)
+                }
                 return@launch
             }
 
-            _uiState.update { it.copy(isTranslating = true, errorMessage = null) }
+            _uiState.update { it.copy(isTranslating = true) }
             try {
                 postProcessTextUseCase(
                     transcriptionId = transcription.id,
@@ -95,7 +99,9 @@ class TranscriptionDetailViewModel @Inject constructor(
                     llmProvider = llmProvider
                 )
             } catch (e: Exception) {
-                _uiState.update { it.copy(errorMessage = e.message ?: "Translation failed") }
+                viewModelScope.launch {
+                    toastManager.showToast(e.message ?: "Translation failed", isError = true)
+                }
             } finally {
                 _uiState.update { it.copy(isTranslating = false) }
             }
@@ -231,6 +237,5 @@ data class TranscriptionDetailUiState(
     val isDeleted: Boolean = false,
     val nextTranscriptionId: Long? = null,
     val isCleanupEnabled: Boolean = false,
-    val isTranslating: Boolean = false,
-    val errorMessage: String? = null
+    val isTranslating: Boolean = false
 )

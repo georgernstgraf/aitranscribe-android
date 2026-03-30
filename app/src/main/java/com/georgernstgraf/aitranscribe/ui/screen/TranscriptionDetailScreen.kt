@@ -31,9 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
@@ -69,7 +66,6 @@ fun TranscriptionDetailScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val filteredIds by viewModel.filteredIds.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
 
     LaunchedEffect(state.isDeleted) {
@@ -78,20 +74,9 @@ fun TranscriptionDetailScreen(
         }
     }
 
-    LaunchedEffect(state.errorMessage) {
-        state.errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(
-                message = message,
-                actionLabel = "OK",
-                duration = SnackbarDuration.Long
-            )
-        }
-    }
-
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Transcription") },

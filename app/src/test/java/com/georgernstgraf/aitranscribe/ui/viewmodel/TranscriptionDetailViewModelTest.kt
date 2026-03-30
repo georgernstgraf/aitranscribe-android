@@ -8,6 +8,7 @@ import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
+import com.georgernstgraf.aitranscribe.util.ToastManager
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -36,6 +37,7 @@ class TranscriptionDetailViewModelTest {
     private lateinit var clipboardManager: ClipboardManager
     private lateinit var securePreferences: SecurePreferences
     private lateinit var postProcessTextUseCase: PostProcessTextUseCase
+    private lateinit var toastManager: ToastManager
     private lateinit var viewModel: TranscriptionDetailViewModel
     private val testDispatcher = StandardTestDispatcher()
 
@@ -47,6 +49,7 @@ class TranscriptionDetailViewModelTest {
         context = mockk(relaxed = true)
         securePreferences = mockk(relaxed = true)
         postProcessTextUseCase = mockk(relaxed = true)
+        toastManager = mockk(relaxed = true)
         every { context.getSystemService(Context.CLIPBOARD_SERVICE) } returns clipboardManager
         coEvery { securePreferences.getLlmProvider() } returns "openrouter"
         coEvery { securePreferences.getOpenRouterApiKey() } returns "test-key"
@@ -94,6 +97,7 @@ class TranscriptionDetailViewModelTest {
             repository,
             securePreferences,
             postProcessTextUseCase,
+            toastManager,
             context
         )
     }
