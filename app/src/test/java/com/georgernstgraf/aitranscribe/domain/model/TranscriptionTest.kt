@@ -7,13 +7,13 @@ import java.time.LocalDateTime
 class TranscriptionTest {
 
     @Test
-    fun `getShareText prepends summary when present`() {
+    fun `getShareText omits summary when present`() {
         val t = testTranscription(
             originalText = "raw text",
             processedText = "cleaned text",
             summary = "A brief summary"
         )
-        assertEquals("A brief summary: cleaned text", t.getShareText())
+        assertEquals("cleaned text", t.getShareText())
     }
 
     @Test
@@ -43,7 +43,7 @@ class TranscriptionTest {
             processedText = null,
             summary = "Summary here"
         )
-        assertEquals("Summary here: raw text", t.getShareText())
+        assertEquals("raw text", t.getShareText())
     }
 
     @Test

@@ -22,12 +22,7 @@ data class Transcription(
         get() = playedCount == 0
 
     fun getShareText(): String {
-        val transcriptionText = processedText ?: originalText
-        return if (!summary.isNullOrBlank()) {
-            "$summary: $transcriptionText"
-        } else {
-            transcriptionText
-        }
+        return processedText ?: originalText
     }
 
     fun getShareTitle(): String {
