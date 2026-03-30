@@ -99,3 +99,18 @@
 - **Tradeoff**: Inconsistent third-party support, but compliant with Android standards.
 Refactored Transcription.getShareText() to remove summary concatenation, as summary is now handled via Intent.EXTRA_SUBJECT. Updated tests accordingly.
 Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTranscription() to TranscriptionDetailViewModel.
+
+## 2026-03-30: Provider-Centric Authentication System
+- **Choice**: Migrated from flat `groqApiKey`/`openRouterApiKey` structure to a dynamic `ProviderAuthToken` mapping in `SecurePreferences`.
+- **Reason**: To support an arbitrary number of future providers gracefully without cluttering the Settings UI with empty text fields.
+- **Tradeoff**: Required a mapping migration in SecurePreferences, temporarily maintaining backward compatibility for legacy flat keys.
+
+## 2026-03-30: Database-Driven Dynamic Model Selection
+- **Choice**: Storing AI models (`ModelEntity`) and providers (`ProviderEntity`) in a local Room database, populated via API sync.
+- **Reason**: Hardcoding model lists is unsustainable. APIs rapidly deprecate old models and release new ones. Database storage enables an "Active Search" UI and scales effortlessly.
+- **Tradeoff**: Introduces a new background worker (`ModelSyncWorker`) running on app startup.
+
+## 2026-03-30: Robust Offline Audio Queueing
+- **Choice**: `TranscriptionWorker` retains the recorded `.m4a` file in the device cache (by not nulling `audioFilePath`) until *both* STT and LLM post-processing steps succeed.
+- **Reason**: Enables true "offline queueing" where users can record endless notes while offline or before entering API keys. The app will catch up on processing once configured.
+- **Tradeoff**: Requires cautious cleanup sweeps to avoid filling the user's storage with orphaned audio files.
