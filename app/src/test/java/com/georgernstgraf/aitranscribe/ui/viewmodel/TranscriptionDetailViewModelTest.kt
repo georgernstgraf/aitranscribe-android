@@ -121,11 +121,22 @@ class TranscriptionDetailViewModelTest {
     @Test
     fun `auto-marks transcription as viewed on load`() = runBlocking {
         val id = insertTestEntity(playedCount = 0)
-        createViewModel(id)
+        createViewModel(id, viewFilter = "ALL")
         testDispatcher.scheduler.runCurrent()
 
         val entity = repository.getById(id)
         assertTrue(entity!!.playedCount > 0)
+    }
+
+    @Test
+    fun `does not auto-mark transcription as viewed when UNVIEWED_ONLY filter is active`() = runBlocking {
+        val id = insertTestEntity(playedCount = 0)
+        createViewModel(id, viewFilter = "UNVIEWED_ONLY")
+        testDispatcher.scheduler.runCurrent()
+
+        val entity = repository.getById(id)
+        // Should remain 0 because auto-mark is suppressed for UNVIEWED_ONLY filter
+        assertEquals(0, entity!!.playedCount)
     }
 
     @Test
@@ -170,17 +181,5 @@ class TranscriptionDetailViewModelTest {
 
         val entity = repository.getById(id)
         assertEquals("New text", entity?.originalText)
-    }
-
-    @Test
-    fun `copyToClipboard sets isCopiedToClipboard flag`() = runBlocking {
-        val id = insertTestEntity(originalText = "Copy me")
-        createViewModel(id)
-        testDispatcher.scheduler.runCurrent()
-
-        viewModel.copyToClipboard()
-        testDispatcher.scheduler.runCurrent()
-
-        assertTrue(viewModel.uiState.value.isCopiedToClipboard)
     }
 }

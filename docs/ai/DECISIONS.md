@@ -98,3 +98,4 @@
 - **Considered**: No changes, or manual text prepending.
 - **Tradeoff**: Inconsistent third-party support, but compliant with Android standards.
 Refactored Transcription.getShareText() to remove summary concatenation, as summary is now handled via Intent.EXTRA_SUBJECT. Updated tests accordingly.
+Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTranscription() to TranscriptionDetailViewModel.

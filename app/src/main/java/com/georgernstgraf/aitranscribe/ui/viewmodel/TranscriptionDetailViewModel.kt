@@ -126,7 +126,7 @@ class TranscriptionDetailViewModel @Inject constructor(
                                 isViewed = transcription.isViewed
                             )
                         }
-                        if (!suppressAutoMark && entity.playedCount == 0) {
+                        if (!suppressAutoMark && entity.playedCount == 0 && viewFilter != ViewFilter.UNVIEWED_ONLY) {
                             markAsViewed(transcription.id)
                         }
                     }

@@ -3,11 +3,12 @@
 Current status as of 2026-03-30.
 
 ## Current Focus
-Sharing intent metadata enhancement (#36).
+Completed sharing UI update (#37).
 
 ## Completed (this cycle)
 - [x] Enhance sharing intent with EXTRA_SUBJECT (#36)
 - [x] Decouple summary from text body in share intent (#36)
+- [x] Replace copy icon with share icon on detail page (#37)
 
 ## Pending
 - None.
