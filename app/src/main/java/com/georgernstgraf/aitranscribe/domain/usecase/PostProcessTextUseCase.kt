@@ -108,7 +108,7 @@ class PostProcessTextUseCase @Inject constructor(
                 messages = listOf(
                     OpenRouterMessage(
                         role = "system",
-                        content = "Create a concise summary of the transcription in 70 to 80 characters. " +
+                        content = "Create a concise summary of the transcription, ideally not exceeding seven words, and definitely no more than ten words. " +
                             "Output only the summary text with no quotes, labels, or extra commentary. " +
                             "The summary shall be in the same language as the transcription."
                     ),
@@ -124,6 +124,52 @@ class PostProcessTextUseCase @Inject constructor(
                 val summary = response.body()!!.getContent().trim()
                 if (summary.isNotBlank()) {
                     repository.updateSummary(transcriptionId, summary)
+                }
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    suspend fun translateSummary(
+        transcriptionId: Long,
+        target: TranslationTarget,
+        llmModel: String,
+        apiKey: String,
+        llmProvider: String = "openrouter"
+    ) = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank()) return@withContext
+
+        val transcription = repository.getById(transcriptionId) ?: return@withContext
+        val summary = transcription.summary ?: return@withContext
+        if (summary.isBlank()) return@withContext
+
+        val targetLang = when (target) {
+            TranslationTarget.EN -> "English"
+            TranslationTarget.DE -> "German"
+            else -> return@withContext
+        }
+
+        try {
+            val request = OpenRouterRequest(
+                model = llmModel,
+                messages = listOf(
+                    OpenRouterMessage(
+                        role = "system",
+                        content = "Translate the following summary into $targetLang, maintaining a soft limit of 7 to 10 words. " +
+                            "Output only the translated text."
+                    ),
+                    OpenRouterMessage(
+                        role = "user",
+                        content = summary
+                    )
+                )
+            )
+
+            val response = callLlmApi(llmProvider, apiKey, request)
+            if (response.isSuccessful && response.body() != null) {
+                val translatedSummary = response.body()!!.getContent().trim()
+                if (translatedSummary.isNotBlank()) {
+                    repository.updateSummary(transcriptionId, translatedSummary)
                 }
             }
         } catch (_: Exception) {
@@ -176,6 +222,15 @@ class PostProcessTextUseCase @Inject constructor(
                     errorMessage = null
                 )
             )
+
+            val translationTarget = when (storedPostProcessingType) {
+                PostProcessingType.TRANSLATE_TO_EN.name -> TranslationTarget.EN
+                PostProcessingType.TRANSLATE_TO_DE.name -> TranslationTarget.DE
+                else -> null
+            }
+            if (translationTarget != null) {
+                translateSummary(transcriptionId, translationTarget, llmModel, apiKey, llmProvider)
+            }
         } catch (e: PostProcessingException) {
             repository.recordError(transcriptionId, e.message ?: "Unknown error")
             throw e
