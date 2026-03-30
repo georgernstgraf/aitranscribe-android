@@ -73,4 +73,6 @@ interface TranscriptionRepository {
     suspend fun getPrevTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long?
 
     fun getFilteredIds(viewFilter: ViewFilter): Flow<List<Long>>
+
+    suspend fun clearAudioPath(id: Long)
 }

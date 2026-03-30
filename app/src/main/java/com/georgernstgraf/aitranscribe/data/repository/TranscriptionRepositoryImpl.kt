@@ -114,6 +114,10 @@ class TranscriptionRepositoryImpl @Inject constructor(
         transcriptionDao.updateSummary(id, summary)
     }
 
+    override suspend fun clearAudioPath(id: Long) {
+        transcriptionDao.clearAudioPath(id)
+    }
+
     override suspend fun queueForOffline(queued: QueuedTranscriptionEntity): Long {
         return queuedTranscriptionDao.insert(queued)
     }

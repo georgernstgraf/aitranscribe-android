@@ -22,6 +22,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
+import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsViewModelTest {
 
@@ -29,6 +31,7 @@ class SettingsViewModelTest {
     private lateinit var deleteUseCase: DeleteTranscriptionUseCase
     private lateinit var validateApiKeysUseCase: ValidateApiKeysUseCase
     private lateinit var securePreferences: SecurePreferences
+    private lateinit var providerModelDao: ProviderModelDao
     private lateinit var viewModel: SettingsViewModel
     private val testDispatcher = StandardTestDispatcher()
 
@@ -38,7 +41,10 @@ class SettingsViewModelTest {
         repository = FakeTranscriptionRepository()
         deleteUseCase = DeleteTranscriptionUseCase(repository)
         securePreferences = mockk(relaxed = true)
+        providerModelDao = mockk(relaxed = true)
         validateApiKeysUseCase = ValidateApiKeysUseCase(OkHttpClient())
+
+        coEvery { providerModelDao.getModelsForProvider(any()) } returns emptyList()
 
         coEvery { securePreferences.getProviderApiKey("groq") } returns null
         coEvery { securePreferences.getProviderApiKey("openrouter") } returns null
@@ -50,7 +56,7 @@ class SettingsViewModelTest {
         coEvery { securePreferences.getSttProvider() } returns "groq"
         coEvery { securePreferences.getGroqApiKey() } returns null
 
-        viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase)
+        viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase, providerModelDao)
     }
 
     @Test

@@ -136,6 +136,9 @@ interface TranscriptionDao {
     @Query("UPDATE transcriptions SET summary = :summary WHERE id = :id")
     suspend fun updateSummary(id: Long, summary: String)
 
+    @Query("UPDATE transcriptions SET audio_file_path = NULL WHERE id = :id")
+    suspend fun clearAudioPath(id: Long)
+
     @Query("""
         SELECT id FROM transcriptions 
         WHERE created_at < (SELECT created_at FROM transcriptions WHERE id = :currentId)

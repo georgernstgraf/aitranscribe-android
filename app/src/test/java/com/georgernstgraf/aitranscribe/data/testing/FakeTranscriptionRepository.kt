@@ -204,6 +204,12 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         }
     }
 
+    override suspend fun clearAudioPath(id: Long) {
+        transcriptions.value = transcriptions.value.map {
+            if (it.id == id) it.copy(audioFilePath = null) else it
+        }
+    }
+
     override suspend fun getQueuedAudioPaths(): List<String> {
         return queuedTranscriptions.value.mapNotNull { it.audioFilePath }
     }

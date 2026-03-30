@@ -58,7 +58,7 @@ class TranscriptionWorker @AssistedInject constructor(
         val entity = TranscriptionEntity(
             originalText = transcriptionText,
             processedText = null,
-            audioFilePath = null,
+            audioFilePath = queued.audioFilePath, // Keep audio file initially
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             postProcessingType = processingMode,
             status = TranscriptionStatus.COMPLETED.name,
@@ -70,14 +70,9 @@ class TranscriptionWorker @AssistedInject constructor(
 
         val transcriptionId = repository.insert(entity)
         repository.removeQueued(queuedId)
-        cleanupAudioFile(queued.audioFilePath)
-        cleanupOrphanedAudioFiles()
 
         val llmProvider = securePreferences.getLlmProvider()
-        val llmApiKey = when (llmProvider) {
-            "zai" -> securePreferences.getZaiApiKey()
-            else -> securePreferences.getOpenRouterApiKey()
-        }
+        val llmApiKey = securePreferences.getActiveAuthToken(llmProvider)
         val llmModel = securePreferences.getLlmModel()
 
         val postProcessingType = when (processingMode) {
@@ -125,12 +120,24 @@ class TranscriptionWorker @AssistedInject constructor(
                 }
 
                 postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
+                
+                // Clear audio file path and delete file ONLY if post-processing succeeds
+                repository.clearAudioPath(transcriptionId)
+                cleanupAudioFile(queued.audioFilePath)
+                
             } catch (e: Exception) {
                 Log.e("TranscriptionWorker", "Post-processing failed (non-fatal)", e)
                 repository.updateStatus(transcriptionId, TranscriptionStatus.COMPLETED_WITH_WARNING.name)
                 repository.recordError(transcriptionId, "Post-processing skipped: ${e.message}")
             }
+        } else {
+            if (postProcessingType == PostProcessingType.RAW) {
+                repository.clearAudioPath(transcriptionId)
+                cleanupAudioFile(queued.audioFilePath)
+            }
         }
+
+        cleanupOrphanedAudioFiles()
 
         Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
     }
