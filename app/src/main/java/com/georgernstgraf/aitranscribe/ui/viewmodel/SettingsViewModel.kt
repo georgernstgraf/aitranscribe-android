@@ -50,11 +50,18 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(llmModel = model) }
     }
 
-    fun onLlmProviderChanged(provider: String) {
-        val models = ProviderConfig.getLlmModelsForProvider(provider)
-        val currentModel = _uiState.value.llmModel
-        val newModel = if (currentModel in models) currentModel else models.firstOrNull() ?: currentModel
-        _uiState.update { it.copy(llmProvider = provider, llmModel = newModel) }
+    fun onLlmProviderChanged(providerId: String) {
+        viewModelScope.launch {
+            val apiKey = securePreferences.getProviderApiKey(providerId)
+            val model = securePreferences.getProviderModel(providerId, ProviderConfig.getDefaultLlmModel(providerId))
+            
+            _uiState.update { it.copy(
+                llmProvider = providerId,
+                llmModel = model,
+                openRouterApiKey = if (providerId == "openrouter") apiKey else it.openRouterApiKey,
+                zaiApiKey = if (providerId == "zai") apiKey else it.zaiApiKey
+            ) }
+        }
     }
 
     fun onDaysToDeleteChanged(days: Int) {
@@ -115,10 +122,14 @@ class SettingsViewModel @Inject constructor(
             }
 
             state.groqApiKey?.let { securePreferences.setGroqApiKey(it) }
-            state.openRouterApiKey?.let { securePreferences.setOpenRouterApiKey(it) }
-            state.zaiApiKey?.let { securePreferences.setZaiApiKey(it) }
+            
+            // Save provider-specific settings
+            when (state.llmProvider) {
+                "openrouter" -> securePreferences.setProviderSettings("openrouter", state.openRouterApiKey, state.llmModel)
+                "zai" -> securePreferences.setProviderSettings("zai", state.zaiApiKey, state.llmModel)
+            }
+            
             securePreferences.setSttModel(state.sttModel)
-            securePreferences.setLlmModel(state.llmModel)
             securePreferences.setLlmProvider(state.llmProvider)
 
             _uiState.update { it.copy(isValidating = false, isSaved = true) }
@@ -164,14 +175,15 @@ class SettingsViewModel @Inject constructor(
     private fun loadSettings() {
         viewModelScope.launch {
             try {
+                val provider = securePreferences.getLlmProvider()
                 _uiState.update {
                     SettingsUiState(
                         groqApiKey = securePreferences.getGroqApiKey(),
-                        openRouterApiKey = securePreferences.getOpenRouterApiKey(),
-                        zaiApiKey = securePreferences.getZaiApiKey(),
+                        openRouterApiKey = securePreferences.getProviderApiKey("openrouter"),
+                        zaiApiKey = securePreferences.getProviderApiKey("zai"),
                         sttModel = securePreferences.getSttModel(),
-                        llmModel = securePreferences.getLlmModel(),
-                        llmProvider = securePreferences.getLlmProvider()
+                        llmModel = securePreferences.getProviderModel(provider, ProviderConfig.getDefaultLlmModel(provider)),
+                        llmProvider = provider
                     )
                 }
             } catch (_: Exception) {

@@ -25,6 +25,17 @@ class SecurePreferences @Inject constructor(
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
+    suspend fun setProviderSettings(providerId: String, apiKey: String?, model: String) {
+        sharedPreferences.edit()
+            .putString("${providerId}_api_key", apiKey)
+            .putString("${providerId}_llm_model", model)
+            .apply()
+    }
+
+    suspend fun getProviderApiKey(providerId: String): String? = sharedPreferences.getString("${providerId}_api_key", null)
+    suspend fun getProviderModel(providerId: String, defaultModel: String): String = 
+        sharedPreferences.getString("${providerId}_llm_model", defaultModel) ?: defaultModel
+
     suspend fun setGroqApiKey(apiKey: String) {
         sharedPreferences.edit().putString(GROQ_API_KEY, apiKey).apply()
     }

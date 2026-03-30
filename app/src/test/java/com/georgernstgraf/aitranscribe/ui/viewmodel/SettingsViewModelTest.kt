@@ -40,20 +40,14 @@ class SettingsViewModelTest {
         securePreferences = mockk(relaxed = true)
         validateApiKeysUseCase = ValidateApiKeysUseCase(OkHttpClient())
 
-        coEvery { securePreferences.getGroqApiKey() } returns null
-        coEvery { securePreferences.getOpenRouterApiKey() } returns null
-        coEvery { securePreferences.getZaiApiKey() } returns null
         coEvery { securePreferences.getSttModel() } returns "whisper-large-v3-turbo"
-        coEvery { securePreferences.getLlmModel() } returns "anthropic/claude-3-haiku"
+        coEvery { securePreferences.getProviderApiKey("openrouter") } returns null
+        coEvery { securePreferences.getProviderApiKey("zai") } returns null
+        coEvery { securePreferences.getProviderModel("openrouter", any()) } returns "anthropic/claude-3-haiku"
+        coEvery { securePreferences.getProviderModel("zai", any()) } returns "glm-4.7"
         coEvery { securePreferences.getLlmProvider() } returns "openrouter"
 
         viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase)
-    }
-
-    @After
-    fun tearDown() {
-        viewModel.viewModelScope.cancel()
-        Dispatchers.resetMain()
     }
 
     @Test
@@ -63,6 +57,13 @@ class SettingsViewModelTest {
 
         assertEquals("whisper-large-v3-turbo", state.sttModel)
         assertEquals("anthropic/claude-3-haiku", state.llmModel)
+    }
+
+
+    @After
+    fun tearDown() {
+        viewModel.viewModelScope.cancel()
+        Dispatchers.resetMain()
     }
 
     @Test
