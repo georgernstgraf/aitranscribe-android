@@ -194,10 +194,12 @@ class SettingsViewModel @Inject constructor(
                 val sttProvider = securePreferences.getSttProvider()
                 val llmProvider = securePreferences.getLlmProvider()
                 
-                val activeProviders = listOf("groq", "openrouter", "zai")
-                val authStatus = activeProviders.associateWith { provider ->
+                // Track only providers with valid auth tokens
+                val allProviders = listOf("groq", "openrouter", "zai")
+                val authStatus = allProviders.associateWith { provider ->
                     securePreferences.getActiveAuthToken(provider) != null
                 }
+                val activeProviders = allProviders.filter { provider -> authStatus[provider] == true }
                 
                 _uiState.update {
                     SettingsUiState(
@@ -220,8 +222,8 @@ class SettingsViewModel @Inject constructor(
 }
 
 data class SettingsUiState(
-    val activeProviders: List<String> = listOf("groq", "openrouter"), // Placeholder logic
-    val providerAuthStatus: Map<String, Boolean> = mapOf("groq" to true, "openrouter" to true),
+    val activeProviders: List<String> = emptyList(),
+    val providerAuthStatus: Map<String, Boolean> = emptyMap(),
     val groqApiKey: String? = null,
     val openRouterApiKey: String? = null,
     val zaiApiKey: String? = null,

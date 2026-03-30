@@ -57,7 +57,7 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 
 ## Build & Deploy
 - Build: `./gradlew assembleDebug`
-- **Auto-deploy:** After every successful build, always run `adb devices` to check for a connected physical device. If one is present, immediately run `adb install -r app/build/outputs/apk/debug/app-debug.apk`. Do not wait for the user to ask.
+- **Auto-deploy:** After every change, always run `./gradlew assembleDebug` followed by `adb devices`. If a device is present, immediately run `adb install -r app/build/outputs/apk/debug/app-debug.apk`. Do not wait for the user to ask.
 - Install preserving data: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 - Never use `adb uninstall` + `adb install` (loses API keys and preferences)
 - Device package name for `run-as`: `com.georgernstgraf.aitranscribe.debug` (debug build has `.debug` suffix)
