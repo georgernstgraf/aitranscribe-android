@@ -1,0 +1,9 @@
+{
+  "prompt.transcribe": "You are a helpful assistant for audio transcription. Clean up grammatical errors and filler words while preserving the original meaning.",
+  "prompt.cleanup": "Please correct grammatical errors, remove filler words, and structure the following text clearly.",
+  "prompt.translate.en": "Please translate the following text to English, correct grammatical errors, remove filler words, and structure it clearly.",
+  "prompt.translate.de": "Please translate the following text to German, correct grammatical errors, remove filler words, and structure it clearly.",
+  "prompt.summary.system": "Create a concise summary of the transcription, ideally not exceeding seven words, and definitely no more than ten words. Output only the summary text with no quotes, labels, or extra commentary.",
+  "prompt.summary.translate.en": "Translate the following summary into English, maintaining a soft limit of 7 to 10 words. Output only the translated text.",
+  "prompt.summary.translate.de": "Translate the following summary into German, maintaining a soft limit of 7 to 10 words. Output only the translated text."
+}

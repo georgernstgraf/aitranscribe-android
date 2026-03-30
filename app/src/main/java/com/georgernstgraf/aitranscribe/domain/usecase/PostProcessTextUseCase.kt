@@ -11,13 +11,15 @@ import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.georgernstgraf.aitranscribe.domain.util.PromptManager
 import retrofit2.Response
 import javax.inject.Inject
 
 class PostProcessTextUseCase @Inject constructor(
     private val openRouterApiService: OpenRouterApiService,
     private val zaiApiService: ZaiApiService,
-    private val repository: TranscriptionRepository
+    private val repository: TranscriptionRepository,
+    private val promptManager: PromptManager
 ) {
 
     suspend operator fun invoke(
@@ -108,9 +110,7 @@ class PostProcessTextUseCase @Inject constructor(
                 messages = listOf(
                     OpenRouterMessage(
                         role = "system",
-                        content = "Create a concise summary of the transcription, ideally not exceeding seven words, and definitely no more than ten words. " +
-                            "Output only the summary text with no quotes, labels, or extra commentary. " +
-                            "The summary shall be in the same language as the transcription."
+                        content = promptManager.get("prompt.summary.system")
                     ),
                     OpenRouterMessage(
                         role = "user",
@@ -143,9 +143,9 @@ class PostProcessTextUseCase @Inject constructor(
         val summary = transcription.summary ?: return@withContext
         if (summary.isBlank()) return@withContext
 
-        val targetLang = when (target) {
-            TranslationTarget.EN -> "English"
-            TranslationTarget.DE -> "German"
+        val promptKey = when (target) {
+            TranslationTarget.EN -> "prompt.summary.translate.en"
+            TranslationTarget.DE -> "prompt.summary.translate.de"
             else -> return@withContext
         }
 
@@ -155,8 +155,7 @@ class PostProcessTextUseCase @Inject constructor(
                 messages = listOf(
                     OpenRouterMessage(
                         role = "system",
-                        content = "Translate the following summary into $targetLang, maintaining a soft limit of 7 to 10 words. " +
-                            "Output only the translated text."
+                        content = promptManager.get(promptKey)
                     ),
                     OpenRouterMessage(
                         role = "user",
@@ -252,27 +251,13 @@ class PostProcessTextUseCase @Inject constructor(
     }
 
     private fun buildCleanupPrompt(): String {
-        return buildBasePrompt(
-            "Please correct grammatical errors, remove filler words, and structure the following text clearly."
-        )
+        return buildBasePrompt(promptManager.get("prompt.cleanup"))
     }
 
     private fun buildTranslationPrompt(target: TranslationTarget, includeCleanup: Boolean): String {
         val request = when (target) {
-            TranslationTarget.EN -> {
-                if (includeCleanup) {
-                    "Please translate the following text to English, correct grammatical errors, remove filler words, and structure it clearly."
-                } else {
-                    "Please translate the following text to English."
-                }
-            }
-            TranslationTarget.DE -> {
-                if (includeCleanup) {
-                    "Please translate the following text to German, correct grammatical errors, remove filler words, and structure it clearly."
-                } else {
-                    "Please translate the following text to German."
-                }
-            }
+            TranslationTarget.EN -> promptManager.get("prompt.translate.en")
+            TranslationTarget.DE -> promptManager.get("prompt.translate.de")
             TranslationTarget.NONE -> ""
         }
         return buildBasePrompt(request)
