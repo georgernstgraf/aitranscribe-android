@@ -10,6 +10,11 @@ import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.georgernstgraf.aitranscribe.service.ModelSyncWorker
+
 @HiltAndroidApp
 class AITranscribeApp : Application(), Configuration.Provider {
 
@@ -19,6 +24,16 @@ class AITranscribeApp : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
+        enqueueModelSync()
+    }
+
+    private fun enqueueModelSync() {
+        val workRequest = OneTimeWorkRequestBuilder<ModelSyncWorker>().build()
+        WorkManager.getInstance(this).enqueueUniqueWork(
+            "model_sync_worker",
+            ExistingWorkPolicy.REPLACE,
+            workRequest
+        )
     }
 
     private fun createNotificationChannels() {

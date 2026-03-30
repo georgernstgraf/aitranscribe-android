@@ -6,11 +6,16 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.GET
+import com.georgernstgraf.aitranscribe.data.remote.dto.ModelsResponse
 
 /**
  * OpenRouter API Service for LLM text processing.
  */
 interface OpenRouterApiService {
+
+    @GET("models")
+    suspend fun getModels(): Response<ModelsResponse>
 
     @POST("chat/completions")
     suspend fun processText(

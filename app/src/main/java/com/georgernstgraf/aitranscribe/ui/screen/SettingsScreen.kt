@@ -48,6 +48,8 @@ import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.ui.components.DeleteOldDialog
 import com.georgernstgraf.aitranscribe.ui.viewmodel.SettingsViewModel
 
+import com.georgernstgraf.aitranscribe.ui.components.SearchableModelDropdown
+
 @Composable
 fun ProviderStatusItem(
     providerId: String,
@@ -202,10 +204,11 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            SttModelDropdown(
-                selectedProvider = state.sttProvider,
+            SearchableModelDropdown(
                 selectedModel = state.sttModel,
+                models = state.sttAvailableModels,
                 onModelSelected = { viewModel.onSttModelChanged(it) },
+                label = "STT Model",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 10.dp)
@@ -231,10 +234,11 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            LlmModelDropdown(
-                selectedProvider = state.llmProvider,
+            SearchableModelDropdown(
                 selectedModel = state.llmModel,
+                models = state.llmAvailableModels,
                 onModelSelected = { viewModel.onLlmModelChanged(it) },
+                label = "LLM Model",
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 10.dp)
@@ -327,47 +331,6 @@ private fun SttProviderDropdown(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SttModelDropdown(
-    selectedProvider: String,
-    selectedModel: String,
-    onModelSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val models = ProviderConfig.getSttModelsForProvider(selectedProvider)
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = selectedModel,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("STT Model") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            models.forEach { model ->
-                androidx.compose.material3.DropdownMenuItem(
-                    text = { Text(model) },
-                    onClick = {
-                        onModelSelected(model)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
 private fun LlmProviderDropdown(
     selectedProvider: String,
     onProviderSelected: (String) -> Unit,
@@ -406,43 +369,3 @@ private fun LlmProviderDropdown(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun LlmModelDropdown(
-    selectedProvider: String,
-    selectedModel: String,
-    onModelSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val models = ProviderConfig.getLlmModelsForProvider(selectedProvider)
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = modifier
-    ) {
-        OutlinedTextField(
-            value = selectedModel,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("LLM Model") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.menuAnchor()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            models.forEach { model ->
-                androidx.compose.material3.DropdownMenuItem(
-                    text = { Text(model) },
-                    onClick = {
-                        onModelSelected(model)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}

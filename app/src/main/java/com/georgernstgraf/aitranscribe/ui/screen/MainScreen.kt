@@ -69,39 +69,55 @@ fun MainScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = { Text("AITranscribe") },
-                actions = {
-                    IconButton(
-                        onClick = { navController.navigate("search") }
-                    ) {
-                        Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.Search,
-                            contentDescription = "Search"
-                        )
-                    }
+            androidx.compose.foundation.layout.Column {
+                TopAppBar(
+                    title = { Text("AITranscribe") },
+                    actions = {
+                        IconButton(
+                            onClick = { navController.navigate("search") }
+                        ) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.Search,
+                                contentDescription = "Search"
+                            )
+                        }
 
-                    IconButton(
-                        onClick = { navController.navigate("settings") }
-                    ) {
-                        Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.Settings,
-                            contentDescription = "Settings"
-                        )
-                    }
+                        IconButton(
+                            onClick = { navController.navigate("settings") }
+                        ) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.Settings,
+                                contentDescription = "Settings"
+                            )
+                        }
 
-                    IconButton(
-                        onClick = { showExportDialog = true }
+                        IconButton(
+                            onClick = { showExportDialog = true }
+                        ) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.Share,
+                                contentDescription = "Export"
+                            )
+                        }
+                    },
+                    scrollBehavior = scrollBehavior
+                )
+                
+                if (!state.isSttConfigured) {
+                    androidx.compose.material3.Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(
-                            imageVector = androidx.compose.material.icons.Icons.Default.Share,
-                            contentDescription = "Export"
+                        Text(
+                            text = "Setup required: Connect a provider in settings to process audio.",
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyMedium
                         )
                     }
-                },
-                scrollBehavior = scrollBehavior
-            )
-        }
+                }
+            }
+        },
     ) { padding ->
         Column(
             modifier = Modifier

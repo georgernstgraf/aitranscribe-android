@@ -35,4 +35,12 @@ object DatabaseModule {
     ): QueuedTranscriptionDao {
         return database.queuedTranscriptionDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideProviderModelDao(
+        database: TranscriptionDatabase
+    ): ProviderModelDao {
+        return database.providerModelDao()
+    }
 }

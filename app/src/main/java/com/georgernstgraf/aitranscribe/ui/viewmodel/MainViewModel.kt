@@ -284,7 +284,14 @@ class MainViewModel @Inject constructor(
                     ViewFilter.VIEWED -> repository.getViewed(limit = 50)
                 }
                 flow.collect { transcriptions ->
-                    _uiState.update { it.copy(recentTranscriptions = transcriptions) }
+                    val sttProvider = securePreferences.getSttProvider()
+                    val hasSttToken = !securePreferences.getActiveAuthToken(sttProvider).isNullOrBlank()
+                    _uiState.update { 
+                        it.copy(
+                            recentTranscriptions = transcriptions,
+                            isSttConfigured = hasSttToken
+                        ) 
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(recentTranscriptions = emptyList()) }
@@ -299,5 +306,6 @@ data class MainUiState(
     val recordingError: String? = null,
     val recentTranscriptions: List<Transcription> = emptyList(),
     val viewFilter: ViewFilter = ViewFilter.ALL,
-    val processingMode: PostProcessingType = PostProcessingType.RAW
+    val processingMode: PostProcessingType = PostProcessingType.RAW,
+    val isSttConfigured: Boolean = true
 )

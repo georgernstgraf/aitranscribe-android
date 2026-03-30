@@ -9,6 +9,8 @@ import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.georgernstgraf.aitranscribe.data.local.ModelEntity
+import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +22,8 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val deleteTranscriptionUseCase: DeleteTranscriptionUseCase,
     private val securePreferences: SecurePreferences,
-    private val validateApiKeysUseCase: ValidateApiKeysUseCase
+    private val validateApiKeysUseCase: ValidateApiKeysUseCase,
+    private val providerModelDao: ProviderModelDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -44,8 +47,11 @@ class SettingsViewModel @Inject constructor(
 
     fun onSttProviderChanged(providerId: String) {
         viewModelScope.launch {
-            val model = securePreferences.getProviderModel(providerId, ProviderConfig.getSttModelsForProvider(providerId).firstOrNull() ?: "")
+            val models = providerModelDao.getModelsForProvider(providerId).map { it.id }
+            val fallback = models.firstOrNull() ?: ProviderConfig.getSttModelsForProvider(providerId).firstOrNull() ?: ""
+            val model = securePreferences.getProviderModel(providerId, fallback)
             _uiState.update { it.copy(sttProvider = providerId, sttModel = model) }
+            updateDropdownModels()
         }
     }
 
@@ -53,22 +59,18 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(sttModel = model) }
     }
 
-    fun onLlmModelChanged(model: String) {
-        _uiState.update { it.copy(llmModel = model) }
-    }
-
     fun onLlmProviderChanged(providerId: String) {
         viewModelScope.launch {
-            val apiKey = securePreferences.getProviderApiKey(providerId)
-            val model = securePreferences.getProviderModel(providerId, ProviderConfig.getDefaultLlmModel(providerId))
-            
-            _uiState.update { it.copy(
-                llmProvider = providerId,
-                llmModel = model,
-                openRouterApiKey = if (providerId == "openrouter") apiKey else it.openRouterApiKey,
-                zaiApiKey = if (providerId == "zai") apiKey else it.zaiApiKey
-            ) }
+            val models = providerModelDao.getModelsForProvider(providerId).map { it.id }
+            val fallback = models.firstOrNull() ?: ProviderConfig.getLlmModelsForProvider(providerId).firstOrNull() ?: ""
+            val model = securePreferences.getProviderModel(providerId, fallback)
+            _uiState.update { it.copy(llmProvider = providerId, llmModel = model) }
+            updateDropdownModels()
         }
+    }
+
+    fun onLlmModelChanged(model: String) {
+        _uiState.update { it.copy(llmModel = model) }
     }
 
     fun onDaysToDeleteChanged(days: Int) {
@@ -200,6 +202,12 @@ class SettingsViewModel @Inject constructor(
                 val activeProviders = allProviderIds.filter { provider -> authStatus[provider] == true }
                 val availableProviders = allProviderIds.filter { provider -> authStatus[provider] != true }
                 
+                val sttModels = providerModelDao.getModelsForProvider(sttProvider)
+                val sttFallback = sttModels.firstOrNull()?.id ?: ProviderConfig.getDefaultSttModel(sttProvider)
+                
+                val llmModels = providerModelDao.getModelsForProvider(llmProvider)
+                val llmFallback = llmModels.firstOrNull()?.id ?: ProviderConfig.getDefaultLlmModel(llmProvider)
+
                 _uiState.update {
                     SettingsUiState(
                         activeProviders = activeProviders,
@@ -208,14 +216,29 @@ class SettingsViewModel @Inject constructor(
                         groqApiKey = securePreferences.getGroqApiKey(),
                         openRouterApiKey = securePreferences.getProviderApiKey("openrouter"),
                         zaiApiKey = securePreferences.getProviderApiKey("zai"),
-                        sttModel = securePreferences.getProviderModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider)),
+                        sttModel = securePreferences.getProviderModel(sttProvider, sttFallback),
                         sttProvider = sttProvider,
-                        llmModel = securePreferences.getProviderModel(llmProvider, ProviderConfig.getDefaultLlmModel(llmProvider)),
-                        llmProvider = llmProvider
+                        llmModel = securePreferences.getProviderModel(llmProvider, llmFallback),
+                        llmProvider = llmProvider,
+                        sttAvailableModels = sttModels,
+                        llmAvailableModels = llmModels
                     )
                 }
             } catch (_: Exception) {
                 _uiState.update { SettingsUiState() }
+            }
+        }
+    }
+
+    private fun updateDropdownModels() {
+        viewModelScope.launch {
+            val sttModels = providerModelDao.getModelsForProvider(_uiState.value.sttProvider)
+            val llmModels = providerModelDao.getModelsForProvider(_uiState.value.llmProvider)
+            _uiState.update {
+                it.copy(
+                    sttAvailableModels = sttModels,
+                    llmAvailableModels = llmModels
+                )
             }
         }
     }
@@ -225,6 +248,8 @@ data class SettingsUiState(
     val activeProviders: List<String> = emptyList(),
     val availableProviders: List<String> = emptyList(),
     val providerAuthStatus: Map<String, Boolean> = emptyMap(),
+    val sttAvailableModels: List<ModelEntity> = emptyList(),
+    val llmAvailableModels: List<ModelEntity> = emptyList(),
     val groqApiKey: String? = null,
     val openRouterApiKey: String? = null,
     val zaiApiKey: String? = null,

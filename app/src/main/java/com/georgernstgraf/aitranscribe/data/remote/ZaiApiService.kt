@@ -6,8 +6,15 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
+import retrofit2.http.GET
+import com.georgernstgraf.aitranscribe.data.remote.dto.ModelsResponse
 
 interface ZaiApiService {
+
+    @GET("paas/v4/models")
+    suspend fun getModels(
+        @Header("Authorization") authorization: String
+    ): Response<ModelsResponse>
 
     @POST("paas/v4/chat/completions")
     suspend fun processText(

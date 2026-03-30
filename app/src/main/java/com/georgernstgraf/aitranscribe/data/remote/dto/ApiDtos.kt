@@ -41,3 +41,27 @@ data class OpenRouterRequest(
     @SerializedName("messages")
     val messages: List<OpenRouterMessage>
 )
+
+/**
+ * Standard OpenAI-compatible /v1/models response.
+ */
+data class ModelsResponse(
+    @SerializedName("data")
+    val data: List<ModelDto>
+)
+
+data class ModelDto(
+    @SerializedName("id")
+    val id: String,
+    @SerializedName("name")
+    val name: String? = null, // OpenRouter uses name sometimes
+    @SerializedName("architecture")
+    val architecture: ModelArchitectureDto? = null
+)
+
+data class ModelArchitectureDto(
+    @SerializedName("modality")
+    val modality: String? = null,
+    @SerializedName("instruct_type")
+    val instructType: String? = null
+)
