@@ -1,7 +1,7 @@
 package com.georgernstgraf.aitranscribe.ui.screen
 
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,6 +20,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -27,8 +28,10 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -88,6 +91,8 @@ fun SettingsScreen(
     val state by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showAddProviderSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
 
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) {
@@ -166,6 +171,15 @@ fun SettingsScreen(
                     onManage = { navController.navigate("auth/$providerId") }
                 )
                 Spacer(modifier = Modifier.height(4.dp))
+            }
+            
+            Button(
+                onClick = { navController.navigate("connect_provider") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp)
+            ) {
+                Text("Connect Provider")
             }
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -254,25 +268,6 @@ fun SettingsScreen(
                     .padding(horizontal = 10.dp)
             ) {
                 Text("Delete Old Transcriptions")
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Sharing",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 10.dp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedButton(
-                onClick = { viewModel.resetPreferredShareApp() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp)
-            ) {
-                Text("Reset Preferred Share App")
             }
 
             Spacer(modifier = Modifier.height(16.dp))

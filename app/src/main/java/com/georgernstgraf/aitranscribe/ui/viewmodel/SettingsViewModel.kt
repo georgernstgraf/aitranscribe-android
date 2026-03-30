@@ -174,18 +174,16 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun resetPreferredShareApp() {
-        viewModelScope.launch {
-            securePreferences.setPreferredShareApp(null)
-        }
-    }
-
     fun saveProviderAuth(providerId: String, token: String) {
         viewModelScope.launch {
             securePreferences.setProviderAuthToken(providerId, token)
             // Refresh state to update auth status
             loadSettings()
         }
+    }
+
+    suspend fun getProviderToken(providerId: String): String? {
+        return securePreferences.getActiveAuthToken(providerId)
     }
 
     private fun loadSettings() {
@@ -195,15 +193,17 @@ class SettingsViewModel @Inject constructor(
                 val llmProvider = securePreferences.getLlmProvider()
                 
                 // Track only providers with valid auth tokens
-                val allProviders = listOf("groq", "openrouter", "zai")
-                val authStatus = allProviders.associateWith { provider ->
-                    securePreferences.getActiveAuthToken(provider) != null
+                val allProviderIds = ProviderConfig.allProviderIds
+                val authStatus = allProviderIds.associateWith { provider ->
+                    !securePreferences.getActiveAuthToken(provider).isNullOrBlank()
                 }
-                val activeProviders = allProviders.filter { provider -> authStatus[provider] == true }
+                val activeProviders = allProviderIds.filter { provider -> authStatus[provider] == true }
+                val availableProviders = allProviderIds.filter { provider -> authStatus[provider] != true }
                 
                 _uiState.update {
                     SettingsUiState(
                         activeProviders = activeProviders,
+                        availableProviders = availableProviders,
                         providerAuthStatus = authStatus,
                         groqApiKey = securePreferences.getGroqApiKey(),
                         openRouterApiKey = securePreferences.getProviderApiKey("openrouter"),
@@ -223,6 +223,7 @@ class SettingsViewModel @Inject constructor(
 
 data class SettingsUiState(
     val activeProviders: List<String> = emptyList(),
+    val availableProviders: List<String> = emptyList(),
     val providerAuthStatus: Map<String, Boolean> = emptyMap(),
     val groqApiKey: String? = null,
     val openRouterApiKey: String? = null,

@@ -20,6 +20,15 @@ fun ProviderAuthScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     var authToken by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(providerId) {
+        val existingToken = viewModel.getProviderToken(providerId)
+        if (!existingToken.isNullOrBlank()) {
+            authToken = existingToken
+        }
+        isLoading = false
+    }
 
     Scaffold(
         topBar = {
@@ -33,29 +42,35 @@ fun ProviderAuthScreen(
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            Text("Enter your authentication credentials for $providerId.")
-            Spacer(modifier = Modifier.height(16.dp))
-            OutlinedTextField(
-                value = authToken,
-                onValueChange = { authToken = it },
-                label = { Text("Token / API Key") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { 
-                    viewModel.saveProviderAuth(providerId, authToken)
-                    navController.popBackStack()
-                },
-                modifier = Modifier.fillMaxWidth()
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp)
             ) {
-                Text("Save Credentials")
+                Text("Enter your authentication credentials for $providerId.")
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = authToken,
+                    onValueChange = { authToken = it },
+                    label = { Text("Token / API Key") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = { 
+                        viewModel.saveProviderAuth(providerId, authToken)
+                        navController.popBackStack()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Save Credentials")
+                }
             }
         }
     }

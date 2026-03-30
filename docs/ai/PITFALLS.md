@@ -86,3 +86,7 @@ ViewModel tests must cancel `viewModel.viewModelScope` in `@After` tearDown. Oth
 
 ## Overscroll auto-navigation breaks detail screen
 Using `NestedScrollConnection.onPostScroll` to auto-navigate prev/next on overscroll fires on initial load because `scrollState.value == 0` is immediately true. Use HorizontalPager with explicit prev/next buttons instead.
+
+## Bundling sqlite3 binary in APK for debugging
+Bundling `sqlite3` in `jniLibs` to inspect app databases on non-rooted devices is not viable. Android's security model (No-Exec partition) prevents executing binaries from the application's private data sandbox. **Fix:** Use the Android Studio Database Inspector for database inspection, or logcat for routine debugging.
+

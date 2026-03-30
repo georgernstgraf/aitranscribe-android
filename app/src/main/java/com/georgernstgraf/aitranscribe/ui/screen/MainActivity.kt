@@ -29,6 +29,7 @@ import com.georgernstgraf.aitranscribe.ui.screen.SearchScreen
 import com.georgernstgraf.aitranscribe.ui.screen.SettingsScreen
 import com.georgernstgraf.aitranscribe.ui.screen.SetupScreen
 import com.georgernstgraf.aitranscribe.ui.screen.TranscriptionDetailScreen
+import com.georgernstgraf.aitranscribe.ui.screen.auth.ConnectProviderScreen
 import com.georgernstgraf.aitranscribe.ui.screen.auth.ProviderAuthScreen
 import com.georgernstgraf.aitranscribe.ui.theme.AITranscribeTheme
 import com.georgernstgraf.aitranscribe.util.ToastManager
@@ -139,6 +140,12 @@ fun MainNavigation() {
 
         composable("settings") {
             SettingsScreen(
+                navController = navController
+            )
+        }
+
+        composable("connect_provider") {
+            ConnectProviderScreen(
                 navController = navController
             )
         }

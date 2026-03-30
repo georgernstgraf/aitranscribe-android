@@ -61,7 +61,11 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Install preserving data: `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 - Never use `adb uninstall` + `adb install` (loses API keys and preferences)
 - Device package name for `run-as`: `com.georgernstgraf.aitranscribe.debug` (debug build has `.debug` suffix)
-- No `sqlite3` binary on device — use `run-as` + file ops or log-based debugging for DB inspection
+## Database Inspection
+- If debugging is required on a physical device, a statically linked `sqlite3` binary can be pushed to `/data/local/tmp/`.
+- Accessing the app's internal database requires root access or specific `run-as` permissions.
+- Direct file access via `adb` is usually restricted. Use log-based debugging (`adb logcat`) for routine inspections.
+- If direct inspection is necessary, copy the database to a readable directory (e.g., `/data/local/tmp/`) using `run-as` if possible, then query it. Ensure cleanup of sensitive data afterwards.
 
 ## Companion Project
 - `../aitranscribe` (Python/TUI) is the **lead and authoritative project** for pipeline logic, prompts, and feature design
