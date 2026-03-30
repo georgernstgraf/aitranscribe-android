@@ -42,6 +42,13 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(zaiApiKey = apiKey) }
     }
 
+    fun onSttProviderChanged(providerId: String) {
+        viewModelScope.launch {
+            val model = securePreferences.getProviderModel(providerId, ProviderConfig.getSttModelsForProvider(providerId).firstOrNull() ?: "")
+            _uiState.update { it.copy(sttProvider = providerId, sttModel = model) }
+        }
+    }
+
     fun onSttModelChanged(model: String) {
         _uiState.update { it.copy(sttModel = model) }
     }
@@ -130,6 +137,7 @@ class SettingsViewModel @Inject constructor(
             }
             
             securePreferences.setSttModel(state.sttModel)
+            securePreferences.setSttProvider(state.sttProvider)
             securePreferences.setLlmProvider(state.llmProvider)
 
             _uiState.update { it.copy(isValidating = false, isSaved = true) }
@@ -175,15 +183,17 @@ class SettingsViewModel @Inject constructor(
     private fun loadSettings() {
         viewModelScope.launch {
             try {
-                val provider = securePreferences.getLlmProvider()
+                val sttProvider = securePreferences.getSttProvider()
+                val llmProvider = securePreferences.getLlmProvider()
                 _uiState.update {
                     SettingsUiState(
                         groqApiKey = securePreferences.getGroqApiKey(),
                         openRouterApiKey = securePreferences.getProviderApiKey("openrouter"),
                         zaiApiKey = securePreferences.getProviderApiKey("zai"),
-                        sttModel = securePreferences.getSttModel(),
-                        llmModel = securePreferences.getProviderModel(provider, ProviderConfig.getDefaultLlmModel(provider)),
-                        llmProvider = provider
+                        sttModel = securePreferences.getProviderModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider)),
+                        sttProvider = sttProvider,
+                        llmModel = securePreferences.getProviderModel(llmProvider, ProviderConfig.getDefaultLlmModel(llmProvider)),
+                        llmProvider = llmProvider
                     )
                 }
             } catch (_: Exception) {
@@ -197,6 +207,7 @@ data class SettingsUiState(
     val groqApiKey: String? = null,
     val openRouterApiKey: String? = null,
     val zaiApiKey: String? = null,
+    val sttProvider: String = "groq",
     val sttModel: String = "whisper-large-v3-turbo",
     val llmProvider: String = "openrouter",
     val llmModel: String = "inception/mercury",

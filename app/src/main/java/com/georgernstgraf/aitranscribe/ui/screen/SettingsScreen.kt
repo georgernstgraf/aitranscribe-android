@@ -165,7 +165,18 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            SttProviderDropdown(
+                selectedProvider = state.sttProvider,
+                onProviderSelected = { viewModel.onSttProviderChanged(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             SttModelDropdown(
+                selectedProvider = state.sttProvider,
                 selectedModel = state.sttModel,
                 onModelSelected = { viewModel.onSttModelChanged(it) },
                 modifier = Modifier
@@ -277,13 +288,54 @@ fun SettingsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+private fun SttProviderDropdown(
+    selectedProvider: String,
+    onProviderSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val providers = ProviderConfig.sttProviders
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = ProviderConfig.getSttProviderDisplayName(selectedProvider),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("STT Provider") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.menuAnchor()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            providers.forEach { provider ->
+                androidx.compose.material3.DropdownMenuItem(
+                    text = { Text(provider.displayName) },
+                    onClick = {
+                        onProviderSelected(provider.id)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun SttModelDropdown(
+    selectedProvider: String,
     selectedModel: String,
     onModelSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val models = ProviderConfig.sttModels
+    val models = ProviderConfig.getSttModelsForProvider(selectedProvider)
 
     ExposedDropdownMenuBox(
         expanded = expanded,

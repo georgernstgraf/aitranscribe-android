@@ -8,10 +8,18 @@ object ProviderConfig {
         val models: List<String>
     )
 
-    val sttModels = listOf(
-        "whisper-large-v3-turbo",
-        "whisper-large-v3"
+    val sttProviders = listOf(
+        Provider(
+            id = "groq",
+            displayName = "Groq",
+            models = listOf(
+                "whisper-large-v3-turbo",
+                "whisper-large-v3"
+            )
+        )
     )
+
+    val sttModels = sttProviders.flatMap { it.models }.distinct()
 
     val llmProviders = listOf(
         Provider(
@@ -56,6 +64,10 @@ object ProviderConfig {
         return llmProviders.find { model in it.models }?.id
     }
 
+    fun getDefaultSttModel(providerId: String): String {
+        return getSttModelsForProvider(providerId).firstOrNull() ?: "whisper-large-v3-turbo"
+    }
+
     fun getDefaultLlmModel(providerId: String): String {
         return getLlmModelsForProvider(providerId).firstOrNull() ?: "anthropic/claude-3-haiku"
     }
@@ -64,7 +76,15 @@ object ProviderConfig {
         return model in getLlmModelsForProvider(providerId)
     }
 
-    fun isValidSttModel(model: String): Boolean {
-        return model in sttModels
+    fun getSttModelsForProvider(providerId: String): List<String> {
+        return sttProviders.find { it.id == providerId }?.models ?: emptyList()
+    }
+
+    fun getSttProviderDisplayName(providerId: String): String {
+        return sttProviders.find { it.id == providerId }?.displayName ?: providerId
+    }
+
+    fun isValidSttModel(providerId: String, model: String): Boolean {
+        return model in getSttModelsForProvider(providerId)
     }
 }

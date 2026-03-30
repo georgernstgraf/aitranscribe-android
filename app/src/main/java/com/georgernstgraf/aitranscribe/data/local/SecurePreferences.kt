@@ -78,6 +78,14 @@ class SecurePreferences @Inject constructor(
         return sharedPreferences.getString(LLM_PROVIDER, "openrouter") ?: "openrouter"
     }
 
+    suspend fun setSttProvider(provider: String) {
+        sharedPreferences.edit().putString(STT_PROVIDER, provider).apply()
+    }
+
+    suspend fun getSttProvider(): String {
+        return sharedPreferences.getString(STT_PROVIDER, "groq") ?: "groq"
+    }
+
     suspend fun setProcessingMode(mode: String) {
         sharedPreferences.edit().putString(PROCESSING_MODE, mode).apply()
     }
@@ -105,6 +113,7 @@ class SecurePreferences @Inject constructor(
         private const val OPENROUTER_API_KEY = "openrouter_api_key"
         private const val ZAI_API_KEY = "zai_api_key"
         private const val STT_MODEL = "stt_model"
+        private const val STT_PROVIDER = "stt_provider"
         private const val LLM_MODEL = "llm_model"
         private const val LLM_PROVIDER = "llm_provider"
         private const val PROCESSING_MODE = "processing_mode"

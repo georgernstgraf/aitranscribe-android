@@ -72,9 +72,9 @@ class ProviderConfigTest {
 
     @Test
     fun `isValidSttModel works correctly`() {
-        assertTrue(ProviderConfig.isValidSttModel("whisper-large-v3-turbo"))
-        assertTrue(ProviderConfig.isValidSttModel("whisper-large-v3"))
-        assertFalse(ProviderConfig.isValidSttModel("glm-asr-2512"))
+        assertTrue(ProviderConfig.isValidSttModel("groq", "whisper-large-v3-turbo"))
+        assertTrue(ProviderConfig.isValidSttModel("groq", "whisper-large-v3"))
+        assertFalse(ProviderConfig.isValidSttModel("groq", "glm-asr-2512"))
     }
 
     @Test
