@@ -66,6 +66,24 @@ class TranscriptionTest {
         assertEquals("raw text", t.getShareText())
     }
 
+    @Test
+    fun `getShareTitle uses summary when present`() {
+        val t = testTranscription(summary = "My Meeting Notes")
+        assertEquals("My Meeting Notes", t.getShareTitle())
+    }
+
+    @Test
+    fun `getShareTitle defaults when summary is null`() {
+        val t = testTranscription(summary = null)
+        assertEquals("Transcription from AITranscribe", t.getShareTitle())
+    }
+
+    @Test
+    fun `getShareTitle defaults when summary is blank`() {
+        val t = testTranscription(summary = "   ")
+        assertEquals("Transcription from AITranscribe", t.getShareTitle())
+    }
+
     private fun testTranscription(
         originalText: String = "Test",
         processedText: String? = null,

@@ -31,7 +31,7 @@ class ShareTranscriptionUseCase @Inject constructor(
         Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
-            putExtra(Intent.EXTRA_SUBJECT, "Transcription from AITranscribe")
+            putExtra(Intent.EXTRA_SUBJECT, transcription.toDomain().getShareTitle())
             
             flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
         }
@@ -40,17 +40,18 @@ class ShareTranscriptionUseCase @Inject constructor(
     suspend fun invokeAsFile(id: Long): Intent = withContext(Dispatchers.IO) {
         val transcription = repository.getById(id)
             ?: throw ShareException("Transcription not found: $id")
-
-        val text = transcription.toDomain().getShareText()
+        
+        val transcriptionDomain = transcription.toDomain()
+        val text = transcriptionDomain.getShareText()
         val fileName = "transcription_${transcription.id}.txt"
         
         val authority = "${context.packageName}.fileprovider"
         val uri = FileProvider.getUriForFile(context, authority, createTempFile(fileName, text))
-
+        
         Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "Transcription from AITranscribe")
+            putExtra(Intent.EXTRA_SUBJECT, transcriptionDomain.getShareTitle())
             
             flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
         }

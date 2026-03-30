@@ -29,4 +29,8 @@ data class Transcription(
             transcriptionText
         }
     }
+
+    fun getShareTitle(): String {
+        return summary?.takeIf { it.isNotBlank() } ?: "Transcription from AITranscribe"
+    }
 }
