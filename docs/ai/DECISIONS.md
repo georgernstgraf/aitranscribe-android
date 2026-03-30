@@ -91,3 +91,10 @@
 
 ## 2026-03-04: audio/mp4 MIME type for .m4a uploads to GROQ
 - **Reason:** RecordingService outputs .m4a (AAC in MP4 container), not audio/mpeg
+
+## 2026-03-30: Enhance Sharing Intent with Standard Metadata
+- **Choice**: Utilize `Intent.EXTRA_SUBJECT` for sharing title.
+- **Reason**: Standardizes metadata delivery for compatible Android apps (e.g., Mail, Obsidian).
+- **Considered**: No changes, or manual text prepending.
+- **Tradeoff**: Inconsistent third-party support, but compliant with Android standards.
+Refactored Transcription.getShareText() to remove summary concatenation, as summary is now handled via Intent.EXTRA_SUBJECT. Updated tests accordingly.

@@ -1,6 +1,6 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
-import android.content.ClipboardManager
+import android.content.Intent
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -183,6 +183,32 @@ class TranscriptionDetailViewModel @Inject constructor(
         }
     }
 
+    fun shareTranscription(transcription: Transcription): Intent {
+        val text = transcription.getShareText()
+        val preferredApp = securePreferences.getPreferredShareApp()
+
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+            putExtra(Intent.EXTRA_SUBJECT, transcription.getShareTitle())
+            if (preferredApp != null) {
+                setPackage(preferredApp)
+            }
+        }
+
+        return if (preferredApp != null) {
+            try {
+                context.packageManager.getPackageInfo(preferredApp, 0)
+                intent
+            } catch (_: Exception) {
+                viewModelScope.launch { securePreferences.setPreferredShareApp(null) }
+                Intent.createChooser(Intent(intent).setPackage(null), "Share transcription")
+            }
+        } else {
+            Intent.createChooser(intent, "Share transcription")
+        }
+    }
+
     fun deleteTranscription(id: Long) {
         viewModelScope.launch {
             val ids = _filteredIds.value
@@ -192,20 +218,6 @@ class TranscriptionDetailViewModel @Inject constructor(
             _uiState.update { it.copy(isDeleted = true, nextTranscriptionId = nextId) }
         }
     }
-
-    fun copyToClipboard() {
-        viewModelScope.launch {
-            val text = _uiState.value.transcription?.getDisplayText() ?: return@launch
-            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val clip = android.content.ClipData.newPlainText("transcription", text)
-            clipboard.setPrimaryClip(clip)
-            _uiState.update { it.copy(isCopiedToClipboard = true) }
-            kotlinx.coroutines.delay(2000)
-            _uiState.update { it.copy(isCopiedToClipboard = false) }
-        }
-    }
-
-    private fun Transcription.getDisplayText(): String = processedText ?: originalText
 
     companion object {
         const val KEY_TRANSCRIPTION_ID = "transcription_id"
@@ -217,7 +229,6 @@ data class TranscriptionDetailUiState(
     val transcription: Transcription? = null,
     val isViewed: Boolean = false,
     val isDeleted: Boolean = false,
-    val isCopiedToClipboard: Boolean = false,
     val nextTranscriptionId: Long? = null,
     val isCleanupEnabled: Boolean = false,
     val isTranslating: Boolean = false,

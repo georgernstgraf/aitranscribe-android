@@ -221,6 +221,7 @@ class MainViewModel @Inject constructor(
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
+            putExtra(Intent.EXTRA_SUBJECT, transcription.getShareTitle())
             if (preferredApp != null) {
                 setPackage(preferredApp)
             }

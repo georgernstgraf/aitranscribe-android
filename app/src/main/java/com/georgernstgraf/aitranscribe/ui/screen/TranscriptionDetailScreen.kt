@@ -19,8 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
@@ -50,6 +50,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -69,16 +70,7 @@ fun TranscriptionDetailScreen(
     val state by viewModel.uiState.collectAsState()
     val filteredIds by viewModel.filteredIds.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.isCopiedToClipboard) {
-        if (state.isCopiedToClipboard) {
-            snackbarHostState.showSnackbar(
-                message = "Copied to clipboard",
-                actionLabel = "OK",
-                duration = SnackbarDuration.Short
-            )
-        }
-    }
+    val context = LocalContext.current
 
     LaunchedEffect(state.isDeleted) {
         if (state.isDeleted) {
@@ -109,10 +101,15 @@ fun TranscriptionDetailScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.copyToClipboard() }) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy to clipboard")
-                    }
                     val currentId = state.transcription?.id ?: transcriptionId
+                    state.transcription?.let { trans ->
+                        IconButton(onClick = { 
+                            val shareIntent = viewModel.shareTranscription(trans)
+                            context.startActivity(shareIntent)
+                        }) {
+                            Icon(Icons.Default.Share, contentDescription = "Share")
+                        }
+                    }
                     IconButton(onClick = { viewModel.toggleViewStatus(currentId) }) {
                         Icon(
                             if (state.isViewed) Icons.Default.VisibilityOff else Icons.Default.Visibility,
