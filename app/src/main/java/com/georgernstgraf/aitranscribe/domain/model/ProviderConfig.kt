@@ -16,6 +16,24 @@ object ProviderConfig {
                 "whisper-large-v3-turbo",
                 "whisper-large-v3"
             )
+        ),
+        Provider(
+            id = "openrouter",
+            displayName = "OpenRouter",
+            models = listOf(
+                "openai/whisper-large-v3",
+                "google/gemini-2.5-flash",
+                "google/gemini-2.0-flash-001",
+                "google/gemini-1.5-pro",
+                "google/gemini-1.5-flash"
+            )
+        ),
+        Provider(
+            id = "zai",
+            displayName = "ZAI",
+            models = listOf(
+                "glm-asr-2512"
+            )
         )
     )
 
@@ -47,10 +65,22 @@ object ProviderConfig {
                 "glm-4.5-air",
                 "glm-4.7"
             )
+        ),
+        Provider(
+            id = "groq",
+            displayName = "Groq",
+            models = listOf(
+                "llama-3.3-70b-versatile",
+                "llama-3.1-8b-instant",
+                "mixtral-8x7b-32768",
+                "gemma2-9b-it"
+            )
         )
     )
 
     val llmProviderIds = llmProviders.map { it.id }
+
+    val allProviderIds = (sttProviders.map { it.id } + llmProviders.map { it.id }).distinct()
 
     fun getLlmProviderDisplayName(providerId: String): String {
         return llmProviders.find { it.id == providerId }?.displayName ?: providerId

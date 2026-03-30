@@ -10,17 +10,22 @@ import org.junit.Test
 class ProviderConfigTest {
 
     @Test
-    fun `stt models contains whisper-large-v3-turbo and whisper-large-v3`() {
-        assertTrue(ProviderConfig.sttModels.contains("whisper-large-v3-turbo"))
-        assertTrue(ProviderConfig.sttModels.contains("whisper-large-v3"))
-        assertEquals(2, ProviderConfig.sttModels.size)
+    fun `stt models contains expected models`() {
+        val models = ProviderConfig.sttModels
+        assertTrue(models.contains("whisper-large-v3-turbo"))
+        assertTrue(models.contains("whisper-large-v3"))
+        assertTrue(models.contains("openai/whisper-large-v3"))
+        assertTrue(models.contains("google/gemini-2.0-flash-001"))
+        assertTrue(models.contains("glm-asr-2512"))
     }
 
     @Test
-    fun `llm providers contain openrouter and zai`() {
-        assertEquals(2, ProviderConfig.llmProviders.size)
-        assertEquals("openrouter", ProviderConfig.llmProviders[0].id)
-        assertEquals("zai", ProviderConfig.llmProviders[1].id)
+    fun `llm providers contain expected providers`() {
+        val providers = ProviderConfig.llmProviders
+        assertEquals(3, providers.size)
+        assertEquals("openrouter", providers[0].id)
+        assertEquals("zai", providers[1].id)
+        assertEquals("groq", providers[2].id)
     }
 
     @Test
@@ -98,6 +103,9 @@ class ProviderConfigTest {
     @Test
     fun `llmProviderIds returns list of provider ids`() {
         val ids = ProviderConfig.llmProviderIds
-        assertEquals(listOf("openrouter", "zai"), ids)
+        assertEquals(3, ids.size)
+        assertTrue(ids.contains("openrouter"))
+        assertTrue(ids.contains("zai"))
+        assertTrue(ids.contains("groq"))
     }
 }
