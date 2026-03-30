@@ -204,6 +204,8 @@ class SettingsViewModel @Inject constructor(
 }
 
 data class SettingsUiState(
+    val activeProviders: List<String> = listOf("groq", "openrouter"), // Placeholder logic
+    val providerAuthStatus: Map<String, Boolean> = mapOf("groq" to true, "openrouter" to true),
     val groqApiKey: String? = null,
     val openRouterApiKey: String? = null,
     val zaiApiKey: String? = null,

@@ -42,6 +42,40 @@ import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.ui.components.DeleteOldDialog
 import com.georgernstgraf.aitranscribe.ui.viewmodel.SettingsViewModel
 
+@Composable
+fun ProviderStatusItem(
+    providerId: String,
+    isAuthed: Boolean,
+    onManage: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.material3.Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp)
+    ) {
+        androidx.compose.foundation.layout.Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Text(
+                text = providerId.replaceFirstChar { it.uppercase() },
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Text(
+                text = if (isAuthed) "Connected" else "Not Connected",
+                color = if (isAuthed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(end = 16.dp),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Button(onClick = onManage) {
+                Text("Manage")
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -114,9 +148,27 @@ fun SettingsScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "API Keys",
+                text = "Active Providers",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            state.activeProviders.forEach { providerId ->
+                val isAuthed = state.providerAuthStatus[providerId] ?: false
+                ProviderStatusItem(
+                    providerId = providerId,
+                    isAuthed = isAuthed,
+                    onManage = { /* TODO */ }
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            Text(
+                text = "API Keys (Configuration)",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 16.dp, start = 10.dp, end = 10.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
