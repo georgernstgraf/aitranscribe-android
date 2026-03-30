@@ -109,7 +109,8 @@ class PostProcessTextUseCase @Inject constructor(
                     OpenRouterMessage(
                         role = "system",
                         content = "Create a concise summary of the transcription in 70 to 80 characters. " +
-                            "Output only the summary text with no quotes, labels, or extra commentary."
+                            "Output only the summary text with no quotes, labels, or extra commentary. " +
+                            "The summary shall be in the same language as the transcription."
                     ),
                     OpenRouterMessage(
                         role = "user",
