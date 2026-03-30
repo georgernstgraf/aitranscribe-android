@@ -7,15 +7,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -52,14 +55,15 @@ fun BottomControlPanel(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ViewFilter.entries.forEach { filter ->
                 val isSelected = currentFilter == filter
                 FilterPill(
                     label = filter.label,
                     selected = isSelected,
-                    onClick = { onFilterChanged(filter) }
+                    onClick = { onFilterChanged(filter) },
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -68,26 +72,32 @@ fun BottomControlPanel(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
+            Row(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                RadioButton(
-                    label = "Raw Transcription",
-                    selected = processingMode == PostProcessingType.RAW,
-                    onClick = { onModeChanged(PostProcessingType.RAW) }
+                Text(
+                    text = "Raw",
+                    color = Color(0xFFF2F5F7),
+                    fontSize = 14.sp,
+                    fontWeight = if (processingMode == PostProcessingType.RAW) FontWeight.Bold else FontWeight.Normal
                 )
-                RadioButton(
-                    label = "Cleanup & Preserve",
-                    selected = processingMode == PostProcessingType.CLEANUP,
-                    onClick = { onModeChanged(PostProcessingType.CLEANUP) }
+                Switch(
+                    checked = processingMode == PostProcessingType.CLEANUP,
+                    onCheckedChange = { checked ->
+                        onModeChanged(if (checked) PostProcessingType.CLEANUP else PostProcessingType.RAW)
+                    }
                 )
-                RadioButton(
-                    label = "Cleanup & English",
-                    selected = processingMode == PostProcessingType.ENGLISH,
-                    onClick = { onModeChanged(PostProcessingType.ENGLISH) }
+                Text(
+                    text = "Cleanup",
+                    color = Color(0xFFF2F5F7),
+                    fontSize = 14.sp,
+                    fontWeight = if (processingMode == PostProcessingType.CLEANUP) FontWeight.Bold else FontWeight.Normal
                 )
             }
+
+            Spacer(modifier = Modifier.width(12.dp))
 
             RecordButton(
                 isRecording = isRecording,
@@ -202,6 +212,7 @@ private fun FilterPill(
 
     Box(
         modifier = modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(bgColor)
             .border(

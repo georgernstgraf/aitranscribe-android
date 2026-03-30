@@ -8,10 +8,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Secure storage for sensitive data (API keys).
- * Uses EncryptedSharedPreferences backed by Android Keystore.
- */
 @Singleton
 class SecurePreferences @Inject constructor(
     @ApplicationContext private val context: Context
@@ -29,60 +25,46 @@ class SecurePreferences @Inject constructor(
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
-    /**
-     * Store GROQ API key securely.
-     */
     suspend fun setGroqApiKey(apiKey: String) {
         sharedPreferences.edit().putString(GROQ_API_KEY, apiKey).apply()
     }
 
-    /**
-     * Get GROQ API key.
-     */
-    suspend fun getGroqApiKey(): String? {
-        return sharedPreferences.getString(GROQ_API_KEY, null)
-    }
+    suspend fun getGroqApiKey(): String? = sharedPreferences.getString(GROQ_API_KEY, null)
 
-    /**
-     * Store OpenRouter API key securely.
-     */
     suspend fun setOpenRouterApiKey(apiKey: String) {
         sharedPreferences.edit().putString(OPENROUTER_API_KEY, apiKey).apply()
     }
 
-    /**
-     * Get OpenRouter API key.
-     */
-    suspend fun getOpenRouterApiKey(): String? {
-        return sharedPreferences.getString(OPENROUTER_API_KEY, null)
+    suspend fun getOpenRouterApiKey(): String? = sharedPreferences.getString(OPENROUTER_API_KEY, null)
+
+    suspend fun setZaiApiKey(apiKey: String) {
+        sharedPreferences.edit().putString(ZAI_API_KEY, apiKey).apply()
     }
 
-    /**
-     * Store STT model preference.
-     */
+    suspend fun getZaiApiKey(): String? = sharedPreferences.getString(ZAI_API_KEY, null)
+
     suspend fun setSttModel(model: String) {
         sharedPreferences.edit().putString(STT_MODEL, model).apply()
     }
 
-    /**
-     * Get STT model preference.
-     */
     suspend fun getSttModel(): String {
         return sharedPreferences.getString(STT_MODEL, "whisper-large-v3-turbo") ?: "whisper-large-v3-turbo"
     }
 
-    /**
-     * Store LLM model preference.
-     */
     suspend fun setLlmModel(model: String) {
         sharedPreferences.edit().putString(LLM_MODEL, model).apply()
     }
 
-    /**
-     * Get LLM model preference.
-     */
     suspend fun getLlmModel(): String {
         return sharedPreferences.getString(LLM_MODEL, "anthropic/claude-3-haiku") ?: "anthropic/claude-3-haiku"
+    }
+
+    suspend fun setLlmProvider(provider: String) {
+        sharedPreferences.edit().putString(LLM_PROVIDER, provider).apply()
+    }
+
+    suspend fun getLlmProvider(): String {
+        return sharedPreferences.getString(LLM_PROVIDER, "openrouter") ?: "openrouter"
     }
 
     suspend fun setProcessingMode(mode: String) {
@@ -97,9 +79,7 @@ class SecurePreferences @Inject constructor(
         sharedPreferences.edit().putString(PREFERRED_SHARE_APP, packageName).apply()
     }
 
-    fun getPreferredShareApp(): String? {
-        return sharedPreferences.getString(PREFERRED_SHARE_APP, null)
-    }
+    fun getPreferredShareApp(): String? = sharedPreferences.getString(PREFERRED_SHARE_APP, null)
 
     suspend fun clearAll() {
         sharedPreferences.edit().clear().apply()
@@ -108,24 +88,6 @@ class SecurePreferences @Inject constructor(
     fun peekGroqApiKey(): String? = sharedPreferences.getString(GROQ_API_KEY, null)
 
     fun peekOpenRouterApiKey(): String? = sharedPreferences.getString(OPENROUTER_API_KEY, null)
-
-    fun peekZaiApiKey(): String? = sharedPreferences.getString(ZAI_API_KEY, null)
-
-    suspend fun setZaiApiKey(apiKey: String) {
-        sharedPreferences.edit().putString(ZAI_API_KEY, apiKey).apply()
-    }
-
-    suspend fun getZaiApiKey(): String? {
-        return sharedPreferences.getString(ZAI_API_KEY, null)
-    }
-
-    suspend fun setLlmProvider(provider: String) {
-        sharedPreferences.edit().putString(LLM_PROVIDER, provider).apply()
-    }
-
-    suspend fun getLlmProvider(): String {
-        return sharedPreferences.getString(LLM_PROVIDER, "openrouter") ?: "openrouter"
-    }
 
     companion object {
         private const val GROQ_API_KEY = "groq_api_key"

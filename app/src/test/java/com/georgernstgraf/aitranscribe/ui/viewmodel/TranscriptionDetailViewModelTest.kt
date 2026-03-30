@@ -4,8 +4,11 @@ import android.content.ClipboardManager
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +34,8 @@ class TranscriptionDetailViewModelTest {
     private lateinit var repository: FakeTranscriptionRepository
     private lateinit var context: Context
     private lateinit var clipboardManager: ClipboardManager
+    private lateinit var securePreferences: SecurePreferences
+    private lateinit var postProcessTextUseCase: PostProcessTextUseCase
     private lateinit var viewModel: TranscriptionDetailViewModel
     private val testDispatcher = StandardTestDispatcher()
 
@@ -40,7 +45,13 @@ class TranscriptionDetailViewModelTest {
         repository = FakeTranscriptionRepository()
         clipboardManager = mockk(relaxed = true)
         context = mockk(relaxed = true)
+        securePreferences = mockk(relaxed = true)
+        postProcessTextUseCase = mockk(relaxed = true)
         every { context.getSystemService(Context.CLIPBOARD_SERVICE) } returns clipboardManager
+        coEvery { securePreferences.getLlmProvider() } returns "openrouter"
+        coEvery { securePreferences.getOpenRouterApiKey() } returns "test-key"
+        coEvery { securePreferences.getZaiApiKey() } returns null
+        coEvery { securePreferences.getLlmModel() } returns "anthropic/claude-3-haiku"
     }
 
     @After
@@ -78,7 +89,13 @@ class TranscriptionDetailViewModelTest {
             set(TranscriptionDetailViewModel.KEY_TRANSCRIPTION_ID, transcriptionId)
             set(TranscriptionDetailViewModel.KEY_VIEW_FILTER, viewFilter)
         }
-        viewModel = TranscriptionDetailViewModel(savedStateHandle, repository, context)
+        viewModel = TranscriptionDetailViewModel(
+            savedStateHandle,
+            repository,
+            securePreferences,
+            postProcessTextUseCase,
+            context
+        )
     }
 
     @Test

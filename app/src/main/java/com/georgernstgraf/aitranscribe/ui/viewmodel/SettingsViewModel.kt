@@ -6,7 +6,6 @@ import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
-import com.georgernstgraf.aitranscribe.domain.usecase.ApiKeyError
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,16 +38,16 @@ class SettingsViewModel @Inject constructor(
         _uiState.update { it.copy(openRouterApiKey = apiKey) }
     }
 
-    fun onLlmModelChanged(model: String) {
-        _uiState.update { it.copy(llmModel = model) }
-    }
-
     fun onZaiApiKeyChanged(apiKey: String?) {
         _uiState.update { it.copy(zaiApiKey = apiKey) }
     }
 
     fun onSttModelChanged(model: String) {
         _uiState.update { it.copy(sttModel = model) }
+    }
+
+    fun onLlmModelChanged(model: String) {
+        _uiState.update { it.copy(llmModel = model) }
     }
 
     fun onLlmProviderChanged(provider: String) {
@@ -69,7 +68,6 @@ class SettingsViewModel @Inject constructor(
     fun saveSettings() {
         viewModelScope.launch {
             val state = _uiState.value
-
             _uiState.update { it.copy(isValidating = true, errorMessage = null, isSaved = false) }
 
             val errors = mutableListOf<String>()
@@ -79,11 +77,13 @@ class SettingsViewModel @Inject constructor(
             if (state.llmModel.isBlank()) errors.add("LLM model cannot be empty")
 
             when (state.llmProvider) {
-                "openrouter" -> {
-                    if (state.openRouterApiKey.isNullOrBlank()) errors.add("OpenRouter API key is required when using OpenRouter")
+                "openrouter" -> if (state.openRouterApiKey.isNullOrBlank()) {
+                    errors.add("OpenRouter API key is required when using OpenRouter")
                 }
-                "zai" -> {
-                    if (state.zaiApiKey.isNullOrBlank()) errors.add("ZAI API key is required when using ZAI")
+                "zai" -> if (state.zaiApiKey.isNullOrBlank()) {
+                    errors.add("ZAI API key is required when using ZAI")
+                } else if (!isValidZaiKeyFormat(state.zaiApiKey!!)) {
+                    errors.add("ZAI API key format is invalid")
                 }
             }
 
@@ -92,10 +92,7 @@ class SettingsViewModel @Inject constructor(
                 return@launch
             }
 
-            val groqResult = if (!state.groqApiKey.isNullOrBlank()) {
-                validateApiKeysUseCase.validateGroqKey(state.groqApiKey)
-            } else false
-
+            val groqResult = validateApiKeysUseCase.validateGroqKey(state.groqApiKey!!)
             if (!groqResult) {
                 _uiState.update { it.copy(isValidating = false, errorMessage = "GROQ API key validation failed") }
                 return@launch
@@ -103,8 +100,8 @@ class SettingsViewModel @Inject constructor(
 
             when (state.llmProvider) {
                 "openrouter" -> {
-                    val orResult = validateApiKeysUseCase.validateOpenRouterKey(state.openRouterApiKey!!)
-                    if (!orResult) {
+                    val valid = validateApiKeysUseCase.validateOpenRouterKey(state.openRouterApiKey!!)
+                    if (!valid) {
                         _uiState.update { it.copy(isValidating = false, errorMessage = "OpenRouter API key validation failed") }
                         return@launch
                     }
@@ -148,14 +145,12 @@ class SettingsViewModel @Inject constructor(
     fun deleteOldTranscriptions(daysOld: Int, viewFilter: ViewFilter) {
         viewModelScope.launch {
             val cutoffDate = deleteTranscriptionUseCase.getCutoffDate(daysOld)
-            
             val deletedCount = deleteTranscriptionUseCase(
                 mode = DeleteMode.OLD_ALL,
                 cutoffDate = cutoffDate,
                 viewFilter = viewFilter,
                 getCount = false
             )
-
             _uiState.update { it.copy(deletedCount = deletedCount) }
         }
     }
@@ -169,27 +164,18 @@ class SettingsViewModel @Inject constructor(
     private fun loadSettings() {
         viewModelScope.launch {
             try {
-                val groqKey = securePreferences.getGroqApiKey()
-                val openRouterKey = securePreferences.getOpenRouterApiKey()
-                val zaiKey = securePreferences.getZaiApiKey()
-                val sttModel = securePreferences.getSttModel()
-                val llmModel = securePreferences.getLlmModel()
-                val llmProvider = securePreferences.getLlmProvider()
-
                 _uiState.update {
                     SettingsUiState(
-                        groqApiKey = groqKey,
-                        openRouterApiKey = openRouterKey,
-                        zaiApiKey = zaiKey,
-                        sttModel = sttModel,
-                        llmModel = llmModel,
-                        llmProvider = llmProvider
+                        groqApiKey = securePreferences.getGroqApiKey(),
+                        openRouterApiKey = securePreferences.getOpenRouterApiKey(),
+                        zaiApiKey = securePreferences.getZaiApiKey(),
+                        sttModel = securePreferences.getSttModel(),
+                        llmModel = securePreferences.getLlmModel(),
+                        llmProvider = securePreferences.getLlmProvider()
                     )
                 }
-            } catch (e: Exception) {
-                _uiState.update {
-                    SettingsUiState()
-                }
+            } catch (_: Exception) {
+                _uiState.update { SettingsUiState() }
             }
         }
     }

@@ -5,11 +5,14 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.toDomain
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
+import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
+import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +29,8 @@ import javax.inject.Inject
 class TranscriptionDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val repository: TranscriptionRepository,
+    private val securePreferences: SecurePreferences,
+    private val postProcessTextUseCase: PostProcessTextUseCase,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -47,12 +52,54 @@ class TranscriptionDetailViewModel @Inject constructor(
     private val _activeTranscriptionId = MutableStateFlow(transcriptionId)
 
     init {
-        val filterName = savedStateHandle.get<String>(KEY_VIEW_FILTER)
-        if (filterName != null) {
-            viewFilter = ViewFilter.valueOf(filterName)
-        }
+        savedStateHandle.get<String>(KEY_VIEW_FILTER)?.let { viewFilter = ViewFilter.valueOf(it) }
         loadFilteredIds()
         observeActiveTranscription()
+    }
+
+    fun onCleanupToggled(enabled: Boolean) {
+        _uiState.update { it.copy(isCleanupEnabled = enabled) }
+    }
+
+    fun translateToEnglish() {
+        translate(TranslationTarget.EN)
+    }
+
+    fun translateToGerman() {
+        translate(TranslationTarget.DE)
+    }
+
+    private fun translate(target: TranslationTarget) {
+        viewModelScope.launch {
+            val transcription = _uiState.value.transcription ?: return@launch
+            val llmProvider = securePreferences.getLlmProvider()
+            val apiKey = when (llmProvider) {
+                "zai" -> securePreferences.getZaiApiKey()
+                else -> securePreferences.getOpenRouterApiKey()
+            }
+            val llmModel = securePreferences.getLlmModel()
+
+            if (apiKey.isNullOrBlank()) {
+                _uiState.update { it.copy(errorMessage = "LLM API key is required for translation") }
+                return@launch
+            }
+
+            _uiState.update { it.copy(isTranslating = true, errorMessage = null) }
+            try {
+                postProcessTextUseCase(
+                    transcriptionId = transcription.id,
+                    isCleanupEnabled = _uiState.value.isCleanupEnabled,
+                    translationTarget = target,
+                    llmModel = llmModel,
+                    apiKey = apiKey,
+                    llmProvider = llmProvider
+                )
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = e.message ?: "Translation failed") }
+            } finally {
+                _uiState.update { it.copy(isTranslating = false) }
+            }
+        }
     }
 
     private fun loadFilteredIds() {
@@ -69,29 +116,26 @@ class TranscriptionDetailViewModel @Inject constructor(
 
     private fun observeActiveTranscription() {
         viewModelScope.launch {
-            _activeTranscriptionId.flatMapLatest { id ->
-                repository.getByIdFlow(id)
-            }.collect { entity ->
-                if (entity != null) {
-                    val transcription = entity.toDomain()
-                    _uiState.update {
-                        it.copy(
-                            transcription = transcription,
-                            isViewed = transcription.isViewed
-                        )
-                    }
-                    if (!suppressAutoMark && entity.playedCount == 0) {
-                        markAsViewed(transcription.id)
+            _activeTranscriptionId.flatMapLatest { id -> repository.getByIdFlow(id) }
+                .collect { entity ->
+                    if (entity != null) {
+                        val transcription = entity.toDomain()
+                        _uiState.update {
+                            it.copy(
+                                transcription = transcription,
+                                isViewed = transcription.isViewed
+                            )
+                        }
+                        if (!suppressAutoMark && entity.playedCount == 0) {
+                            markAsViewed(transcription.id)
+                        }
                     }
                 }
-            }
         }
     }
 
     private fun markAsViewed(id: Long) {
-        viewModelScope.launch {
-            repository.markAsViewed(id)
-        }
+        viewModelScope.launch { repository.markAsViewed(id) }
     }
 
     fun onPageChanged(index: Int) {
@@ -143,7 +187,6 @@ class TranscriptionDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val ids = _filteredIds.value
             val currentIdx = _currentIndex.value
-            // Pick next or prev as fallback
             val nextId = ids.getOrNull(currentIdx + 1) ?: ids.getOrNull(currentIdx - 1)
             repository.deleteById(id)
             _uiState.update { it.copy(isDeleted = true, nextTranscriptionId = nextId) }
@@ -153,21 +196,16 @@ class TranscriptionDetailViewModel @Inject constructor(
     fun copyToClipboard() {
         viewModelScope.launch {
             val text = _uiState.value.transcription?.getDisplayText() ?: return@launch
-
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = android.content.ClipData.newPlainText("transcription", text)
             clipboard.setPrimaryClip(clip)
-
             _uiState.update { it.copy(isCopiedToClipboard = true) }
-
             kotlinx.coroutines.delay(2000)
             _uiState.update { it.copy(isCopiedToClipboard = false) }
         }
     }
 
-    private fun Transcription.getDisplayText(): String {
-        return processedText ?: originalText
-    }
+    private fun Transcription.getDisplayText(): String = processedText ?: originalText
 
     companion object {
         const val KEY_TRANSCRIPTION_ID = "transcription_id"
@@ -180,5 +218,8 @@ data class TranscriptionDetailUiState(
     val isViewed: Boolean = false,
     val isDeleted: Boolean = false,
     val isCopiedToClipboard: Boolean = false,
-    val nextTranscriptionId: Long? = null
+    val nextTranscriptionId: Long? = null,
+    val isCleanupEnabled: Boolean = false,
+    val isTranslating: Boolean = false,
+    val errorMessage: String? = null
 )

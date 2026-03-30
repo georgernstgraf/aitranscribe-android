@@ -228,13 +228,7 @@ fun SettingsScreen(
                 Text("Save Settings")
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Data Management",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 10.dp)
-            )
+            Spacer(modifier = Modifier.height(24.dp))
 
             Spacer(modifier = Modifier.height(16.dp))
 

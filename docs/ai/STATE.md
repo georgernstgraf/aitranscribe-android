@@ -6,6 +6,8 @@ Current status as of 2026-03-29.
 Issue #32 (ZAI provider + model dropdowns + failure feedback) completed and committed. CI build fixed.
 
 ## Completed This Session
+- [x] Installed arm64 `sqlite3` on device from `SQLite-v3.51.1-for-magisk.multi-arch.zip`
+- [x] Verified on-device DB access by copying `sqlite3` into app sandbox and querying `aitranscribe.db`
 - [x] Issue #32: ZAI as LLM provider — `ZaiApiService`, `ProviderConfig`, settings dropdowns
 - [x] Issue #32: Model selection dropdowns replacing free-text fields (STT + LLM)
 - [x] Issue #32: Post-processing failure feedback — `COMPLETED_WITH_WARNING` status + amber warning banner

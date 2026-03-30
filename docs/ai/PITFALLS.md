@@ -39,6 +39,9 @@ Without explicit `@ColumnInfo(name = "...")`, Room uses the Kotlin property name
 ## Device package name has .debug suffix
 The debug build's package name is `com.georgernstgraf.aitranscribe.debug` (not `com.georgernstgraf.aitranscribe`). Use this for `run-as`, `adb shell pm`, etc.
 
+## sqlite3 on device: run-as cannot execute /data/local/tmp binary directly
+`run-as com.georgernstgraf.aitranscribe.debug /data/local/tmp/sqlite3 ...` fails with `Permission denied`. Copy the binary into the app sandbox first, then execute it there, e.g. `run-as <pkg> sh -c "cp /data/local/tmp/sqlite3 files/sqlite3 && chmod 700 files/sqlite3 && ./files/sqlite3 databases/aitranscribe.db ..."`.
+
 ## Post-processing failures are surfaced via COMPLETED_WITH_WARNING (IMPLEMENTED)
 When LLM post-processing fails (wrong model, insufficient credits, network error), the transcription is saved with `COMPLETED_WITH_WARNING` status. The detail screen shows an amber warning banner with the error message. The raw transcription text is still displayed. Implemented in #32.
 

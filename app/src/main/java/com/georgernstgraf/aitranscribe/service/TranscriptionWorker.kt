@@ -7,12 +7,14 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
+import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
 import dagger.assisted.Assisted
@@ -40,22 +42,10 @@ class TranscriptionWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val queuedId = inputData.getLong(KEY_QUEUED_ID, -1)
-        Log.d("TranscriptionWorker", "doWork: queuedId=$queuedId")
+        if (queuedId == -1L) return@withContext Result.failure()
 
-        if (queuedId == -1L) {
-            Log.e("TranscriptionWorker", "doWork: FAILED - invalid queuedId")
-            return@withContext Result.failure()
-        }
-
-        val queued = repository.getQueuedById(queuedId)
-        if (queued == null) {
-            Log.e("TranscriptionWorker", "doWork: FAILED - queued not found with id=$queuedId")
-            return@withContext Result.failure()
-        }
-
-        if (!networkMonitor.isConnected()) {
-            return@withContext Result.retry()
-        }
+        val queued = repository.getQueuedById(queuedId) ?: return@withContext Result.failure()
+        if (!networkMonitor.isConnected()) return@withContext Result.retry()
 
         val transcriptionText = try {
             transcribeAudio(queued)
@@ -63,10 +53,8 @@ class TranscriptionWorker @AssistedInject constructor(
             Log.e("TranscriptionWorker", "transcribeAudio failed", e)
             return@withContext Result.retry()
         }
-        Log.d("TranscriptionWorker", "doWork: transcriptionText='$transcriptionText', length=${transcriptionText.length}")
 
         val processingMode = queued.postProcessingType ?: PostProcessingType.RAW.name
-
         val entity = TranscriptionEntity(
             originalText = transcriptionText,
             processedText = null,
@@ -81,54 +69,78 @@ class TranscriptionWorker @AssistedInject constructor(
         )
 
         val transcriptionId = repository.insert(entity)
-        Log.d("TranscriptionWorker", "doWork: Saved transcription with id=$transcriptionId")
-
         repository.removeQueued(queuedId)
         cleanupAudioFile(queued.audioFilePath)
         cleanupOrphanedAudioFiles()
 
-        val mode = try {
-            PostProcessingType.valueOf(processingMode)
-        } catch (_: Exception) {
-            PostProcessingType.RAW
+        val llmProvider = securePreferences.getLlmProvider()
+        val llmApiKey = when (llmProvider) {
+            "zai" -> securePreferences.getZaiApiKey()
+            else -> securePreferences.getOpenRouterApiKey()
+        }
+        val llmModel = securePreferences.getLlmModel()
+
+        val postProcessingType = when (processingMode) {
+            PostProcessingType.CLEANUP.name,
+            PostProcessingType.TRANSLATE_TO_EN.name,
+            PostProcessingType.TRANSLATE_TO_DE.name,
+            "ENGLISH" -> PostProcessingType.CLEANUP
+            else -> PostProcessingType.RAW
         }
 
-        try {
-            val llmProvider = securePreferences.getLlmProvider()
-            val llmApiKey = when (llmProvider) {
-                "zai" -> securePreferences.getZaiApiKey()
-                else -> securePreferences.getOpenRouterApiKey()
-            }
-            val llmModel = securePreferences.getLlmModel()
-
-            if (mode != PostProcessingType.RAW) {
-                if (!llmApiKey.isNullOrBlank()) {
-                    postProcessTextUseCase(transcriptionId, mode, llmModel, llmApiKey, llmProvider)
+        if (!llmApiKey.isNullOrBlank()) {
+            try {
+                when (postProcessingType) {
+                    PostProcessingType.RAW -> Unit
+                    PostProcessingType.CLEANUP -> {
+                        postProcessTextUseCase(
+                            transcriptionId,
+                            isCleanupEnabled = true,
+                            translationTarget = TranslationTarget.NONE,
+                            llmModel = llmModel,
+                            apiKey = llmApiKey,
+                            llmProvider = llmProvider
+                        )
+                    }
+                    PostProcessingType.TRANSLATE_TO_EN -> {
+                        postProcessTextUseCase(
+                            transcriptionId,
+                            isCleanupEnabled = true,
+                            translationTarget = TranslationTarget.EN,
+                            llmModel = llmModel,
+                            apiKey = llmApiKey,
+                            llmProvider = llmProvider
+                        )
+                    }
+                    PostProcessingType.TRANSLATE_TO_DE -> {
+                        postProcessTextUseCase(
+                            transcriptionId,
+                            isCleanupEnabled = true,
+                            translationTarget = TranslationTarget.DE,
+                            llmModel = llmModel,
+                            apiKey = llmApiKey,
+                            llmProvider = llmProvider
+                        )
+                    }
                 }
-            }
 
-            if (!llmApiKey.isNullOrBlank()) {
                 postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
+            } catch (e: Exception) {
+                Log.e("TranscriptionWorker", "Post-processing failed (non-fatal)", e)
+                repository.updateStatus(transcriptionId, TranscriptionStatus.COMPLETED_WITH_WARNING.name)
+                repository.recordError(transcriptionId, "Post-processing skipped: ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.e("TranscriptionWorker", "Post-processing failed (non-fatal)", e)
-            repository.updateStatus(transcriptionId, TranscriptionStatus.COMPLETED_WITH_WARNING.name)
-            repository.recordError(transcriptionId, "Post-processing skipped: ${e.message}")
         }
 
         Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
     }
 
-    private suspend fun transcribeAudio(queued: com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity): String {
+    private suspend fun transcribeAudio(queued: QueuedTranscriptionEntity): String {
         val audioFile = File(queued.audioFilePath)
-        if (!audioFile.exists()) {
-            throw Exception("Audio file not found: ${queued.audioFilePath}")
-        }
+        if (!audioFile.exists()) throw Exception("Audio file not found: ${queued.audioFilePath}")
 
         val apiKey = securePreferences.getGroqApiKey()
-        if (apiKey.isNullOrBlank()) {
-            throw Exception("GROQ API key not configured")
-        }
+        if (apiKey.isNullOrBlank()) throw Exception("GROQ API key not configured")
 
         return groqApiService.transcribeAudio(
             authorization = "Bearer $apiKey",
@@ -144,13 +156,9 @@ class TranscriptionWorker @AssistedInject constructor(
         return MultipartBody.Part.createFormData("file", audioFile.name, requestBody)
     }
 
-    private fun createModelPart(model: String): okhttp3.RequestBody {
-        return model.toRequestBody("text/plain".toMediaType())
-    }
+    private fun createModelPart(model: String) = model.toRequestBody("text/plain".toMediaType())
 
-    private fun createFormatPart(): okhttp3.RequestBody {
-        return "json".toRequestBody("text/plain".toMediaType())
-    }
+    private fun createFormatPart() = "json".toRequestBody("text/plain".toMediaType())
 
     private fun cleanupAudioFile(path: String) {
         try {
@@ -163,8 +171,8 @@ class TranscriptionWorker @AssistedInject constructor(
         try {
             val queuedPaths = repository.getQueuedAudioPaths().toSet()
             context.cacheDir.listFiles()?.filter {
-                it.name.startsWith("recording_") && it.name.endsWith(".m4a")
-                        && it.absolutePath !in queuedPaths
+                it.name.startsWith("recording_") && it.name.endsWith(".m4a") &&
+                    it.absolutePath !in queuedPaths
             }?.forEach { it.delete() }
         } catch (_: Exception) {
         }
@@ -174,8 +182,6 @@ class TranscriptionWorker @AssistedInject constructor(
         const val KEY_QUEUED_ID = "queued_id"
         const val KEY_TRANSCRIPTION_ID = "transcription_id"
 
-        fun createInputData(queuedId: Long): Data {
-            return workDataOf(KEY_QUEUED_ID to queuedId)
-        }
+        fun createInputData(queuedId: Long): Data = workDataOf(KEY_QUEUED_ID to queuedId)
     }
 }

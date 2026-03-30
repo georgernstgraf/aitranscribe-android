@@ -13,3 +13,4 @@
 - Project-specific skill at `skills/orchestrator/`
 - Companion project `../aitranscribe` is the authoritative source for prompts and pipeline logic
 - CI builds successful; release APKs are unsigned as of 2026-03-29.
+- On-device SQLite debugging works if `sqlite3` is copied into the app sandbox via `run-as ... sh -c "cp /data/local/tmp/sqlite3 files/sqlite3 && chmod 700 files/sqlite3 ..."`.

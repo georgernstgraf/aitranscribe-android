@@ -233,7 +233,12 @@ class FakeTranscriptionRepository : TranscriptionRepository {
             audioFilePath = audioFilePath,
             createdAt = java.time.LocalDateTime.parse(createdAt),
             postProcessingType = postProcessingType?.let {
-                com.georgernstgraf.aitranscribe.domain.model.PostProcessingType.valueOf(it)
+                when (it) {
+                    "ENGLISH" -> com.georgernstgraf.aitranscribe.domain.model.PostProcessingType.TRANSLATE_TO_EN
+                    else -> runCatching {
+                        com.georgernstgraf.aitranscribe.domain.model.PostProcessingType.valueOf(it)
+                    }.getOrNull()
+                }
             },
             status = com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.valueOf(status),
             errorMessage = errorMessage,

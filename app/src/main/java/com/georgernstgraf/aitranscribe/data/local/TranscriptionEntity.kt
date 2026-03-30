@@ -41,13 +41,18 @@ fun TranscriptionEntity.toDomain(): Transcription {
         processedText = processedText,
         audioFilePath = audioFilePath,
         createdAt = LocalDateTime.parse(createdAt),
-        postProcessingType = postProcessingType?.let {
-            PostProcessingType.valueOf(it)
-        },
+        postProcessingType = postProcessingType?.toPostProcessingTypeOrNull(),
         status = TranscriptionStatus.valueOf(status),
         errorMessage = errorMessage,
         playedCount = playedCount,
         retryCount = retryCount,
         summary = summary
     )
+}
+
+private fun String.toPostProcessingTypeOrNull(): PostProcessingType? {
+    return when (this) {
+        "ENGLISH" -> PostProcessingType.TRANSLATE_TO_EN
+        else -> runCatching { PostProcessingType.valueOf(this) }.getOrNull()
+    }
 }

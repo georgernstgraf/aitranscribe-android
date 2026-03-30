@@ -6,9 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -33,6 +34,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -80,6 +83,16 @@ fun TranscriptionDetailScreen(
     LaunchedEffect(state.isDeleted) {
         if (state.isDeleted) {
             navController.navigateUp()
+        }
+    }
+
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                actionLabel = "OK",
+                duration = SnackbarDuration.Long
+            )
         }
     }
 
@@ -159,7 +172,7 @@ fun TranscriptionDetailScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 transcription?.let { trans ->
-                    var editText by remember(trans.id) {
+                    var editText by remember(trans.id, trans.originalText) {
                         mutableStateOf(trans.originalText)
                     }
 
@@ -205,6 +218,42 @@ fun TranscriptionDetailScreen(
                                             )
                                         }
                                     }
+                                }
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Cleanup",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Switch(
+                                    checked = state.isCleanupEnabled,
+                                    onCheckedChange = { viewModel.onCleanupToggled(it) }
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                TextButton(
+                                    onClick = { viewModel.translateToEnglish() },
+                                    enabled = !state.isTranslating,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("EN")
+                                }
+                                TextButton(
+                                    onClick = { viewModel.translateToGerman() },
+                                    enabled = !state.isTranslating,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("DE")
                                 }
                             }
 

@@ -262,10 +262,12 @@ class MainViewModel @Inject constructor(
     private fun loadProcessingMode() {
         viewModelScope.launch {
             val modeName = securePreferences.getProcessingMode()
-            val mode = try {
-                PostProcessingType.valueOf(modeName)
-            } catch (_: Exception) {
-                PostProcessingType.RAW
+            val mode = when (modeName) {
+                PostProcessingType.CLEANUP.name,
+                PostProcessingType.TRANSLATE_TO_EN.name,
+                PostProcessingType.TRANSLATE_TO_DE.name,
+                "ENGLISH" -> PostProcessingType.CLEANUP
+                else -> PostProcessingType.RAW
             }
             _uiState.update { it.copy(processingMode = mode) }
         }

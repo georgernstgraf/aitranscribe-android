@@ -42,8 +42,10 @@ class SettingsViewModelTest {
 
         coEvery { securePreferences.getGroqApiKey() } returns null
         coEvery { securePreferences.getOpenRouterApiKey() } returns null
+        coEvery { securePreferences.getZaiApiKey() } returns null
         coEvery { securePreferences.getSttModel() } returns "whisper-large-v3-turbo"
         coEvery { securePreferences.getLlmModel() } returns "anthropic/claude-3-haiku"
+        coEvery { securePreferences.getLlmProvider() } returns "openrouter"
 
         viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase)
     }
