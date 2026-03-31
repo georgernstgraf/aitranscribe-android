@@ -157,6 +157,7 @@ interface TranscriptionDao {
         UPDATE transcriptions
         SET text = :text,
             audio_file_path = NULL,
+            language = NULL,
             status = :status,
             error_message = NULL
         WHERE id = :id

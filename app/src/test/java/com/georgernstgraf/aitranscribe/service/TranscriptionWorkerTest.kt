@@ -131,10 +131,17 @@ class TranscriptionWorkerTest {
         assertNull(saved!!.audioFilePath)
 
         coVerify(exactly = 0) {
-            postProcessTextUseCase(any(), any(), any(), any(), any(), any())
+            postProcessTextUseCase(
+                transcriptionId = any(),
+                isCleanupEnabled = any(),
+                translationTarget = any(),
+                llmModel = any(),
+                apiKey = any(),
+                llmProvider = any()
+            )
         }
         coVerify(exactly = 1) {
-            postProcessTextUseCase.generateSummary(queued.id, any(), any(), any())
+            postProcessTextUseCase.generateSummary(queued.id, any(), any(), any(), any())
         }
     }
 
@@ -158,7 +165,14 @@ class TranscriptionWorkerTest {
 
         // Force LLM to fail
         coEvery { 
-            postProcessTextUseCase(any(), any(), any(), any(), any(), any()) 
+            postProcessTextUseCase(
+                transcriptionId = any(),
+                isCleanupEnabled = any(),
+                translationTarget = any(),
+                llmModel = any(),
+                apiKey = any(),
+                llmProvider = any()
+            ) 
         } throws Exception("LLM Error")
 
         val result = worker.doWork()
@@ -205,8 +219,8 @@ class TranscriptionWorkerTest {
         coVerify(exactly = 1) {
             postProcessTextUseCase(queued.id, true, TranslationTarget.NONE, any(), any(), any())
         }
-        coVerify(exactly = 1) {
-            postProcessTextUseCase.generateSummary(queued.id, any(), any(), any())
+        coVerify(exactly = 0) {
+            postProcessTextUseCase.generateSummary(queued.id, any(), any(), any(), any())
         }
     }
 }

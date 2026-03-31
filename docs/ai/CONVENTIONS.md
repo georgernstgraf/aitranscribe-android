@@ -79,6 +79,8 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Keep STT success atomic in DB: update `text` and clear `audio_file_path` in one statement.
 - Cleanup post-processing runs only when cleanup mode is requested; summary request runs after STT success when LLM is configured.
 - Recordings must be stored under `filesDir/recordings` (not `cacheDir`) for restart persistence.
+- Prompt composition rule: for cleanup-enabled actions, compose `prompt.cleanup` first, then newline, then `prompt.cleanup.<en|de|null>`; for detail cleanup-off actions, use `prompt.translate.<en|de>` directly.
+- Use prompt templates for all LLM message text (`prompt.system.base`, `prompt.system.request`, `prompt.user.transcription`, `prompt.summary`); avoid hard-coded prompt strings in Kotlin.
 
 ## Companion Project
 - `../aitranscribe` (Python/TUI) is the **lead and authoritative project** for pipeline logic, prompts, and feature design

@@ -209,3 +209,18 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: After STT success, summary generation runs regardless of cleanup mode; cleanup itself runs only in CLEANUP mode.
 - **Reason**: Matches product rule: cleanup is optional, summary is requested when text exists.
 - **Changed**: `TranscriptionWorker.performPostProcessing()` now gates cleanup by mode and calls `generateSummary(...)` in all modes.
+
+## 2026-04-01: Cleanup/translation prompt routing normalized to explicit prompt keys (#46)
+- **Choice**: Prompt composition now uses explicit key families: `prompt.translate.*` for detail actions with cleanup off, and `prompt.cleanup` + `prompt.cleanup.<lang|null>` for cleanup-enabled actions.
+- **Reason**: German cleanup flow produced unexpected English output and prompt behavior was hard to reason about.
+- **Changed**: `PostProcessTextUseCase` now resolves prompts by flow/context and language state, with deterministic cleanup-first ordering.
+
+## 2026-04-01: Summary prompt is generated once per action path (#46)
+- **Choice**: Removed duplicate summary trigger in worker cleanup path.
+- **Reason**: Recording flow produced duplicate summary requests and unstable outcomes.
+- **Changed**: Worker no longer calls a second summary after cleanup/detail use-case path that already generates summary.
+
+## 2026-04-01: Prompt preview logging is sanitized and summary-focused in UI (#46)
+- **Choice**: Persist/show only summary prompt preview in detail screen while logging all prompt previews with `{{TEXT}}` placeholder.
+- **Reason**: Needed inspectable prompt debugging without exposing full transcription text in debug preview state.
+- **Changed**: Added summary-preview preference key and UI card switched from generic prompt preview to summary prompt preview.

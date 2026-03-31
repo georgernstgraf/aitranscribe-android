@@ -182,6 +182,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
                 it.copy(
                     text = text,
                     audioFilePath = null,
+                    language = null,
                     status = status,
                     errorMessage = null
                 )
@@ -240,7 +241,8 @@ class FakeTranscriptionRepository : TranscriptionRepository {
             errorMessage = errorMessage,
             playedCount = if (seen) 1 else 0,
             seen = seen,
-            summary = summary
+            summary = summary,
+            language = language
         )
     }
 

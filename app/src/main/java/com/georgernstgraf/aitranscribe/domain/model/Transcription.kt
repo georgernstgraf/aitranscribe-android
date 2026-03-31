@@ -11,7 +11,8 @@ data class Transcription(
     val errorMessage: String?,
     val playedCount: Int = 0,
     val seen: Boolean = false,
-    val summary: String? = null
+    val summary: String? = null,
+    val language: String? = null
 ) {
     val isViewed: Boolean
         get() = seen

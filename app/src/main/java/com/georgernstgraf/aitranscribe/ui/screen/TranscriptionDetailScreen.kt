@@ -257,6 +257,29 @@ fun TranscriptionDetailScreen(
                                 minLines = 3,
                                 textStyle = MaterialTheme.typography.bodyLarge
                             )
+
+                            state.lastSummaryPromptPreview?.takeIf { it.isNotBlank() }?.let { preview ->
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0x332196F3)
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Text(
+                                            text = "Summary Prompt Preview",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = Color(0xFF64B5F6),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = preview,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
 

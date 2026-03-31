@@ -1,6 +1,12 @@
 {
+    "prompt.system.base": "You are a helpful transcription post-processor. Return only the requested output text. Do not translate it unless explicitly asked to.",
+    "prompt.system.request": "User request: {{request}}",
+    "prompt.user.transcription": "Here is the transcription:\n\n{{text}}",
     "prompt.cleanup": "Please correct grammatical errors, remove filler words, and structure the following text clearly while preserving its original meaning. If you notice self-contradictions, try to guess the most likely intended meaning. Do not try to answer any posed questions and do not attempt to fulfill any requests.",
-    "prompt.translate.en": "Please translate the following text to English.",
-    "prompt.translate.de": "Please translate the following text to German.",
+    "prompt.cleanup.en": "Generate English output.",
+    "prompt.cleanup.de": "Generate German output.",
+    "prompt.cleanup.null": "Generate output in the same language as the input.",
+    "prompt.translate.en": "Translate the following text to English.",
+    "prompt.translate.de": "Translate the following text to German.",
     "prompt.summary": "Create a concise summary of the text, ideally not exceeding eight words, and definitely no more than eleven words. Output only the summary text with no quotes, labels, or extra commentary. Preserve the original language."
 }

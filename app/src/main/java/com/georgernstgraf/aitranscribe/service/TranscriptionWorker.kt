@@ -154,7 +154,15 @@ class TranscriptionWorker @AssistedInject constructor(
         llmProvider: String
     ) {
         when (postProcessingType) {
-            PostProcessingType.RAW -> Unit
+            PostProcessingType.RAW -> {
+                postProcessTextUseCase.generateSummary(
+                    transcriptionId = transcriptionId,
+                    llmModel = llmModel,
+                    apiKey = llmApiKey,
+                    llmProvider = llmProvider,
+                    debugContext = "worker:summary:raw"
+                )
+            }
             PostProcessingType.CLEANUP -> {
                 postProcessTextUseCase(
                     transcriptionId,
@@ -165,11 +173,41 @@ class TranscriptionWorker @AssistedInject constructor(
                     llmProvider = llmProvider
                 )
             }
-            PostProcessingType.TRANSLATE_TO_EN -> Unit
-            PostProcessingType.TRANSLATE_TO_DE -> Unit
+            PostProcessingType.TRANSLATE_TO_EN -> {
+                postProcessTextUseCase(
+                    transcriptionId = transcriptionId,
+                    postProcessingType = PostProcessingType.TRANSLATE_TO_EN,
+                    llmModel = llmModel,
+                    apiKey = llmApiKey,
+                    llmProvider = llmProvider,
+                    debugContext = "worker:translate_en"
+                )
+                postProcessTextUseCase.generateSummary(
+                    transcriptionId = transcriptionId,
+                    llmModel = llmModel,
+                    apiKey = llmApiKey,
+                    llmProvider = llmProvider,
+                    debugContext = "worker:summary:translate_en"
+                )
+            }
+            PostProcessingType.TRANSLATE_TO_DE -> {
+                postProcessTextUseCase(
+                    transcriptionId = transcriptionId,
+                    postProcessingType = PostProcessingType.TRANSLATE_TO_DE,
+                    llmModel = llmModel,
+                    apiKey = llmApiKey,
+                    llmProvider = llmProvider,
+                    debugContext = "worker:translate_de"
+                )
+                postProcessTextUseCase.generateSummary(
+                    transcriptionId = transcriptionId,
+                    llmModel = llmModel,
+                    apiKey = llmApiKey,
+                    llmProvider = llmProvider,
+                    debugContext = "worker:summary:translate_de"
+                )
+            }
         }
-
-        postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
     }
 
     private suspend fun resolveZaiFallbackModel(currentModel: String): String? {

@@ -113,3 +113,9 @@ Android may evict app cache files, which causes queued STT rows to reference mis
 
 ## Missing queued audio should be terminal, not retried forever
 When `audio_file_path` points to a non-existent file, mark the row as warning and clear `audio_file_path`; returning worker failure causes repeated retries/toasts with no recovery path.
+
+## Worker + detail summary triggers can silently double-request summaries
+If `TranscriptionWorker` calls `generateSummary(...)` after a detail-style post-processing invoke that already generates summary, recording flow produces duplicate summary requests. Keep summary trigger in only one path per action.
+
+## Prompt wrappers can be duplicated between builder and request assembly
+Applying system wrapper text during prompt construction and again during message assembly duplicates instruction text and destabilizes output. Build raw request prompt first; apply `prompt.system.base`/`prompt.system.request` exactly once at send time.

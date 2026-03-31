@@ -24,7 +24,9 @@ data class TranscriptionEntity(
     @ColumnInfo(name = "seen")
     val seen: Boolean = false,
     @ColumnInfo(name = "summary")
-    val summary: String? = null
+    val summary: String? = null,
+    @ColumnInfo(name = "language")
+    val language: String? = null
 )
 
 fun TranscriptionEntity.toDomain(): Transcription {
@@ -37,6 +39,7 @@ fun TranscriptionEntity.toDomain(): Transcription {
         errorMessage = errorMessage,
         playedCount = if (seen) 1 else 0,
         seen = seen,
-        summary = summary
+        summary = summary,
+        language = language
     )
 }

@@ -1,6 +1,7 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
 import com.georgernstgraf.aitranscribe.domain.util.PromptManager
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
@@ -11,11 +12,14 @@ import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiCodingApiService
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
+import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import retrofit2.Response
@@ -29,6 +33,7 @@ class PostProcessTextUseCaseTest {
     private lateinit var zaiCodingApiService: ZaiCodingApiService
     private lateinit var groqApiService: GroqApiService
     private lateinit var promptManager: PromptManager
+    private lateinit var appSettingsStore: AppSettingsStore
     private lateinit var useCase: PostProcessTextUseCase
 
     @Before
@@ -39,9 +44,26 @@ class PostProcessTextUseCaseTest {
         zaiCodingApiService = mockk()
         groqApiService = mockk()
         promptManager = mockk()
-        useCase = PostProcessTextUseCase(apiService, zaiApiService, zaiCodingApiService, groqApiService, repository, promptManager)
-        
-        every { promptManager.get(any()) } answers { firstArg() }
+        appSettingsStore = mockk()
+        coEvery { appSettingsStore.setLastSummaryPromptPreview(any()) } returns Unit
+        useCase = PostProcessTextUseCase(
+            apiService,
+            zaiApiService,
+            zaiCodingApiService,
+            groqApiService,
+            repository,
+            promptManager,
+            appSettingsStore
+        )
+
+        every { promptManager.get(any()) } answers {
+            when (val key = firstArg<String>()) {
+                "prompt.system.base" -> "BASE"
+                "prompt.system.request" -> "User request: {{request}}"
+                "prompt.user.transcription" -> "Here is the transcription:\n\n{{text}}"
+                else -> key
+            }
+        }
     }
 
     @Test
@@ -77,6 +99,81 @@ class PostProcessTextUseCaseTest {
 
         val updated = repository.getById(id)
         assertEquals("Processed text", updated?.text)
+    }
+
+    @Test
+    fun `detail action skips llm when language matches button and cleanup disabled`() = runTest {
+        val id = repository.insert(
+            TranscriptionEntity(
+                text = "Already English text",
+                audioFilePath = null,
+                createdAt = LocalDateTime.now().toString(),
+                status = "COMPLETED",
+                errorMessage = null,
+                seen = false,
+                language = "en"
+            )
+        )
+
+        useCase(
+            transcriptionId = id,
+            isCleanupEnabled = false,
+            translationTarget = TranslationTarget.EN,
+            llmModel = "test-model",
+            apiKey = "test-key"
+        )
+
+        coVerify(exactly = 0) { apiService.processText(any(), any()) }
+        val unchanged = repository.getById(id)
+        assertEquals("Already English text", unchanged?.text)
+        assertEquals("en", unchanged?.language)
+    }
+
+    @Test
+    fun `detail action translates plus cleanup then updates language and summary`() = runTest {
+        val id = repository.insert(
+            TranscriptionEntity(
+                text = "Original unknown language",
+                audioFilePath = null,
+                createdAt = LocalDateTime.now().toString(),
+                status = "COMPLETED",
+                errorMessage = null,
+                seen = false,
+                language = null
+            )
+        )
+
+        val requests = mutableListOf<com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterRequest>()
+        coEvery { apiService.processText(any(), capture(requests)) } returnsMany listOf(
+            Response.success(
+                OpenRouterResponse(
+                    choices = listOf(OpenRouterChoice(OpenRouterMessage("assistant", "Translated and cleaned")))
+                )
+            ),
+            Response.success(
+                OpenRouterResponse(
+                    choices = listOf(OpenRouterChoice(OpenRouterMessage("assistant", "Summary text")))
+                )
+            )
+        )
+
+        useCase(
+            transcriptionId = id,
+            isCleanupEnabled = true,
+            translationTarget = TranslationTarget.DE,
+            llmModel = "test-model",
+            apiKey = "test-key"
+        )
+
+        coVerify(exactly = 2) { apiService.processText(any(), any()) }
+        val postProcessPrompt = requests.first().messages.first().content
+        assertTrue(postProcessPrompt.contains("prompt.cleanup"))
+        assertTrue(postProcessPrompt.contains("prompt.cleanup.de"))
+
+        val updated = repository.getById(id)
+        assertEquals("Translated and cleaned", updated?.text)
+        assertEquals("de", updated?.language)
+        assertEquals("Summary text", updated?.summary)
     }
 
     @Test(expected = PostProcessTextUseCase.PostProcessingException::class)
