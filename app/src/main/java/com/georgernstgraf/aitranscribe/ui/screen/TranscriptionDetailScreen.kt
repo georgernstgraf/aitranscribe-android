@@ -111,9 +111,6 @@ fun TranscriptionDetailScreen(
     ) { padding ->
 
         if (filteredIds.isEmpty()) {
-            LaunchedEffect(Unit) {
-                navController.navigateUp()
-            }
             return@Scaffold
         }
 

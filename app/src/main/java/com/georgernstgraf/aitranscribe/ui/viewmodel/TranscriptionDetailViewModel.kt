@@ -218,10 +218,28 @@ class TranscriptionDetailViewModel @Inject constructor(
 
     fun deleteTranscription(id: Long) {
         viewModelScope.launch {
-            repository.deleteById(id)
             val ids = _filteredIds.value
-            if (ids.isEmpty() || (ids.size == 1 && ids[0] == id)) {
+            val currentIdx = ids.indexOf(id)
+            
+            // Determine the next ID to show
+            val nextId = if (currentIdx != -1) {
+                if (ids.size <= 1) null
+                else if (currentIdx < ids.lastIndex) ids[currentIdx + 1]
+                else ids[currentIdx - 1]
+            } else null
+
+            if (nextId == null) {
+                // If this was the last item, signal UI to close
                 _uiState.update { it.copy(isDeleted = true) }
+                repository.deleteById(id)
+            } else {
+                // Proactively switch to the next item
+                val nextIdx = ids.indexOf(nextId)
+                _activeTranscriptionId.value = nextId
+                _currentIndex.value = nextIdx
+                
+                // Perform deletion in background
+                repository.deleteById(id)
             }
         }
     }
