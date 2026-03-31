@@ -66,6 +66,9 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Accessing the app's internal database requires root access or specific `run-as` permissions.
 - Direct file access via `adb` is usually restricted. Use log-based debugging (`adb logcat`) for routine inspections.
 - If direct inspection is necessary, copy the database to a readable directory (e.g., `/data/local/tmp/`) using `run-as` if possible, then query it. Ensure cleanup of sensitive data afterwards.
+- Canonical schema is `prisma/desired/schema.prisma`; observed runtime schema is `prisma/device/schema.prisma`.
+- Refresh runtime schema with `cd prisma && make`.
+- Check schema drift with `cd prisma && make check-schema`.
 
 ## Companion Project
 - `../aitranscribe` (Python/TUI) is the **lead and authoritative project** for pipeline logic, prompts, and feature design

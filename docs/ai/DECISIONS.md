@@ -119,3 +119,8 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Configured `GroqApiService` to handle `chat/completions` directly and updated `PostProcessTextUseCase` to route requests dynamically based on the selected provider.
 - **Reason**: The previous implementation forced all LLM requests through `OpenRouterApiService` if they weren't explicitly ZAI, which caused HTTP 401 errors when attempting to use a Groq API key on an OpenRouter endpoint.
 - **Tradeoff**: Required duplicating the OpenAI-compatible DTO structures across Retrofit API interfaces, but maintains clean separation of base URLs.
+
+## 2026-03-31: Prisma desired schema is canonical for DB governance (#54)
+- **Choice**: Treat `prisma/desired/schema.prisma` as the canonical DB contract and `prisma/device/schema.prisma` as observed runtime state.
+- **Reason**: The team wants DB evolution to be desired-first and explicitly detect runtime drift.
+- **Changed**: Added `prisma/GOVERNANCE.md` and Make targets `refresh-device`/`check-schema` to support the workflow.

@@ -90,3 +90,8 @@ Using `NestedScrollConnection.onPostScroll` to auto-navigate prev/next on oversc
 ## Bundling sqlite3 binary in APK for debugging
 Bundling `sqlite3` in `jniLibs` to inspect app databases on non-rooted devices is not viable. Android's security model (No-Exec partition) prevents executing binaries from the application's private data sandbox. **Fix:** Use the Android Studio Database Inspector for database inspection, or logcat for routine debugging.
 
+## `prisma` schema check is strict text diff
+`cd prisma && make check-schema` uses `diff -u` between `desired/schema.prisma` and `device/schema.prisma`. Any textual difference fails the check, including formatting/order differences. Keep both files intentionally aligned when asserting zero drift.
+
+## `gh issue comment --body` with backticks can execute shell substitutions
+Passing markdown with backticks via inline `--body "..."` in shell can trigger command substitution and mangle the comment. Use `gh issue comment --body-file - <<'EOF' ... EOF` for safe multiline comments.
