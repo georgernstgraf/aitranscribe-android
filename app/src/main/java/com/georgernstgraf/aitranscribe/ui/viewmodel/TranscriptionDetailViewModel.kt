@@ -146,11 +146,11 @@ class TranscriptionDetailViewModel @Inject constructor(
 
     fun onPageChanged(index: Int) {
         val ids = _filteredIds.value
-        if (index in ids.indices) {
-            _currentIndex.value = index
-            suppressAutoMark = false
-            _activeTranscriptionId.value = ids[index]
-        }
+        if (ids.isEmpty()) return
+        val clampedIndex = index.coerceIn(0, ids.lastIndex)
+        _currentIndex.value = clampedIndex
+        suppressAutoMark = false
+        _activeTranscriptionId.value = ids[clampedIndex]
     }
 
     fun toggleViewStatus(id: Long) {
@@ -171,6 +171,7 @@ class TranscriptionDetailViewModel @Inject constructor(
     fun updateText(id: Long, newText: String) {
         viewModelScope.launch {
             val transcription = _uiState.value.transcription ?: return@launch
+            if (transcription.id != id) return@launch // Ensure we're updating the correct one
             repository.update(
                 TranscriptionEntity(
                     id = transcription.id,
@@ -217,11 +218,11 @@ class TranscriptionDetailViewModel @Inject constructor(
 
     fun deleteTranscription(id: Long) {
         viewModelScope.launch {
-            val ids = _filteredIds.value
-            val currentIdx = _currentIndex.value
-            val nextId = ids.getOrNull(currentIdx + 1) ?: ids.getOrNull(currentIdx - 1)
             repository.deleteById(id)
-            _uiState.update { it.copy(isDeleted = true, nextTranscriptionId = nextId) }
+            val ids = _filteredIds.value
+            if (ids.isEmpty() || (ids.size == 1 && ids[0] == id)) {
+                _uiState.update { it.copy(isDeleted = true) }
+            }
         }
     }
 
@@ -235,7 +236,6 @@ data class TranscriptionDetailUiState(
     val transcription: Transcription? = null,
     val isViewed: Boolean = false,
     val isDeleted: Boolean = false,
-    val nextTranscriptionId: Long? = null,
     val isCleanupEnabled: Boolean = false,
     val isTranslating: Boolean = false
 )

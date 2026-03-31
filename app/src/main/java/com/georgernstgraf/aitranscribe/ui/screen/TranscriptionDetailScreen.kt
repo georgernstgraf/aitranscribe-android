@@ -111,6 +111,9 @@ fun TranscriptionDetailScreen(
     ) { padding ->
 
         if (filteredIds.isEmpty()) {
+            LaunchedEffect(Unit) {
+                navController.navigateUp()
+            }
             return@Scaffold
         }
 
@@ -120,7 +123,7 @@ fun TranscriptionDetailScreen(
             pageCount = { filteredIds.size }
         )
 
-        LaunchedEffect(pagerState.settledPage) {
+        LaunchedEffect(pagerState.settledPage, filteredIds) {
             viewModel.onPageChanged(pagerState.settledPage)
         }
 
