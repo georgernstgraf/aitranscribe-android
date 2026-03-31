@@ -7,6 +7,8 @@ import androidx.work.WorkerParameters
 import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
+import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
+import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import com.georgernstgraf.aitranscribe.data.remote.dto.GroqTranscriptionResponse
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
@@ -36,6 +38,8 @@ class TranscriptionWorkerTest {
     private lateinit var params: WorkerParameters
     private lateinit var fakeRepository: FakeTranscriptionRepository
     private lateinit var groqApiService: GroqApiService
+    private lateinit var openRouterApiService: OpenRouterApiService
+    private lateinit var zaiApiService: ZaiApiService
     private lateinit var networkMonitor: NetworkMonitor
     private lateinit var securePreferences: SecurePreferences
     private lateinit var postProcessTextUseCase: PostProcessTextUseCase
@@ -52,6 +56,8 @@ class TranscriptionWorkerTest {
         params = mockk(relaxed = true)
         fakeRepository = FakeTranscriptionRepository()
         groqApiService = mockk(relaxed = true)
+        openRouterApiService = mockk(relaxed = true)
+        zaiApiService = mockk(relaxed = true)
         networkMonitor = mockk(relaxed = true)
         securePreferences = mockk(relaxed = true)
         postProcessTextUseCase = mockk(relaxed = true)
@@ -62,6 +68,7 @@ class TranscriptionWorkerTest {
         // Default API Key
         coEvery { securePreferences.getGroqApiKey() } returns "fake-groq-key"
         coEvery { securePreferences.getActiveAuthToken(any()) } returns "fake-llm-token"
+        coEvery { securePreferences.getSttProvider() } returns "groq"
         coEvery { securePreferences.getLlmProvider() } returns "openrouter"
 
         // Default Groq success
@@ -75,6 +82,8 @@ class TranscriptionWorkerTest {
             params,
             fakeRepository,
             groqApiService,
+            openRouterApiService,
+            zaiApiService,
             networkMonitor,
             securePreferences,
             postProcessTextUseCase

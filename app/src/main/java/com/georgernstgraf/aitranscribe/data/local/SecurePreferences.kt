@@ -53,8 +53,19 @@ class SecurePreferences @Inject constructor(
     }
 
     suspend fun getProviderApiKey(providerId: String): String? = sharedPreferences.getString("${providerId}_api_key", null)
-    suspend fun getProviderModel(providerId: String, defaultModel: String): String = 
+    suspend fun getProviderLlmModel(providerId: String, defaultModel: String): String = 
         sharedPreferences.getString("${providerId}_llm_model", defaultModel) ?: defaultModel
+
+    suspend fun getProviderSttModel(providerId: String, defaultModel: String): String = 
+        sharedPreferences.getString("${providerId}_stt_model", defaultModel) ?: defaultModel
+
+    suspend fun setProviderSttModel(providerId: String, model: String) {
+        sharedPreferences.edit().putString("${providerId}_stt_model", model).apply()
+    }
+
+    suspend fun setProviderLlmModel(providerId: String, model: String) {
+        sharedPreferences.edit().putString("${providerId}_llm_model", model).apply()
+    }
 
     suspend fun setGroqApiKey(apiKey: String) {
         sharedPreferences.edit().putString(GROQ_API_KEY, apiKey).apply()

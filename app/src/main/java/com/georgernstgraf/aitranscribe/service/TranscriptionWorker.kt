@@ -17,6 +17,8 @@ import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
+import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
+import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +37,8 @@ class TranscriptionWorker @AssistedInject constructor(
     @Assisted private val params: WorkerParameters,
     private val repository: TranscriptionRepository,
     private val groqApiService: GroqApiService,
+    private val openRouterApiService: OpenRouterApiService,
+    private val zaiApiService: ZaiApiService,
     private val networkMonitor: NetworkMonitor,
     private val securePreferences: SecurePreferences,
     private val postProcessTextUseCase: PostProcessTextUseCase
@@ -146,15 +150,34 @@ class TranscriptionWorker @AssistedInject constructor(
         val audioFile = File(queued.audioFilePath)
         if (!audioFile.exists()) throw Exception("Audio file not found: ${queued.audioFilePath}")
 
-        val apiKey = securePreferences.getGroqApiKey()
-        if (apiKey.isNullOrBlank()) throw Exception("GROQ API key not configured")
+        val sttProvider = securePreferences.getSttProvider()
+        val token = securePreferences.getActiveAuthToken(sttProvider)
+        if (token.isNullOrBlank()) throw Exception("${sttProvider.replaceFirstChar { it.uppercase() }} API token not configured")
+        val authorization = if (token.startsWith("Bearer ")) token else "Bearer $token"
 
-        return groqApiService.transcribeAudio(
-            authorization = "Bearer $apiKey",
-            file = createAudioPart(audioFile),
-            model = createModelPart(queued.sttModel),
-            responseFormat = createFormatPart()
-        ).body()?.text ?: throw Exception("Empty transcription response")
+        val response = when (sttProvider) {
+            "groq" -> groqApiService.transcribeAudio(
+                authorization = authorization,
+                file = createAudioPart(audioFile),
+                model = createModelPart(queued.sttModel),
+                responseFormat = createFormatPart()
+            )
+            "openrouter" -> openRouterApiService.transcribeAudio(
+                authorization = authorization,
+                file = createAudioPart(audioFile),
+                model = createModelPart(queued.sttModel),
+                responseFormat = createFormatPart()
+            )
+            "zai" -> zaiApiService.transcribeAudio(
+                authorization = authorization,
+                file = createAudioPart(audioFile),
+                model = createModelPart(queued.sttModel),
+                responseFormat = createFormatPart()
+            )
+            else -> throw Exception("Unknown STT Provider: $sttProvider")
+        }
+
+        return response.body()?.text ?: throw Exception("Empty transcription response from $sttProvider (Code: ${response.code()})")
     }
 
     private fun createAudioPart(audioFile: File): MultipartBody.Part {

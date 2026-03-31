@@ -52,9 +52,9 @@ class SettingsViewModelTest {
         coEvery { securePreferences.getProviderApiKey("groq") } returns null
         coEvery { securePreferences.getProviderApiKey("openrouter") } returns null
         coEvery { securePreferences.getProviderApiKey("zai") } returns null
-        coEvery { securePreferences.getProviderModel("groq", any()) } returns "whisper-large-v3-turbo"
-        coEvery { securePreferences.getProviderModel("openrouter", any()) } returns "anthropic/claude-3-haiku"
-        coEvery { securePreferences.getProviderModel("zai", any()) } returns "glm-4.7"
+        coEvery { securePreferences.getProviderSttModel("groq", any()) } returns "whisper-large-v3-turbo"
+        coEvery { securePreferences.getProviderLlmModel("openrouter", any()) } returns "anthropic/claude-3-haiku"
+        coEvery { securePreferences.getProviderLlmModel("zai", any()) } returns "glm-4.7"
         coEvery { securePreferences.getLlmProvider() } returns "openrouter"
         coEvery { securePreferences.getSttProvider() } returns "groq"
         coEvery { securePreferences.getGroqApiKey() } returns null

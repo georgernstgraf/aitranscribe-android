@@ -49,7 +49,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val models = providerModelDao.getModelsForProvider(providerId).map { it.id }
             val fallback = models.firstOrNull() ?: ProviderConfig.getSttModelsForProvider(providerId).firstOrNull() ?: ""
-            val model = securePreferences.getProviderModel(providerId, fallback)
+            val model = securePreferences.getProviderSttModel(providerId, fallback)
             _uiState.update { it.copy(sttProvider = providerId, sttModel = model) }
             updateDropdownModels()
         }
@@ -63,7 +63,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val models = providerModelDao.getModelsForProvider(providerId).map { it.id }
             val fallback = models.firstOrNull() ?: ProviderConfig.getLlmModelsForProvider(providerId).firstOrNull() ?: ""
-            val model = securePreferences.getProviderModel(providerId, fallback)
+            val model = securePreferences.getProviderLlmModel(providerId, fallback)
             _uiState.update { it.copy(llmProvider = providerId, llmModel = model) }
             updateDropdownModels()
         }
@@ -87,20 +87,20 @@ class SettingsViewModel @Inject constructor(
             _uiState.update { it.copy(isValidating = true, errorMessage = null, isSaved = false) }
 
             val errors = mutableListOf<String>()
-            if (state.groqApiKey.isNullOrBlank()) errors.add("GROQ API key is required")
             if (state.sttModel.isBlank()) errors.add("STT model cannot be empty")
             if (state.sttModel.contains(' ')) errors.add("STT model name must not contain spaces")
             if (state.llmModel.isBlank()) errors.add("LLM model cannot be empty")
 
-            when (state.llmProvider) {
-                "openrouter" -> if (state.openRouterApiKey.isNullOrBlank()) {
-                    errors.add("OpenRouter API key is required when using OpenRouter")
-                }
-                "zai" -> if (state.zaiApiKey.isNullOrBlank()) {
-                    errors.add("ZAI API key is required when using ZAI")
-                } else if (!isValidZaiKeyFormat(state.zaiApiKey!!)) {
-                    errors.add("ZAI API key format is invalid")
-                }
+            val activeSttToken = securePreferences.getActiveAuthToken(state.sttProvider)
+            if (activeSttToken.isNullOrBlank() && state.sttProvider != "openrouter") {
+                // OpenRouter allows fetching some things without auth, but STT might require it.
+                // Assuming Groq and ZAI require auth for STT:
+                errors.add("${state.sttProvider.replaceFirstChar { it.uppercase() }} authentication is required for STT")
+            }
+
+            val activeLlmToken = securePreferences.getActiveAuthToken(state.llmProvider)
+            if (activeLlmToken.isNullOrBlank()) {
+                errors.add("${state.llmProvider.replaceFirstChar { it.uppercase() }} authentication is required for LLM Post-Processing")
             }
 
             if (errors.isNotEmpty()) {
@@ -108,46 +108,18 @@ class SettingsViewModel @Inject constructor(
                 return@launch
             }
 
-            val groqResult = validateApiKeysUseCase.validateGroqKey(state.groqApiKey!!)
-            if (!groqResult) {
-                _uiState.update { it.copy(isValidating = false, errorMessage = "GROQ API key validation failed") }
-                return@launch
-            }
-
-            when (state.llmProvider) {
-                "openrouter" -> {
-                    val valid = validateApiKeysUseCase.validateOpenRouterKey(state.openRouterApiKey!!)
-                    if (!valid) {
-                        _uiState.update { it.copy(isValidating = false, errorMessage = "OpenRouter API key validation failed") }
-                        return@launch
-                    }
-                }
-                "zai" -> {
-                    if (!isValidZaiKeyFormat(state.zaiApiKey!!)) {
-                        _uiState.update { it.copy(isValidating = false, errorMessage = "ZAI API key format is invalid") }
-                        return@launch
-                    }
-                }
-            }
-
-            state.groqApiKey?.let { securePreferences.setGroqApiKey(it) }
+            // Save provider-specific models
+            securePreferences.setProviderLlmModel(state.llmProvider, state.llmModel)
+            securePreferences.setProviderSttModel(state.sttProvider, state.sttModel)
             
-            // Save provider-specific settings
-            when (state.llmProvider) {
-                "openrouter" -> securePreferences.setProviderSettings("openrouter", state.openRouterApiKey, state.llmModel)
-                "zai" -> securePreferences.setProviderSettings("zai", state.zaiApiKey, state.llmModel)
-            }
-            
+            // Save global active providers
             securePreferences.setSttModel(state.sttModel)
+            securePreferences.setLlmModel(state.llmModel)
             securePreferences.setSttProvider(state.sttProvider)
             securePreferences.setLlmProvider(state.llmProvider)
 
             _uiState.update { it.copy(isValidating = false, isSaved = true) }
         }
-    }
-
-    private fun isValidZaiKeyFormat(key: String): Boolean {
-        return key.length >= 20 && key.contains(".")
     }
 
     fun getOldCount(daysOld: Int) {
@@ -216,9 +188,9 @@ class SettingsViewModel @Inject constructor(
                         groqApiKey = securePreferences.getGroqApiKey(),
                         openRouterApiKey = securePreferences.getProviderApiKey("openrouter"),
                         zaiApiKey = securePreferences.getProviderApiKey("zai"),
-                        sttModel = securePreferences.getProviderModel(sttProvider, sttFallback),
+                        sttModel = securePreferences.getProviderSttModel(sttProvider, sttFallback),
                         sttProvider = sttProvider,
-                        llmModel = securePreferences.getProviderModel(llmProvider, llmFallback),
+                        llmModel = securePreferences.getProviderLlmModel(llmProvider, llmFallback),
                         llmProvider = llmProvider,
                         sttAvailableModels = sttModels,
                         llmAvailableModels = llmModels

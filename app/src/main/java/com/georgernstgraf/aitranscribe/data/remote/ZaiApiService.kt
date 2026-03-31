@@ -9,7 +9,22 @@ import retrofit2.http.POST
 import retrofit2.http.GET
 import com.georgernstgraf.aitranscribe.data.remote.dto.ModelsResponse
 
+import retrofit2.http.Part
+import retrofit2.http.Multipart
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import com.georgernstgraf.aitranscribe.data.remote.dto.GroqTranscriptionResponse
+
 interface ZaiApiService {
+
+    @Multipart
+    @POST("paas/v4/audio/transcriptions")
+    suspend fun transcribeAudio(
+        @Header("Authorization") authorization: String,
+        @Part file: MultipartBody.Part,
+        @Part("model") model: RequestBody,
+        @Part("response_format") responseFormat: RequestBody
+    ): Response<GroqTranscriptionResponse> // Standard OpenAI compatible STT format
 
     @GET("paas/v4/models")
     suspend fun getModels(
