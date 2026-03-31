@@ -73,8 +73,7 @@ class TranscribeAudioUseCase @Inject constructor(
             val transcriptionText = response.body()!!.text
 
             val entity = TranscriptionEntity(
-                originalText = transcriptionText,
-                processedText = null,
+                text = transcriptionText,
                 audioFilePath = audioPath,
                 createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                 status = TranscriptionStatus.COMPLETED.name,

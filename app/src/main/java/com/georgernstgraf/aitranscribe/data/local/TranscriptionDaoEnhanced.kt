@@ -42,9 +42,7 @@ interface TranscriptionDaoEnhanced {
         WHERE 
             (:startDate IS NULL OR created_at >= :startDate)
             AND (:endDate IS NULL OR created_at <= :endDate)
-            AND (:searchQuery IS NULL OR 
-                 original_text LIKE '%' || :searchQuery || '%' OR 
-                 processed_text LIKE '%' || :searchQuery || '%')
+            AND (:searchQuery IS NULL OR text LIKE '%' || :searchQuery || '%')
             AND (:viewFilter = 'ALL' OR seen = 0)
         ORDER BY created_at DESC
     """)
@@ -108,9 +106,9 @@ interface TranscriptionDaoEnhanced {
     @Query("SELECT * FROM transcriptions ORDER BY RANDOM() LIMIT :limit")
     suspend fun getRandom(limit: Int): List<TranscriptionEntity>
 
-    @Query("SELECT AVG(LENGTH(original_text)) FROM transcriptions")
+    @Query("SELECT AVG(LENGTH(text)) FROM transcriptions")
     suspend fun getAverageTranscriptionLength(): Double?
 
-    @Query("SELECT COUNT(*) FROM transcriptions WHERE processed_text IS NOT NULL")
+    @Query("SELECT COUNT(*) FROM transcriptions WHERE text IS NOT NULL")
     suspend fun getProcessedCount(): Int
 }

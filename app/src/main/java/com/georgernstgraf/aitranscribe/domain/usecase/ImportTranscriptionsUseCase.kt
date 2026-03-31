@@ -78,16 +78,21 @@ class ImportTranscriptionsUseCase @Inject constructor(
         lines.drop(1).forEach { line ->
             try {
                 val fields = parseCsvLine(line)
-                if (fields.size >= 6) {
+                if (fields.size >= 5) {
+                    val isLegacyFormat = fields.size >= 6
+                    val textField = fields[1]
+                    val audioPathField: String? = null
+                    val createdAtField = if (isLegacyFormat) fields[3] else fields[2]
+                    val statusField = if (isLegacyFormat) fields[4] else fields[3]
+                    val seenField = if (isLegacyFormat) fields.getOrNull(5) else fields.getOrNull(4)
                     val entity = TranscriptionEntity(
                         id = fields[0].toLongOrNull() ?: 0,
-                        originalText = unescapeCsv(fields[1]),
-                        processedText = if (fields[2].isBlank()) null else unescapeCsv(fields[2]),
-                        audioFilePath = fields[3],
-                        createdAt = fields[4],
-                        status = fields[5],
+                        text = unescapeCsv(textField),
+                        audioFilePath = audioPathField,
+                        createdAt = createdAtField,
+                        status = statusField,
                         errorMessage = null,
-                        seen = (fields.getOrNull(6)?.toIntOrNull() ?: 0) > 0
+                        seen = (seenField?.toIntOrNull() ?: 0) > 0
                     )
                     
                     repository.insert(entity)

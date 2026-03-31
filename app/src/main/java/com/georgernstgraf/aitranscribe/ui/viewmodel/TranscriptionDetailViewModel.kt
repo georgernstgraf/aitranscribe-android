@@ -173,8 +173,7 @@ class TranscriptionDetailViewModel @Inject constructor(
             repository.update(
                 TranscriptionEntity(
                     id = transcription.id,
-                    originalText = newText,
-                    processedText = transcription.processedText,
+                    text = newText,
                     audioFilePath = transcription.audioFilePath,
                     createdAt = transcription.createdAt.toString(),
                     status = transcription.status.name,
@@ -250,6 +249,6 @@ data class TranscriptionDetailUiState(
     val transcription: Transcription? = null,
     val isViewed: Boolean = false,
     val isDeleted: Boolean = false,
-    val isCleanupEnabled: Boolean = false,
+    val isCleanupEnabled: Boolean = true,
     val isTranslating: Boolean = false
 )

@@ -154,8 +154,8 @@ fun TranscriptionDetailScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 transcription?.let { trans ->
-                    var editText by remember(trans.id, trans.originalText) {
-                        mutableStateOf(trans.originalText)
+                    var editText by remember(trans.id, trans.text) {
+                        mutableStateOf(trans.text ?: "")
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -248,7 +248,7 @@ fun TranscriptionDetailScreen(
                                         if (focusState.hasFocus) {
                                             isEditing = true
                                         } else if (isEditing) {
-                                            if (editText != trans.originalText) {
+                                            if (editText != (trans.text ?: "")) {
                                                 viewModel.updateText(trans.id, editText)
                                             }
                                             isEditing = false

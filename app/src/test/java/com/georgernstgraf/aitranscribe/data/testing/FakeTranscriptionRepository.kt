@@ -78,8 +78,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
                     (startDate == null || it.createdAt >= startDate) &&
                     (endDate == null || it.createdAt <= endDate) &&
                     (searchQuery == null ||
-                        it.originalText.contains(searchQuery, ignoreCase = true) ||
-                        (it.processedText?.contains(searchQuery, ignoreCase = true) == true))
+                        (it.text?.contains(searchQuery, ignoreCase = true) == true))
                 }
                 .filter {
                     viewFilter == ViewFilter.ALL || !it.seen
@@ -173,6 +172,26 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         }
     }
 
+    override suspend fun getUnfinishedSttTranscriptions(): List<TranscriptionEntity> {
+        return transcriptions.value.filter { it.text == null && it.audioFilePath != null }
+    }
+
+    override suspend fun markSttSuccess(id: Long, text: String, status: String): Int {
+        transcriptions.value = transcriptions.value.map {
+            if (it.id == id) {
+                it.copy(
+                    text = text,
+                    audioFilePath = null,
+                    status = status,
+                    errorMessage = null
+                )
+            } else {
+                it
+            }
+        }
+        return 1
+    }
+
     override suspend fun updateSummary(id: Long, summary: String) {
         transcriptions.value = transcriptions.value.map {
             if (it.id == id) it.copy(summary = summary) else it
@@ -182,6 +201,12 @@ class FakeTranscriptionRepository : TranscriptionRepository {
     override suspend fun clearAudioPath(id: Long) {
         transcriptions.value = transcriptions.value.map {
             if (it.id == id) it.copy(audioFilePath = null) else it
+        }
+    }
+
+    override suspend fun markAudioMissing(id: Long, status: String, errorMessage: String) {
+        transcriptions.value = transcriptions.value.map {
+            if (it.id == id) it.copy(audioFilePath = null, status = status, errorMessage = errorMessage) else it
         }
     }
 
@@ -208,8 +233,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
     private fun TranscriptionEntity.toDomain(): Transcription {
         return Transcription(
             id = id,
-            originalText = originalText,
-            processedText = processedText,
+            text = text,
             audioFilePath = audioFilePath,
             createdAt = java.time.LocalDateTime.parse(createdAt),
             status = com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.valueOf(status),

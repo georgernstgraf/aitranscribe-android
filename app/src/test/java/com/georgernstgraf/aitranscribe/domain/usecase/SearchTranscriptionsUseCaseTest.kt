@@ -26,8 +26,7 @@ class SearchTranscriptionsUseCaseTest {
         repository.insert(
             TranscriptionEntity(
                 id = 0,
-                originalText = "Hello world",
-                processedText = null,
+                text = "Hello world",
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
                 status = "COMPLETED",
@@ -39,7 +38,7 @@ class SearchTranscriptionsUseCaseTest {
         val result = useCase(viewFilter = ViewFilter.ALL).first()
 
         assertEquals(1, result.size)
-        assertEquals("Hello world", result[0].originalText)
+        assertEquals("Hello world", result[0].text)
     }
 
     @Test
@@ -47,8 +46,7 @@ class SearchTranscriptionsUseCaseTest {
         repository.insert(
             TranscriptionEntity(
                 id = 0,
-                originalText = "Hello world",
-                processedText = null,
+                text = "Hello world",
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
                 status = "COMPLETED",
@@ -59,8 +57,7 @@ class SearchTranscriptionsUseCaseTest {
         repository.insert(
             TranscriptionEntity(
                 id = 0,
-                originalText = "Goodbye",
-                processedText = null,
+                text = "Goodbye",
                 audioFilePath = "/test2.mp3",
                 createdAt = LocalDateTime.now().toString(),
                 status = "COMPLETED",
@@ -72,6 +69,6 @@ class SearchTranscriptionsUseCaseTest {
         val result = useCase(searchQuery = "Hello", viewFilter = ViewFilter.ALL).first()
 
         assertEquals(1, result.size)
-        assertEquals("Hello world", result[0].originalText)
+        assertEquals("Hello world", result[0].text)
     }
 }

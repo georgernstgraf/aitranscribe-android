@@ -30,7 +30,7 @@ class ShareTranscriptionUseCaseTest {
 
     @Test
     fun `invoke returns non-null intent for existing transcription`() = runBlocking {
-        val id = repository.insert(testEntity(originalText = "Hello world"))
+        val id = repository.insert(testEntity(text = "Hello world"))
 
         val intent = useCase(id)
 
@@ -39,23 +39,20 @@ class ShareTranscriptionUseCaseTest {
 
     @Test
     fun `repository returns correct text for sharing`() = runBlocking {
-        val id = repository.insert(testEntity(originalText = "Hello world"))
+        val id = repository.insert(testEntity(text = "Hello world"))
 
         val entity = repository.getById(id)
         assertNotNull(entity)
-        assertEquals("Hello world", entity?.originalText)
+        assertEquals("Hello world", entity?.text)
     }
 
     @Test
-    fun `repository returns processed text when available`() = runBlocking {
-        val id = repository.insert(testEntity(
-            originalText = "raw text",
-            processedText = "cleaned text"
-        ))
+    fun `repository returns text for sharing`() = runBlocking {
+        val id = repository.insert(testEntity(text = "cleaned text"))
 
         val entity = repository.getById(id)
         assertNotNull(entity)
-        assertEquals("cleaned text", entity?.processedText)
+        assertEquals("cleaned text", entity?.text)
     }
 
     @Test
@@ -79,12 +76,10 @@ class ShareTranscriptionUseCaseTest {
     }
 
     private fun testEntity(
-        originalText: String = "Test",
-        processedText: String? = null
+        text: String = "Test"
     ) = TranscriptionEntity(
         id = 0,
-        originalText = originalText,
-        processedText = processedText,
+        text = text,
         audioFilePath = null,
         createdAt = LocalDateTime.now().toString(),
         status = "COMPLETED",

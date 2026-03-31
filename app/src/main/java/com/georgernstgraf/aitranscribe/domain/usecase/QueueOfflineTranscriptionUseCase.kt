@@ -27,8 +27,7 @@ class QueueOfflineTranscriptionUseCase @Inject constructor(
         }
 
         val queued = TranscriptionEntity(
-            originalText = "",
-            processedText = null,
+            text = null,
             audioFilePath = audioPath,
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             status = TranscriptionStatus.NO_NETWORK.name,

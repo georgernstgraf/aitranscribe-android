@@ -113,8 +113,8 @@ class MainViewModelTest {
 
     @Test
     fun `network reconnect retries queued transcriptions with updated model`() = runBlocking {
-        repository.insert(TranscriptionEntity(originalText = "", processedText = null, audioFilePath = "/a.m4a", createdAt = LocalDateTime.now().toString(), status = TranscriptionStatus.NO_NETWORK.name, errorMessage = null))
-        repository.insert(TranscriptionEntity(originalText = "", processedText = null, audioFilePath = "/b.m4a", createdAt = LocalDateTime.now().toString(), status = TranscriptionStatus.STT_ERROR_RETRYABLE.name, errorMessage = null))
+        repository.insert(TranscriptionEntity(text = null, audioFilePath = "/a.m4a", createdAt = LocalDateTime.now().toString(), status = TranscriptionStatus.NO_NETWORK.name, errorMessage = null))
+        repository.insert(TranscriptionEntity(text = null, audioFilePath = "/b.m4a", createdAt = LocalDateTime.now().toString(), status = TranscriptionStatus.STT_ERROR_RETRYABLE.name, errorMessage = null))
         coEvery { appSettingsStore.getProviderSttModel(any(), any()) } returns "whisper-large-v3-turbo"
 
         val workManager = mockk<androidx.work.WorkManager>(relaxed = true)
@@ -128,8 +128,8 @@ class MainViewModelTest {
         networkStateFlow.value = true
         testDispatcher.scheduler.runCurrent()
 
-        assertEquals(TranscriptionStatus.PENDING.name, repository.getById(1)?.status)
-        assertEquals(TranscriptionStatus.PENDING.name, repository.getById(2)?.status)
+        assertEquals(TranscriptionStatus.NO_NETWORK.name, repository.getById(1)?.status)
+        assertEquals(TranscriptionStatus.STT_ERROR_RETRYABLE.name, repository.getById(2)?.status)
     }
 
     @Test
@@ -144,7 +144,7 @@ class MainViewModelTest {
 
     @Test
     fun `network disconnect does not trigger retry`() = runBlocking {
-        val queuedItem = TranscriptionEntity(id = 1, originalText = "", processedText = null, audioFilePath = "/a.m4a", createdAt = LocalDateTime.now().toString(), status = TranscriptionStatus.NO_NETWORK.name, errorMessage = null)
+        val queuedItem = TranscriptionEntity(id = 1, text = null, audioFilePath = "/a.m4a", createdAt = LocalDateTime.now().toString(), status = TranscriptionStatus.NO_NETWORK.name, errorMessage = null)
         repository.insert(queuedItem)
 
         every { networkMonitor.isConnected() } returns false
@@ -162,8 +162,7 @@ class MainViewModelTest {
     fun `app start while online retries pending transcriptions`() = runBlocking {
         repository.insert(
             TranscriptionEntity(
-                originalText = "",
-                processedText = null,
+                text = null,
                 audioFilePath = "/c.m4a",
                 createdAt = LocalDateTime.now().toString(),
                 status = TranscriptionStatus.PENDING.name,

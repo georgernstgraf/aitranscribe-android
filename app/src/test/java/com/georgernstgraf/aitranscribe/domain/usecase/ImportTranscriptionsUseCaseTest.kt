@@ -30,7 +30,7 @@ class ImportTranscriptionsUseCaseTest {
             [
                 {
                     "id": 1,
-                    "originalText": "Hello world",
+                    "text": "Hello world",
                     "processedText": null,
                     "audioFilePath": "/test.mp3",
                     "createdAt": "2026-03-23T20:00:00",

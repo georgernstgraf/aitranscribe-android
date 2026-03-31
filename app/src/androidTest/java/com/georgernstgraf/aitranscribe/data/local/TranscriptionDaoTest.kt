@@ -46,13 +46,13 @@ class TranscriptionDaoTest {
 
     @Test
     fun getById_returnsInsertedEntity() = runTest {
-        val entity = createTestEntity(originalText = "Hello world")
+        val entity = createTestEntity(text = "Hello world")
         val id = dao.insert(entity)
 
         val retrieved = dao.getById(id)
 
         assertNotNull(retrieved)
-        assertEquals("Hello world", retrieved?.originalText)
+        assertEquals("Hello world", retrieved?.text)
     }
 
     @Test
@@ -63,14 +63,14 @@ class TranscriptionDaoTest {
 
     @Test
     fun update_modifiesEntity() = runTest {
-        val entity = createTestEntity(originalText = "Original")
+        val entity = createTestEntity(text = "Original")
         val id = dao.insert(entity)
 
-        val updated = entity.copy(id = id, originalText = "Updated")
+        val updated = entity.copy(id = id, text = "Updated")
         dao.update(updated)
 
         val retrieved = dao.getById(id)
-        assertEquals("Updated", retrieved?.originalText)
+        assertEquals("Updated", retrieved?.text)
     }
 
     @Test
@@ -92,24 +92,24 @@ class TranscriptionDaoTest {
 
     @Test
     fun incrementPlayedCount_increasesByOne() = runTest {
-        val entity = createTestEntity(playedCount = 0)
+        val entity = createTestEntity(seen = false)
         val id = dao.insert(entity)
 
         dao.incrementPlayedCount(id)
 
         val retrieved = dao.getById(id)
-        assertEquals(1, retrieved?.playedCount)
+        assertEquals(true, retrieved?.seen)
     }
 
     @Test
     fun resetPlayedCount_setsToZero() = runTest {
-        val entity = createTestEntity(playedCount = 5)
+        val entity = createTestEntity(seen = true)
         val id = dao.insert(entity)
 
         dao.resetPlayedCount(id)
 
         val retrieved = dao.getById(id)
-        assertEquals(0, retrieved?.playedCount)
+        assertEquals(false, retrieved?.seen)
     }
 
     @Test
@@ -125,14 +125,13 @@ class TranscriptionDaoTest {
 
     @Test
     fun recordError_setsErrorAndIncrementsRetry() = runTest {
-        val entity = createTestEntity(retryCount = 0)
+        val entity = createTestEntity()
         val id = dao.insert(entity)
 
         dao.recordError(id, "Network error")
 
         val retrieved = dao.getById(id)
         assertEquals("Network error", retrieved?.errorMessage)
-        assertEquals(1, retrieved?.retryCount)
     }
 
     @Test
@@ -148,21 +147,21 @@ class TranscriptionDaoTest {
 
     @Test
     fun getUnviewed_returnsOnlyUnviewed() = runTest {
-        dao.insert(createTestEntity(originalText = "Unviewed 1", playedCount = 0))
-        dao.insert(createTestEntity(originalText = "Viewed", playedCount = 1))
-        dao.insert(createTestEntity(originalText = "Unviewed 2", playedCount = 0))
+        dao.insert(createTestEntity(text = "Unviewed 1", seen = false))
+        dao.insert(createTestEntity(text = "Viewed", seen = true))
+        dao.insert(createTestEntity(text = "Unviewed 2", seen = false))
 
         val unviewed = dao.getUnviewed(10).first()
 
         assertEquals(2, unviewed.size)
-        assertTrue(unviewed.all { it.playedCount == 0 })
+        assertTrue(unviewed.all { !it.seen })
     }
 
     @Test
     fun searchTranscriptions_filtersByQuery() = runTest {
-        dao.insert(createTestEntity(originalText = "Hello world"))
-        dao.insert(createTestEntity(originalText = "Goodbye"))
-        dao.insert(createTestEntity(originalText = "Hello there"))
+        dao.insert(createTestEntity(text = "Hello world"))
+        dao.insert(createTestEntity(text = "Goodbye"))
+        dao.insert(createTestEntity(text = "Hello there"))
 
         val results = dao.searchTranscriptions(
             startDate = null,
@@ -172,7 +171,7 @@ class TranscriptionDaoTest {
         ).first()
 
         assertEquals(2, results.size)
-        assertTrue(results.all { it.originalText.contains("Hello") })
+        assertTrue(results.all { it.text?.contains("Hello") == true })
     }
 
     @Test
@@ -180,8 +179,8 @@ class TranscriptionDaoTest {
         val oldDate = LocalDateTime.now().minusDays(100).toString()
         val recentDate = LocalDateTime.now().toString()
 
-        dao.insert(createTestEntity(createdAt = oldDate, originalText = "Old"))
-        dao.insert(createTestEntity(createdAt = recentDate, originalText = "Recent"))
+        dao.insert(createTestEntity(createdAt = oldDate, text = "Old"))
+        dao.insert(createTestEntity(createdAt = recentDate, text = "Recent"))
 
         val cutoff = LocalDateTime.now().minusDays(30).toString()
         val deleted = dao.deleteOld(cutoff, "ALL")
@@ -191,24 +190,19 @@ class TranscriptionDaoTest {
     }
 
     private fun createTestEntity(
-        originalText: String = "Test",
-        processedText: String? = null,
+        text: String = "Test",
         createdAt: String = LocalDateTime.now().toString(),
         status: String = "COMPLETED",
-        playedCount: Int = 0,
-        retryCount: Int = 0
+        seen: Boolean = false
     ): TranscriptionEntity {
         return TranscriptionEntity(
             id = 0,
-            originalText = originalText,
-            processedText = processedText,
+            text = text,
             audioFilePath = "/test.mp3",
             createdAt = createdAt,
-            postProcessingType = null,
             status = status,
             errorMessage = null,
-            playedCount = playedCount,
-            retryCount = retryCount
+            seen = seen
         )
     }
 }

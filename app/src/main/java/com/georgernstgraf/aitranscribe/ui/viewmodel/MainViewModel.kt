@@ -193,8 +193,7 @@ class MainViewModel @Inject constructor(
                 Log.d("MainViewModel", "startTranscription: sttModel=$sttModel, llmModel=$llmModel")
                 
                 val queuedTranscription = TranscriptionEntity(
-                    originalText = "",
-                    processedText = null,
+                    text = null,
                     audioFilePath = audioPath,
                     createdAt = LocalDateTime.now().toString(),
                     status = if (networkMonitor.isConnected()) {
@@ -330,19 +329,10 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun retryQueuedTranscriptions() {
-        val queuedItems = repository.getByStatuses(
-            listOf(
-                TranscriptionStatus.PENDING.name,
-                TranscriptionStatus.PROCESSING.name,
-                TranscriptionStatus.NO_NETWORK.name,
-                TranscriptionStatus.STT_ERROR_RETRYABLE.name
-            )
-        )
+        val queuedItems = repository.getUnfinishedSttTranscriptions()
         if (queuedItems.isEmpty()) return
 
-        val sttProvider = appSettingsStore.getSttProvider()
         for (transcription in queuedItems) {
-            repository.updateStatusAndError(transcription.id, TranscriptionStatus.PENDING.name, null)
             enqueueTranscriptionWork(transcription.id)
         }
         Log.d("MainViewModel", "Retrying ${queuedItems.size} queued transcription(s)")
@@ -372,25 +362,18 @@ class MainViewModel @Inject constructor(
                         WorkInfo.State.FAILED -> {
                             Log.e("MainViewModel", "Transcription work failed for transcriptionId=$transcriptionId")
                             val transcription = repository.getById(transcriptionId)
-                            when (transcription?.status) {
-                                TranscriptionStatus.NO_NETWORK.name -> Unit
-                                TranscriptionStatus.STT_ERROR_RETRYABLE.name -> {
-                                    toastManager.showToast(
-                                        "Transcription failed and is queued for retry.",
-                                        isWarning = true
-                                    )
+                            val hasPendingAudio = transcription?.let { it.text == null && it.audioFilePath != null } == true
+                            val errorMessage = transcription?.errorMessage
+                            when {
+                                !networkMonitor.isConnected() -> Unit
+                                hasPendingAudio && !errorMessage.isNullOrBlank() -> {
+                                    toastManager.showToast(errorMessage, isWarning = true)
                                 }
-                                TranscriptionStatus.STT_ERROR_PERMANENT.name -> {
-                                    toastManager.showToast(
-                                        transcription.errorMessage ?: "Transcription failed due to provider/model configuration.",
-                                        isError = true
-                                    )
+                                hasPendingAudio -> {
+                                    toastManager.showToast("Transcription failed and is queued for retry.", isWarning = true)
                                 }
                                 else -> {
-                                    toastManager.showToast(
-                                        "Transcription failed — audio kept for retry",
-                                        isError = true
-                                    )
+                                    toastManager.showToast("Transcription failed.", isError = true)
                                 }
                             }
                         }

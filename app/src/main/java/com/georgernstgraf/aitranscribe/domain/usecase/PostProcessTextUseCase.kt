@@ -105,7 +105,7 @@ class PostProcessTextUseCase @Inject constructor(
         if (apiKey.isBlank()) return@withContext
 
         val transcription = repository.getById(transcriptionId) ?: return@withContext
-        val text = transcription.processedText ?: transcription.originalText
+        val text = transcription.text.orEmpty()
         if (text.isBlank()) return@withContext
 
         try {
@@ -193,6 +193,10 @@ class PostProcessTextUseCase @Inject constructor(
 
         val transcription = repository.getById(transcriptionId)
             ?: throw PostProcessingException("Transcription not found: $transcriptionId")
+        val sourceText = transcription.text.orEmpty()
+        if (sourceText.isBlank()) {
+            throw PostProcessingException("Cannot post-process empty transcription")
+        }
 
         try {
             val request = OpenRouterRequest(
@@ -201,7 +205,7 @@ class PostProcessTextUseCase @Inject constructor(
                     OpenRouterMessage(role = "system", content = prompt),
                     OpenRouterMessage(
                         role = "user",
-                        content = "Here is the transcription:\n\n${transcription.originalText}"
+                        content = "Here is the transcription:\n\n$sourceText"
                     )
                 )
             )
@@ -218,8 +222,7 @@ class PostProcessTextUseCase @Inject constructor(
             val processedText = response.body()!!.getContent().trim()
             repository.update(
                 transcription.copy(
-                    originalText = processedText,
-                    processedText = null,
+                    text = processedText,
                     status = TranscriptionStatus.COMPLETED.name,
                     errorMessage = null
                 )

@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ModelCapabilityEntity::class,
         AppPreferenceEntity::class
     ],
-    version = 10,
+    version = 12,
     exportSchema = false
 )
 abstract class TranscriptionDatabase : RoomDatabase() {
@@ -38,7 +38,7 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                     TranscriptionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                     .addCallback(ProviderPrepopulateCallback())
                     .fallbackToDestructiveMigration()
                     .build()
@@ -410,6 +410,89 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                 )
                 db.execSQL("DROP TABLE IF EXISTS `transcriptions`")
                 db.execSQL("ALTER TABLE `transcriptions_new2` RENAME TO `transcriptions`")
+            }
+        }
+
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `transcriptions_new3` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `original_text` TEXT,
+                        `processed_text` TEXT,
+                        `audio_file_path` TEXT,
+                        `created_at` TEXT NOT NULL,
+                        `status` TEXT NOT NULL,
+                        `error_message` TEXT,
+                        `seen` INTEGER NOT NULL DEFAULT 0,
+                        `summary` TEXT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO `transcriptions_new3` (
+                        `id`, `original_text`, `processed_text`, `audio_file_path`,
+                        `created_at`, `status`, `error_message`, `seen`, `summary`
+                    )
+                    SELECT
+                        `id`,
+                        CASE
+                            WHEN `audio_file_path` IS NOT NULL AND TRIM(COALESCE(`original_text`, '')) = '' THEN NULL
+                            ELSE `original_text`
+                        END,
+                        `processed_text`,
+                        `audio_file_path`,
+                        `created_at`,
+                        `status`,
+                        `error_message`,
+                        `seen`,
+                        `summary`
+                    FROM `transcriptions`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `transcriptions`")
+                db.execSQL("ALTER TABLE `transcriptions_new3` RENAME TO `transcriptions`")
+            }
+        }
+
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `transcriptions_new4` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `text` TEXT,
+                        `audio_file_path` TEXT,
+                        `created_at` TEXT NOT NULL,
+                        `status` TEXT NOT NULL,
+                        `error_message` TEXT,
+                        `seen` INTEGER NOT NULL DEFAULT 0,
+                        `summary` TEXT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO `transcriptions_new4` (
+                        `id`, `text`, `audio_file_path`, `created_at`,
+                        `status`, `error_message`, `seen`, `summary`
+                    )
+                    SELECT
+                        `id`,
+                        COALESCE(`processed_text`, `original_text`) AS `text`,
+                        `audio_file_path`,
+                        `created_at`,
+                        `status`,
+                        `error_message`,
+                        `seen`,
+                        `summary`
+                    FROM `transcriptions`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `transcriptions`")
+                db.execSQL("ALTER TABLE `transcriptions_new4` RENAME TO `transcriptions`")
             }
         }
     }

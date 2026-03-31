@@ -4,8 +4,7 @@ import java.time.LocalDateTime
 
 data class Transcription(
     val id: Long = 0,
-    val originalText: String,
-    val processedText: String?,
+    val text: String?,
     val audioFilePath: String?,
     val createdAt: LocalDateTime,
     val status: TranscriptionStatus,
@@ -21,7 +20,7 @@ data class Transcription(
         get() = !seen
 
     fun getShareText(): String {
-        return processedText ?: originalText
+        return text ?: ""
     }
 
     fun getShareTitle(): String {

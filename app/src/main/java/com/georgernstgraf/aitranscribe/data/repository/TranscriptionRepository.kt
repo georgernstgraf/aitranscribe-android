@@ -54,7 +54,11 @@ interface TranscriptionRepository {
 
     suspend fun getByStatuses(statuses: List<String>): List<TranscriptionEntity>
 
+    suspend fun getUnfinishedSttTranscriptions(): List<TranscriptionEntity>
+
     suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?)
+
+    suspend fun markSttSuccess(id: Long, text: String, status: String): Int
 
     suspend fun getAllAudioPaths(): List<String>
 
@@ -65,4 +69,6 @@ interface TranscriptionRepository {
     fun getFilteredIds(viewFilter: ViewFilter): Flow<List<Long>>
 
     suspend fun clearAudioPath(id: Long)
+
+    suspend fun markAudioMissing(id: Long, status: String, errorMessage: String)
 }

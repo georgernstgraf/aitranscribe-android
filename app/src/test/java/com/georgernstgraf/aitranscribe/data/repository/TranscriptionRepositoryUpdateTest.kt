@@ -18,11 +18,10 @@ class TranscriptionRepositoryUpdateTest {
         repository = FakeTranscriptionRepository()
     }
 
-    private fun createEntity(originalText: String = "Hello world"): TranscriptionEntity {
+    private fun createEntity(text: String = "Hello world"): TranscriptionEntity {
         return TranscriptionEntity(
             id = 0,
-            originalText = originalText,
-            processedText = "processed",
+            text = text,
             audioFilePath = "/audio.m4a",
             createdAt = LocalDateTime.now().toString(),
             status = "COMPLETED",
@@ -33,15 +32,14 @@ class TranscriptionRepositoryUpdateTest {
     }
 
     @Test
-    fun `update persists modified originalText`() = runBlocking {
+    fun `update persists modified text`() = runBlocking {
         val id = repository.insert(createEntity("Original text"))
 
         val entity = repository.getById(id)!!
-        repository.update(entity.copy(originalText = "Updated text"))
+        repository.update(entity.copy(text = "Updated text"))
 
         val reloaded = repository.getById(id)!!
-        assertEquals("Updated text", reloaded.originalText)
-        assertEquals("processed", reloaded.processedText)
+        assertEquals("Updated text", reloaded.text)
         assertEquals("/audio.m4a", reloaded.audioFilePath)
         assertEquals(true, reloaded.seen)
         assertEquals("A summary", reloaded.summary)
@@ -52,12 +50,11 @@ class TranscriptionRepositoryUpdateTest {
         val id = repository.insert(createEntity("Original"))
 
         val entity = repository.getById(id)!!
-        repository.update(entity.copy(originalText = "Changed", summary = "New summary"))
+        repository.update(entity.copy(text = "Changed", summary = "New summary"))
 
         val reloaded = repository.getById(id)!!
-        assertEquals("Changed", reloaded.originalText)
+        assertEquals("Changed", reloaded.text)
         assertEquals("New summary", reloaded.summary)
-        assertEquals(entity.processedText, reloaded.processedText)
         assertEquals(entity.audioFilePath, reloaded.audioFilePath)
         assertEquals(entity.seen, reloaded.seen)
     }

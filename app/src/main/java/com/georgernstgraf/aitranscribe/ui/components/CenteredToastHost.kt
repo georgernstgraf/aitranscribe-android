@@ -26,7 +26,7 @@ fun CenteredToastHost(
     LaunchedEffect(toastManager) {
         toastManager.messages.collect { message ->
             toastState = message
-            delay(3000) // Auto-hide after 3 seconds
+            delay(message.durationMillis.toLong())
             toastState = null
         }
     }

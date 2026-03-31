@@ -28,6 +28,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+import java.io.IOException
 
 @HiltWorker
 class TranscriptionWorker @AssistedInject constructor(
@@ -51,15 +52,11 @@ class TranscriptionWorker @AssistedInject constructor(
         val audioPath = transcription.audioFilePath ?: return@withContext Result.failure()
 
         if (!networkMonitor.isConnected()) {
-            repository.updateStatusAndError(
-                transcriptionId,
-                TranscriptionStatus.NO_NETWORK.name,
-                "No network available"
-            )
+            repository.recordError(transcriptionId, "No network available")
             return@withContext Result.failure()
         }
 
-        repository.updateStatusAndError(transcriptionId, TranscriptionStatus.PROCESSING.name, null)
+        repository.updateStatusAndError(transcriptionId, transcription.status, null)
 
         val sttProvider = appSettingsStore.getSttProvider()
         val sttModel = appSettingsStore.getProviderSttModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider))
@@ -69,32 +66,31 @@ class TranscriptionWorker @AssistedInject constructor(
 
         val transcriptionText = try {
             transcribeAudio(audioPath, sttModel)
+        } catch (e: AudioFileMissingException) {
+            Log.w("TranscriptionWorker", "Audio file missing for transcriptionId=$transcriptionId", e)
+            repository.markAudioMissing(
+                id = transcriptionId,
+                status = TranscriptionStatus.COMPLETED_WITH_WARNING.name,
+                errorMessage = "Audio file missing before transcription. It may have been removed by system cleanup."
+            )
+            cleanupOrphanedAudioFiles()
+            return@withContext Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
         } catch (e: SttPermanentException) {
             Log.e("TranscriptionWorker", "Permanent STT failure", e)
-            repository.updateStatusAndError(
-                transcriptionId,
-                TranscriptionStatus.STT_ERROR_PERMANENT.name,
-                e.message
-            )
+            repository.recordError(transcriptionId, e.message ?: "Permanent STT failure")
             return@withContext Result.failure()
         } catch (e: Exception) {
             Log.e("TranscriptionWorker", "Retryable STT failure", e)
-            repository.updateStatusAndError(
-                transcriptionId,
-                TranscriptionStatus.STT_ERROR_RETRYABLE.name,
-                e.message
-            )
+            repository.recordError(transcriptionId, e.message ?: "STT failure")
             return@withContext Result.failure()
         }
 
-        repository.update(
-            transcription.copy(
-                originalText = transcriptionText,
-                processedText = null,
-                status = TranscriptionStatus.COMPLETED.name,
-                errorMessage = null
-            )
+        repository.markSttSuccess(
+            id = transcriptionId,
+            text = transcriptionText,
+            status = TranscriptionStatus.COMPLETED.name
         )
+        cleanupAudioFile(audioPath)
 
         val llmApiKey = appSettingsStore.getActiveAuthToken(llmProvider)
 
@@ -116,10 +112,6 @@ class TranscriptionWorker @AssistedInject constructor(
                     llmProvider = llmProvider
                 )
 
-                // Clear audio file path and delete file ONLY if post-processing succeeds
-                repository.clearAudioPath(transcriptionId)
-                cleanupAudioFile(audioPath)
-
             } catch (e: Exception) {
                 if (llmProvider == "zai") {
                     val fallbackModel = resolveZaiFallbackModel(llmModel)
@@ -134,8 +126,6 @@ class TranscriptionWorker @AssistedInject constructor(
                                 llmProvider = llmProvider
                             )
                             appSettingsStore.setProviderLlmModel("zai", fallbackModel)
-                            repository.clearAudioPath(transcriptionId)
-                            cleanupAudioFile(audioPath)
                             cleanupOrphanedAudioFiles()
                             return@withContext Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
                         } catch (retryError: Exception) {
@@ -148,10 +138,7 @@ class TranscriptionWorker @AssistedInject constructor(
                 repository.recordError(transcriptionId, "Post-processing skipped: ${e.message}")
             }
         } else {
-            if (postProcessingType == PostProcessingType.RAW) {
-                repository.clearAudioPath(transcriptionId)
-                cleanupAudioFile(audioPath)
-            }
+            Unit
         }
 
         cleanupOrphanedAudioFiles()
@@ -177,6 +164,7 @@ class TranscriptionWorker @AssistedInject constructor(
                     apiKey = llmApiKey,
                     llmProvider = llmProvider
                 )
+                postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
             }
             PostProcessingType.TRANSLATE_TO_EN -> {
                 postProcessTextUseCase(
@@ -199,8 +187,6 @@ class TranscriptionWorker @AssistedInject constructor(
                 )
             }
         }
-
-        postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
     }
 
     private suspend fun resolveZaiFallbackModel(currentModel: String): String? {
@@ -214,7 +200,7 @@ class TranscriptionWorker @AssistedInject constructor(
 
     private suspend fun transcribeAudio(audioPath: String, sttModel: String): String {
         val audioFile = File(audioPath)
-        if (!audioFile.exists()) throw Exception("Audio file not found: $audioPath")
+        if (!audioFile.exists()) throw AudioFileMissingException("Audio file not found: $audioPath")
 
         val sttProvider = appSettingsStore.getSttProvider()
         val token = appSettingsStore.getActiveAuthToken(sttProvider)
@@ -280,19 +266,32 @@ class TranscriptionWorker @AssistedInject constructor(
     private suspend fun cleanupOrphanedAudioFiles() {
         try {
             val queuedPaths = repository.getAllAudioPaths().toSet()
-            context.cacheDir.listFiles()?.filter {
+            val thresholdTime = System.currentTimeMillis() - ORPHAN_FILE_GRACE_PERIOD_MS
+            recordingsDirectory().listFiles()?.filter {
                 it.name.startsWith("recording_") && it.name.endsWith(".m4a") &&
+                    it.lastModified() < thresholdTime &&
                     it.absolutePath !in queuedPaths
             }?.forEach { it.delete() }
         } catch (_: Exception) {
         }
     }
 
+    private fun recordingsDirectory(): File {
+        val directory = File(context.filesDir, RECORDINGS_DIR_NAME)
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+        return directory
+    }
+
     companion object {
         const val KEY_TRANSCRIPTION_ID = "transcription_id"
+        private const val RECORDINGS_DIR_NAME = "recordings"
+        private const val ORPHAN_FILE_GRACE_PERIOD_MS = 15 * 60 * 1000L
 
         fun createInputData(transcriptionId: Long): Data = workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId)
     }
 
     private class SttPermanentException(message: String) : Exception(message)
+    private class AudioFileMissingException(message: String) : IOException(message)
 }

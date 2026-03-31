@@ -11,10 +11,8 @@ import java.time.LocalDateTime
 data class TranscriptionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    @ColumnInfo(name = "original_text")
-    val originalText: String,
-    @ColumnInfo(name = "processed_text")
-    val processedText: String?,
+    @ColumnInfo(name = "text")
+    val text: String?,
     @ColumnInfo(name = "audio_file_path")
     val audioFilePath: String?,
     @ColumnInfo(name = "created_at")
@@ -32,8 +30,7 @@ data class TranscriptionEntity(
 fun TranscriptionEntity.toDomain(): Transcription {
     return Transcription(
         id = id,
-        originalText = originalText,
-        processedText = processedText,
+        text = text,
         audioFilePath = audioFilePath,
         createdAt = LocalDateTime.parse(createdAt),
         status = TranscriptionStatus.valueOf(status),

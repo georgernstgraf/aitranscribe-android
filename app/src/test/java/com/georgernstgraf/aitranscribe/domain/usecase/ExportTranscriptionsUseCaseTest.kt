@@ -28,8 +28,7 @@ class ExportTranscriptionsUseCaseTest {
         repository.insert(
             TranscriptionEntity(
                 id = 0,
-                originalText = "Test transcription",
-                processedText = "Processed",
+                text = "Test transcription",
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
                 status = "COMPLETED",
@@ -46,6 +45,6 @@ class ExportTranscriptionsUseCaseTest {
         ).first()
 
         assertTrue(transcriptions.isNotEmpty())
-        assertTrue(transcriptions[0].originalText == "Test transcription")
+        assertTrue(transcriptions[0].text == "Test transcription")
     }
 }

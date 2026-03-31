@@ -108,8 +108,7 @@ class TranscriptionWorkerTest {
         val audioFile = createAudioFile()
         val queued = TranscriptionEntity(
             id = 1,
-            originalText = "",
-            processedText = null,
+            text = null,
             audioFilePath = audioFile.absolutePath,
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             status = TranscriptionStatus.PENDING.name,
@@ -132,13 +131,12 @@ class TranscriptionWorkerTest {
     }
 
     @Test
-    fun `worker preserves audio path if llm fails`() = runBlocking {
+    fun `worker still clears audio path if llm fails after stt success`() = runBlocking {
         coEvery { appSettingsStore.getProcessingMode() } returns PostProcessingType.CLEANUP.name
         val audioFile = createAudioFile()
         val queued = TranscriptionEntity(
             id = 1,
-            originalText = "",
-            processedText = null,
+            text = null,
             audioFilePath = audioFile.absolutePath,
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             status = TranscriptionStatus.PENDING.name,
@@ -159,10 +157,10 @@ class TranscriptionWorkerTest {
 
         assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
 
-        // Verify audio file path is still present
+        // Verify audio file path is already cleared after STT success
         val saved = fakeRepository.getById(1)
         assertNotNull(saved)
-        assertEquals(audioFile.absolutePath, saved!!.audioFilePath)
+        assertNull(saved!!.audioFilePath)
         assertEquals(TranscriptionStatus.COMPLETED_WITH_WARNING.name, saved.status)
     }
 
@@ -172,8 +170,7 @@ class TranscriptionWorkerTest {
         val audioFile = createAudioFile()
         val queued = TranscriptionEntity(
             id = 1,
-            originalText = "",
-            processedText = null,
+            text = null,
             audioFilePath = audioFile.absolutePath,
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             status = TranscriptionStatus.PENDING.name,

@@ -24,8 +24,7 @@ class TranscriptionItemTest {
     @Test
     fun `transcription item displays preview text`() {
         val transcription = createTestTranscription(
-            originalText = "This is a test transcription with some text",
-            processedText = null
+            text = "This is a test transcription with some text"
         )
 
         composeTestRule.setContent {
@@ -41,10 +40,9 @@ class TranscriptionItemTest {
     }
 
     @Test
-    fun `transcription item displays processed text when available`() {
+    fun `transcription item displays text`() {
         val transcription = createTestTranscription(
-            originalText = "This is the original text",
-            processedText = "This is the processed text"
+            text = "This is the processed text"
         )
 
         composeTestRule.setContent {
@@ -57,10 +55,6 @@ class TranscriptionItemTest {
         composeTestRule
             .onNodeWithText("This is the processed text")
             .assertIsDisplayed()
-
-        composeTestRule
-            .onNodeWithText("This is the original text")
-            .assertDoesNotExist()
     }
 
     @Test
@@ -68,8 +62,7 @@ class TranscriptionItemTest {
         val longText = "A".repeat(200)
 
         val transcription = createTestTranscription(
-            originalText = longText,
-            processedText = null
+            text = longText
         )
 
         composeTestRule.setContent {
@@ -122,7 +115,7 @@ class TranscriptionItemTest {
         }
 
         composeTestRule
-            .onNodeWithText(transcription.originalText)
+            .onNodeWithText(transcription.text ?: "")
             .performClick()
 
         composeTestRule.waitForIdle()
@@ -132,7 +125,7 @@ class TranscriptionItemTest {
     @Test
     fun `unviewed transcription shows blue indicator`() {
         val transcription = createTestTranscription(
-            playedCount = 0
+            seen = false
         )
 
         composeTestRule.setContent {
@@ -145,14 +138,14 @@ class TranscriptionItemTest {
         // In a real test, we'd verify the indicator color
         // For now, we just verify the component renders
         composeTestRule
-            .onNodeWithText(transcription.originalText)
+            .onNodeWithText(transcription.text ?: "")
             .assertIsDisplayed()
     }
 
     @Test
     fun `viewed transcription shows gray indicator`() {
         val transcription = createTestTranscription(
-            playedCount = 1
+            seen = true
         )
 
         composeTestRule.setContent {
@@ -165,27 +158,23 @@ class TranscriptionItemTest {
         // In a real test, we'd verify the indicator color
         // For now, we just verify the component renders
         composeTestRule
-            .onNodeWithText(transcription.originalText)
+            .onNodeWithText(transcription.text ?: "")
             .assertIsDisplayed()
     }
 
     private fun createTestTranscription(
-        originalText: String = "Test transcription",
-        processedText: String? = null,
-        playedCount: Int = 0,
+        text: String = "Test transcription",
+        seen: Boolean = false,
         createdAt: LocalDateTime = LocalDateTime.now()
     ): Transcription {
         return Transcription(
             id = 1,
-            originalText = originalText,
-            processedText = processedText,
+            text = text,
             audioFilePath = "/path/to/audio.mp3",
             createdAt = createdAt,
-            postProcessingType = null,
             status = TranscriptionStatus.COMPLETED,
             errorMessage = null,
-            playedCount = playedCount,
-            retryCount = 0
+            seen = seen
         )
     }
 }

@@ -94,18 +94,11 @@ fun TranscriptionItem(
 }
 
 private fun getPreviewText(transcription: Transcription): String {
-    val text = (transcription.processedText ?: transcription.originalText).trim()
+    val text = (transcription.text ?: "").trim()
     if (text.isEmpty()) {
-        return when (transcription.status) {
-            com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.NO_NETWORK ->
-                "Audio saved - waiting for network"
-            com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.PROCESSING,
-            com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.PENDING ->
-                "Audio saved - transcription pending"
-            com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.STT_ERROR_RETRYABLE ->
-                "Transcription failed - will retry"
-            com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.STT_ERROR_PERMANENT ->
-                "Transcription failed - check model/provider"
+        return when {
+            transcription.audioFilePath != null -> "Audio saved - transcription pending"
+            !transcription.errorMessage.isNullOrBlank() -> "Transcription failed - check provider/model"
             else -> "Audio saved"
         }
     }

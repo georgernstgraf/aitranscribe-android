@@ -21,6 +21,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.IOException
+import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -41,6 +42,7 @@ class RecordingService : Service() {
 
     companion object {
         private const val TAG = "RecordingService"
+        private const val RECORDINGS_DIR_NAME = "recordings"
         const val NOTIFICATION_ID_RECORDING = 1001
         const val CHANNEL_ID_RECORDING = "recording_channel"
 
@@ -169,9 +171,19 @@ class RecordingService : Service() {
     }
 
     private fun createTempAudioFile(): File {
-        val cacheDir = cacheDir
-        val timestamp = System.currentTimeMillis()
-        return File(cacheDir, "recording_$timestamp.m4a")
+        val directory = File(filesDir, RECORDINGS_DIR_NAME)
+        if (!directory.exists() && !directory.mkdirs()) {
+            throw RecordingException("Failed to create recordings directory", null)
+        }
+        repeat(10) {
+            val timestamp = System.currentTimeMillis()
+            val suffix = UUID.randomUUID().toString().take(8)
+            val file = File(directory, "recording_${timestamp}_$suffix.m4a")
+            if (file.createNewFile()) {
+                return file
+            }
+        }
+        throw RecordingException("Failed to allocate unique audio file", null)
     }
 
     private fun createNotificationChannel() {

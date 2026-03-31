@@ -9,8 +9,8 @@ class TranscriptionTest {
     @Test
     fun `getShareText omits summary when present`() {
         val t = testTranscription(
-            originalText = "raw text",
-            processedText = "cleaned text",
+            text = "raw text",
+            textOverride = "cleaned text",
             summary = "A brief summary"
         )
         assertEquals("cleaned text", t.getShareText())
@@ -19,8 +19,7 @@ class TranscriptionTest {
     @Test
     fun `getShareText omits summary when null`() {
         val t = testTranscription(
-            originalText = "raw text",
-            processedText = "cleaned text",
+            textOverride = "cleaned text",
             summary = null
         )
         assertEquals("cleaned text", t.getShareText())
@@ -29,28 +28,25 @@ class TranscriptionTest {
     @Test
     fun `getShareText omits summary when blank`() {
         val t = testTranscription(
-            originalText = "raw text",
-            processedText = null,
+            text = "raw text",
             summary = "   "
         )
         assertEquals("raw text", t.getShareText())
     }
 
     @Test
-    fun `getShareText falls back to originalText when processedText is null`() {
+    fun `getShareText returns text`() {
         val t = testTranscription(
-            originalText = "raw text",
-            processedText = null,
+            text = "raw text",
             summary = "Summary here"
         )
         assertEquals("raw text", t.getShareText())
     }
 
     @Test
-    fun `getShareText uses processedText over originalText`() {
+    fun `getShareText uses updated text`() {
         val t = testTranscription(
-            originalText = "raw",
-            processedText = "processed",
+            textOverride = "processed",
             summary = null
         )
         assertEquals("processed", t.getShareText())
@@ -59,8 +55,7 @@ class TranscriptionTest {
     @Test
     fun `getShareText with empty summary falls back to text only`() {
         val t = testTranscription(
-            originalText = "raw text",
-            processedText = null,
+            text = "raw text",
             summary = ""
         )
         assertEquals("raw text", t.getShareText())
@@ -85,13 +80,12 @@ class TranscriptionTest {
     }
 
     private fun testTranscription(
-        originalText: String = "Test",
-        processedText: String? = null,
+        text: String = "Test",
+        textOverride: String? = null,
         summary: String? = null
     ) = Transcription(
         id = 1L,
-        originalText = originalText,
-        processedText = processedText,
+        text = textOverride ?: text,
         audioFilePath = null,
         createdAt = LocalDateTime.now(),
         status = TranscriptionStatus.COMPLETED,

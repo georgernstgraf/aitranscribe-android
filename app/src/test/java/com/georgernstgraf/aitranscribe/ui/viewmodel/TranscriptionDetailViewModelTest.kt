@@ -66,15 +66,13 @@ class TranscriptionDetailViewModelTest {
 
     private suspend fun insertTestEntity(
         id: Long = 0,
-        originalText: String = "Test transcription",
-        processedText: String? = null,
+        text: String = "Test transcription",
         seen: Boolean = false
     ): Long {
         return repository.insert(
             TranscriptionEntity(
                 id = id,
-                originalText = originalText,
-                processedText = processedText,
+                text = text,
                 audioFilePath = null,
                 createdAt = LocalDateTime.now().toString(),
                 status = "COMPLETED",
@@ -101,13 +99,13 @@ class TranscriptionDetailViewModelTest {
 
     @Test
     fun `initial state loads transcription by id`() = runBlocking {
-        val id = insertTestEntity(originalText = "Hello world")
+        val id = insertTestEntity(text = "Hello world")
         createViewModel(id)
         testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.uiState.value
         assertNotNull(state.transcription)
-        assertEquals("Hello world", state.transcription?.originalText)
+        assertEquals("Hello world", state.transcription?.text)
     }
 
     @Test
@@ -158,8 +156,8 @@ class TranscriptionDetailViewModelTest {
 
     @Test
     fun `deleteTranscription deletes item and updates active id without setting isDeleted if items remain`() = runBlocking {
-        val id1 = insertTestEntity(originalText = "First")
-        val id2 = insertTestEntity(originalText = "Second")
+        val id1 = insertTestEntity(text = "First")
+        val id2 = insertTestEntity(text = "Second")
         createViewModel(id1)
         testDispatcher.scheduler.runCurrent()
 
@@ -176,7 +174,7 @@ class TranscriptionDetailViewModelTest {
 
     @Test
     fun `deleteTranscription sets isDeleted true if no items remain`() = runBlocking {
-        val id1 = insertTestEntity(originalText = "First")
+        val id1 = insertTestEntity(text = "First")
         createViewModel(id1)
         testDispatcher.scheduler.runCurrent()
 
@@ -189,7 +187,7 @@ class TranscriptionDetailViewModelTest {
 
     @Test
     fun `updateText updates transcription in repository`() = runBlocking {
-        val id = insertTestEntity(originalText = "Old text")
+        val id = insertTestEntity(text = "Old text")
         createViewModel(id)
         testDispatcher.scheduler.runCurrent()
 
@@ -197,6 +195,6 @@ class TranscriptionDetailViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         val entity = repository.getById(id)
-        assertEquals("New text", entity?.originalText)
+        assertEquals("New text", entity?.text)
     }
 }

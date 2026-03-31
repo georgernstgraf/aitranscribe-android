@@ -49,8 +49,7 @@ class PostProcessTextUseCaseTest {
         val id = repository.insert(
             TranscriptionEntity(
                 id = 0,
-                originalText = "Hello world",
-                processedText = null,
+                text = "Hello world",
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
                 status = "COMPLETED",
@@ -77,7 +76,7 @@ class PostProcessTextUseCaseTest {
         useCase(id, PostProcessingType.CLEANUP, "test-model", "test-key")
 
         val updated = repository.getById(id)
-        assertEquals("Processed text", updated?.originalText)
+        assertEquals("Processed text", updated?.text)
     }
 
     @Test(expected = PostProcessTextUseCase.PostProcessingException::class)

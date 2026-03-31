@@ -24,8 +24,7 @@ class MarkAsViewedUseCaseTest {
         val id = repository.insert(
             TranscriptionEntity(
                 id = 0,
-                originalText = "Test",
-                processedText = null,
+                text = "Test",
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
                 status = "COMPLETED",

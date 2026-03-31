@@ -11,7 +11,6 @@ import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
@@ -231,13 +230,10 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun retryQueuedTranscriptions() {
-        val queuedItems = repository.getByStatuses(
-            listOf(TranscriptionStatus.STT_ERROR_PERMANENT.name)
-        )
+        val queuedItems = repository.getUnfinishedSttTranscriptions()
         if (queuedItems.isEmpty()) return
 
         for (transcription in queuedItems) {
-            repository.updateStatusAndError(transcription.id, TranscriptionStatus.PENDING.name, null)
             val workRequest = OneTimeWorkRequestBuilder<TranscriptionWorker>()
                 .setInputData(TranscriptionWorker.createInputData(transcriptionId = transcription.id))
                 .build()

@@ -173,8 +173,7 @@ class SettingsViewModelTest {
         repository.insert(
             TranscriptionEntity(
                 id = 10,
-                originalText = "",
-                processedText = null,
+                text = null,
                 audioFilePath = "/a.m4a",
                 createdAt = "2026-01-01T00:00:00",
                 status = TranscriptionStatus.STT_ERROR_PERMANENT.name,
@@ -189,6 +188,6 @@ class SettingsViewModelTest {
         viewModel.saveSettings()
         testDispatcher.scheduler.runCurrent()
 
-        assertEquals(TranscriptionStatus.PENDING.name, repository.getById(1)?.status)
+        assertEquals(TranscriptionStatus.STT_ERROR_PERMANENT.name, repository.getById(1)?.status)
     }
 }

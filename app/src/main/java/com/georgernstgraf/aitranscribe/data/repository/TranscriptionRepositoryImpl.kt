@@ -113,12 +113,24 @@ class TranscriptionRepositoryImpl @Inject constructor(
         transcriptionDao.clearAudioPath(id)
     }
 
+    override suspend fun markAudioMissing(id: Long, status: String, errorMessage: String) {
+        transcriptionDao.markAudioMissing(id, status, errorMessage)
+    }
+
     override suspend fun getByStatuses(statuses: List<String>): List<TranscriptionEntity> {
         return transcriptionDao.getByStatuses(statuses)
     }
 
+    override suspend fun getUnfinishedSttTranscriptions(): List<TranscriptionEntity> {
+        return transcriptionDao.getUnfinishedSttTranscriptions()
+    }
+
     override suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?) {
         transcriptionDao.updateStatusAndError(id, status, errorMessage)
+    }
+
+    override suspend fun markSttSuccess(id: Long, text: String, status: String): Int {
+        return transcriptionDao.markSttSuccess(id, text, status)
     }
 
     override suspend fun getAllAudioPaths(): List<String> {
