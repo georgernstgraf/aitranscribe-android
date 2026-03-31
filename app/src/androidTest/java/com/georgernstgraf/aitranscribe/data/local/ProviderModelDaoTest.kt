@@ -60,8 +60,16 @@ class ProviderModelDaoTest {
         dao.insertProviders(listOf(ProviderEntity("prov1", "Prov 1", 0L)))
         
         val initialModels = listOf(
-            ModelEntity("mod1", "prov1", "Model 1"),
-            ModelEntity("mod2", "prov1", "Model 2")
+            ModelCatalogEntry(
+                externalId = "mod1",
+                modelName = "Model 1",
+                capabilities = emptyList()
+            ),
+            ModelCatalogEntry(
+                externalId = "mod2",
+                modelName = "Model 2",
+                capabilities = emptyList()
+            )
         )
         dao.replaceModelsForProvider("prov1", initialModels, 500L)
         
@@ -72,13 +80,17 @@ class ProviderModelDaoTest {
         assertEquals(500L, prov?.lastSyncedAt)
         
         val newModels = listOf(
-            ModelEntity("mod3", "prov1", "Model 3")
+            ModelCatalogEntry(
+                externalId = "mod3",
+                modelName = "Model 3",
+                capabilities = emptyList()
+            )
         )
         dao.replaceModelsForProvider("prov1", newModels, 1000L)
         
         currentModels = dao.getModelsForProvider("prov1")
         assertEquals(1, currentModels.size)
-        assertEquals("mod3", currentModels[0].id)
+        assertEquals("mod3", currentModels[0].externalId)
         
         prov = dao.getProviderById("prov1")
         assertEquals(1000L, prov?.lastSyncedAt)

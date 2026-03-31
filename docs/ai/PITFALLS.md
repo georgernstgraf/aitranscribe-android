@@ -98,3 +98,6 @@ Passing markdown with backticks via inline `--body "..."` in shell can trigger c
 
 ## Updating `prisma/desired/schema.prisma` does not change runtime DB
 Desired schema edits alone do not affect Room entities, migrations, or `prisma/device/schema.prisma`. Kotlin/Room implementation work is required before drift checks can pass.
+
+## Room migration FK mismatch when referencing temporary table names
+In migrations that rebuild tables (e.g. `models_new` -> `models`), creating dependent tables with foreign keys pointing to temporary names causes startup crash (`Migration didn't properly handle ...`). Create/link dependent tables after final rename, or seed into temporary non-FK table and copy into final FK table.

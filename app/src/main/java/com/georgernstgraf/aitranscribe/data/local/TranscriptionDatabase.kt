@@ -11,9 +11,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [
         TranscriptionEntity::class,
         ProviderEntity::class,
-        ModelEntity::class
+        ModelEntity::class,
+        CapabilityEntity::class,
+        ModelCapabilityEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class TranscriptionDatabase : RoomDatabase() {
@@ -34,7 +36,7 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                     TranscriptionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .addCallback(ProviderPrepopulateCallback())
                     .fallbackToDestructiveMigration()
                     .build()
@@ -135,6 +137,160 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                 )
 
                 db.execSQL("DROP TABLE IF EXISTS queued_transcriptions")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `models_new` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `provider_id` TEXT NOT NULL,
+                        `external_id` TEXT NOT NULL,
+                        `model_name` TEXT NOT NULL,
+                        FOREIGN KEY(`provider_id`) REFERENCES `providers`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO `models_new` (`provider_id`, `external_id`, `model_name`)
+                    SELECT `provider_id`, `id`, `model_name` FROM `models`
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `capabilities` (
+                        `id` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `model_capabilities_seed` (
+                        `model_id` INTEGER NOT NULL,
+                        `capability_id` TEXT NOT NULL,
+                        `source` TEXT,
+                        PRIMARY KEY(`model_id`, `capability_id`)
+                    )
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO `capabilities` (`id`, `name`)
+                    SELECT DISTINCT
+                        'modality:' || TRIM(SUBSTR(
+                            SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"modality":"') + LENGTH('"modality":"')),
+                            1,
+                            INSTR(SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"modality":"') + LENGTH('"modality":"')), '"') - 1
+                        )),
+                        'Modality: ' || TRIM(SUBSTR(
+                            SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"modality":"') + LENGTH('"modality":"')),
+                            1,
+                            INSTR(SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"modality":"') + LENGTH('"modality":"')), '"') - 1
+                        ))
+                    FROM `models` `m`
+                    WHERE `m`.`capabilities` IS NOT NULL
+                      AND INSTR(`m`.`capabilities`, '"modality":"') > 0
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO `capabilities` (`id`, `name`)
+                    SELECT DISTINCT
+                        'instruct_type:' || TRIM(SUBSTR(
+                            SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"instruct_type":"') + LENGTH('"instruct_type":"')),
+                            1,
+                            INSTR(SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"instruct_type":"') + LENGTH('"instruct_type":"')), '"') - 1
+                        )),
+                        'Instruct Type: ' || TRIM(SUBSTR(
+                            SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"instruct_type":"') + LENGTH('"instruct_type":"')),
+                            1,
+                            INSTR(SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"instruct_type":"') + LENGTH('"instruct_type":"')), '"') - 1
+                        ))
+                    FROM `models` `m`
+                    WHERE `m`.`capabilities` IS NOT NULL
+                      AND INSTR(`m`.`capabilities`, '"instruct_type":"') > 0
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO `model_capabilities_seed` (`model_id`, `capability_id`, `source`)
+                    SELECT
+                        `mn`.`id`,
+                        'modality:' || TRIM(SUBSTR(
+                            SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"modality":"') + LENGTH('"modality":"')),
+                            1,
+                            INSTR(SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"modality":"') + LENGTH('"modality":"')), '"') - 1
+                        )),
+                        'legacy_json'
+                    FROM `models` `m`
+                    JOIN `models_new` `mn`
+                      ON `mn`.`provider_id` = `m`.`provider_id`
+                     AND `mn`.`external_id` = `m`.`id`
+                    WHERE `m`.`capabilities` IS NOT NULL
+                      AND INSTR(`m`.`capabilities`, '"modality":"') > 0
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO `model_capabilities_seed` (`model_id`, `capability_id`, `source`)
+                    SELECT
+                        `mn`.`id`,
+                        'instruct_type:' || TRIM(SUBSTR(
+                            SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"instruct_type":"') + LENGTH('"instruct_type":"')),
+                            1,
+                            INSTR(SUBSTR(`m`.`capabilities`, INSTR(`m`.`capabilities`, '"instruct_type":"') + LENGTH('"instruct_type":"')), '"') - 1
+                        )),
+                        'legacy_json'
+                    FROM `models` `m`
+                    JOIN `models_new` `mn`
+                      ON `mn`.`provider_id` = `m`.`provider_id`
+                     AND `mn`.`external_id` = `m`.`id`
+                    WHERE `m`.`capabilities` IS NOT NULL
+                      AND INSTR(`m`.`capabilities`, '"instruct_type":"') > 0
+                    """.trimIndent()
+                )
+
+                db.execSQL("DROP TABLE IF EXISTS `models`")
+                db.execSQL("ALTER TABLE `models_new` RENAME TO `models`")
+
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `model_capabilities` (
+                        `model_id` INTEGER NOT NULL,
+                        `capability_id` TEXT NOT NULL,
+                        `source` TEXT,
+                        PRIMARY KEY(`model_id`, `capability_id`),
+                        FOREIGN KEY(`model_id`) REFERENCES `models`(`id`) ON UPDATE CASCADE ON DELETE CASCADE,
+                        FOREIGN KEY(`capability_id`) REFERENCES `capabilities`(`id`) ON UPDATE CASCADE ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO `model_capabilities` (`model_id`, `capability_id`, `source`)
+                    SELECT `model_id`, `capability_id`, `source` FROM `model_capabilities_seed`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `model_capabilities_seed`")
+
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_models_provider_id_external_id` ON `models` (`provider_id`, `external_id`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_models_provider_id` ON `models` (`provider_id`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_models_external_id` ON `models` (`external_id`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_models_provider_id_model_name` ON `models` (`provider_id`, `model_name`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_models_model_name` ON `models` (`model_name`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_capabilities_name` ON `capabilities` (`name`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_model_capabilities_capability_id` ON `model_capabilities` (`capability_id`)")
             }
         }
     }

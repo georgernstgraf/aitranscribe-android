@@ -4,32 +4,38 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "models",
-    primaryKeys = ["id", "provider_id"],
+    indices = [
+        Index(value = ["provider_id"]),
+        Index(value = ["external_id"]),
+        Index(value = ["provider_id", "model_name"]),
+        Index(value = ["model_name"]),
+        Index(value = ["provider_id", "external_id"], unique = true)
+    ],
     foreignKeys = [
         ForeignKey(
             entity = ProviderEntity::class,
             parentColumns = ["id"],
             childColumns = ["provider_id"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE
         )
-    ],
-    indices = [
-        Index(value = ["provider_id"])
     ]
 )
 data class ModelEntity(
+    @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
-    val id: String,
-    
+    val id: Long = 0,
+
+    @ColumnInfo(name = "external_id")
+    val externalId: String,
+
     @ColumnInfo(name = "provider_id")
     val providerId: String,
-    
+
     @ColumnInfo(name = "model_name")
-    val modelName: String,
-    
-    @ColumnInfo(name = "capabilities")
-    val capabilities: String? = null // Future-proofing: store JSON list of capabilities (e.g. ["stt", "llm", "vision"])
+    val modelName: String
 )

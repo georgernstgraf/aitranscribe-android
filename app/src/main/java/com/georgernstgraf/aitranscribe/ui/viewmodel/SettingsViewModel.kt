@@ -58,7 +58,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onSttProviderChanged(providerId: String) {
         viewModelScope.launch {
-            val models = providerModelDao.getModelsForProvider(providerId).map { it.id }
+            val models = providerModelDao.getModelsForProvider(providerId).map { it.externalId }
             val fallback = models.firstOrNull() ?: ProviderConfig.getSttModelsForProvider(providerId).firstOrNull() ?: ""
             val model = securePreferences.getProviderSttModel(providerId, fallback)
             _uiState.update { it.copy(sttProvider = providerId, sttModel = model) }
@@ -72,7 +72,7 @@ class SettingsViewModel @Inject constructor(
 
     fun onLlmProviderChanged(providerId: String) {
         viewModelScope.launch {
-            val models = providerModelDao.getModelsForProvider(providerId).map { it.id }
+            val models = providerModelDao.getModelsForProvider(providerId).map { it.externalId }
             val fallback = models.firstOrNull() ?: ProviderConfig.getLlmModelsForProvider(providerId).firstOrNull() ?: ""
             val model = securePreferences.getProviderLlmModel(providerId, fallback)
             _uiState.update { it.copy(llmProvider = providerId, llmModel = model) }
@@ -188,10 +188,10 @@ class SettingsViewModel @Inject constructor(
                 val availableProviders = allProviderIds.filter { provider -> authStatus[provider] != true }
                 
                 val sttModels = providerModelDao.getModelsForProvider(sttProvider)
-                val sttFallback = sttModels.firstOrNull()?.id ?: ProviderConfig.getDefaultSttModel(sttProvider)
+                val sttFallback = sttModels.firstOrNull()?.externalId ?: ProviderConfig.getDefaultSttModel(sttProvider)
                 
                 val llmModels = providerModelDao.getModelsForProvider(llmProvider)
-                val llmFallback = llmModels.firstOrNull()?.id ?: ProviderConfig.getDefaultLlmModel(llmProvider)
+                val llmFallback = llmModels.firstOrNull()?.externalId ?: ProviderConfig.getDefaultLlmModel(llmProvider)
 
                 _uiState.update {
                     SettingsUiState(

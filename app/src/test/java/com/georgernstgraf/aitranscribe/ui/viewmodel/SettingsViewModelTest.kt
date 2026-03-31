@@ -2,6 +2,7 @@ package com.georgernstgraf.aitranscribe.ui.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.ModelEntity
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
@@ -23,7 +24,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertFalse
-import com.georgernstgraf.aitranscribe.data.local.ModelEntity
 import org.junit.Before
 import org.junit.Test
 
@@ -102,7 +102,7 @@ class SettingsViewModelTest {
     
     @Test
     fun `changing provider updates available models from dao`() = runBlocking {
-        val orModels = listOf(ModelEntity("model1", "openrouter", "Model 1"))
+        val orModels = listOf(ModelEntity(externalId = "model1", providerId = "openrouter", modelName = "Model 1"))
         coEvery { providerModelDao.getModelsForProvider("openrouter") } returns orModels
         
         testDispatcher.scheduler.runCurrent()

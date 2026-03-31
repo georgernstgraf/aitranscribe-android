@@ -79,8 +79,8 @@ fun SearchableModelDropdown(
                     DropdownMenuItem(
                         text = { Text(model.modelName) },
                         onClick = {
-                            onModelSelected(model.id)
-                            searchQuery = model.id
+                            onModelSelected(model.externalId)
+                            searchQuery = model.externalId
                             expanded = false
                         }
                     )

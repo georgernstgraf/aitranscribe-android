@@ -5,7 +5,8 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.georgernstgraf.aitranscribe.data.local.ModelEntity
+import com.georgernstgraf.aitranscribe.data.local.CapabilityEntity
+import com.georgernstgraf.aitranscribe.data.local.ModelCatalogEntry
 import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
@@ -15,8 +16,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
-import com.google.gson.Gson
 
 @HiltWorker
 class ModelSyncWorker @AssistedInject constructor(
@@ -58,7 +57,6 @@ class ModelSyncWorker @AssistedInject constructor(
     private suspend fun syncProvider(providerId: String, timestamp: Long) {
         val token = securePreferences.getActiveAuthToken(providerId)
         val bearerToken = token?.let { if (it.startsWith("Bearer ")) it else "Bearer $it" }
-        val gson = Gson()
 
         try {
             val models = when (providerId) {
@@ -69,13 +67,12 @@ class ModelSyncWorker @AssistedInject constructor(
                     }
                     val response = groqApiService.getModels(bearerToken)
                     if (response.isSuccessful) {
-                        response.body()?.data?.map { 
-                            ModelEntity(
-                                id = it.id, 
-                                providerId = providerId, 
+                        response.body()?.data?.map {
+                            ModelCatalogEntry(
+                                externalId = it.id,
                                 modelName = it.name ?: it.id,
-                                capabilities = it.architecture?.let { arch -> gson.toJson(arch) }
-                            ) 
+                                capabilities = extractCapabilities(it.architecture?.modality, it.architecture?.instructType)
+                            )
                         } ?: emptyList()
                     } else emptyList()
                 }
@@ -83,14 +80,12 @@ class ModelSyncWorker @AssistedInject constructor(
                     // OpenRouter allows fetching models without auth
                     val response = openRouterApiService.getModels()
                     if (response.isSuccessful) {
-                        response.body()?.data?.map { 
-                            // OpenRouter has 'id' and 'name'. ID is required.
-                            ModelEntity(
-                                id = it.id, 
-                                providerId = providerId, 
+                        response.body()?.data?.map {
+                            ModelCatalogEntry(
+                                externalId = it.id,
                                 modelName = it.name ?: it.id,
-                                capabilities = it.architecture?.let { arch -> gson.toJson(arch) }
-                            ) 
+                                capabilities = extractCapabilities(it.architecture?.modality, it.architecture?.instructType)
+                            )
                         } ?: emptyList()
                     } else emptyList()
                 }
@@ -101,13 +96,12 @@ class ModelSyncWorker @AssistedInject constructor(
                     }
                     val response = zaiApiService.getModels(bearerToken)
                     if (response.isSuccessful) {
-                        response.body()?.data?.map { 
-                            ModelEntity(
-                                id = it.id, 
-                                providerId = providerId, 
+                        response.body()?.data?.map {
+                            ModelCatalogEntry(
+                                externalId = it.id,
                                 modelName = it.name ?: it.id,
-                                capabilities = it.architecture?.let { arch -> gson.toJson(arch) }
-                            ) 
+                                capabilities = extractCapabilities(it.architecture?.modality, it.architecture?.instructType)
+                            )
                         } ?: emptyList()
                     } else emptyList()
                 }
@@ -124,5 +118,22 @@ class ModelSyncWorker @AssistedInject constructor(
             Log.e(TAG, "Failed to sync models for $providerId", e)
             // Do not throw here, let other providers try to sync
         }
+    }
+
+    private fun extractCapabilities(modality: String?, instructType: String?): List<CapabilityEntity> {
+        val result = mutableListOf<CapabilityEntity>()
+        modality?.trim()?.takeIf { it.isNotEmpty() }?.let {
+            result += CapabilityEntity(
+                id = "modality:$it",
+                name = "Modality: $it"
+            )
+        }
+        instructType?.trim()?.takeIf { it.isNotEmpty() }?.let {
+            result += CapabilityEntity(
+                id = "instruct_type:$it",
+                name = "Instruct Type: $it"
+            )
+        }
+        return result
     }
 }

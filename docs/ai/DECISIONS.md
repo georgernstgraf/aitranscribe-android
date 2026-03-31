@@ -139,3 +139,8 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Hardened `prisma/desired/schema.prisma` with targeted defaults, FK update cascades, and query-oriented indexes without changing domain structure.
 - **Reason**: Improve data integrity and lookup performance while keeping schema redesign work isolated to #52/#53.
 - **Changed**: Added defaults/indexes on `provider` and `transcriptions`, added `onUpdate: Cascade` on provider/capability relations, and removed redundant `model_capability.modelId` index covered by PK prefix.
+
+## 2026-03-31: Runtime provider-model-capability storage normalized in Room (#52)
+- **Choice**: Migrated Room schema from denormalized `models.capabilities` JSON text to normalized `capabilities` + `model_capabilities` tables, with `models.id` as surrogate PK and `external_id` retained for provider-facing model IDs.
+- **Reason**: Align runtime DB with desired relational model and enable durable many-to-many capability mapping.
+- **Changed**: Added DB `version = 6` migration (`MIGRATION_5_6`), updated DAO replacement flow, updated sync pipeline to write capability rows and joins, and switched UI model selection to use `externalId`.
