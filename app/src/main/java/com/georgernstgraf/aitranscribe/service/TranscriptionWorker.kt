@@ -7,6 +7,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
@@ -37,6 +38,7 @@ class TranscriptionWorker @AssistedInject constructor(
     private val zaiApiService: ZaiApiService,
     private val networkMonitor: NetworkMonitor,
     private val securePreferences: SecurePreferences,
+    private val providerModelDao: ProviderModelDao,
     private val postProcessTextUseCase: PostProcessTextUseCase
 ) : CoroutineWorker(context, params) {
 
@@ -59,7 +61,11 @@ class TranscriptionWorker @AssistedInject constructor(
         repository.updateStatusAndError(transcriptionId, TranscriptionStatus.PROCESSING.name, null)
 
         val sttModel = transcription.sttModel ?: securePreferences.getSttModel()
-        val llmModel = transcription.llmModel ?: securePreferences.getLlmModel()
+        val llmProvider = securePreferences.getLlmProvider()
+        val llmModel = securePreferences.getProviderLlmModel(
+            llmProvider,
+            transcription.llmModel ?: securePreferences.getLlmModel()
+        )
         val processingMode = transcription.postProcessingType ?: PostProcessingType.RAW.name
 
         val transcriptionText = try {
@@ -94,7 +100,6 @@ class TranscriptionWorker @AssistedInject constructor(
             )
         )
 
-        val llmProvider = securePreferences.getLlmProvider()
         val llmApiKey = securePreferences.getActiveAuthToken(llmProvider)
 
         val postProcessingType = when (processingMode) {
@@ -107,47 +112,42 @@ class TranscriptionWorker @AssistedInject constructor(
 
         if (!llmApiKey.isNullOrBlank()) {
             try {
-                when (postProcessingType) {
-                    PostProcessingType.RAW -> Unit
-                    PostProcessingType.CLEANUP -> {
-                        postProcessTextUseCase(
-                            transcriptionId,
-                            isCleanupEnabled = true,
-                            translationTarget = TranslationTarget.NONE,
-                            llmModel = llmModel,
-                            apiKey = llmApiKey,
-                            llmProvider = llmProvider
-                        )
-                    }
-                    PostProcessingType.TRANSLATE_TO_EN -> {
-                        postProcessTextUseCase(
-                            transcriptionId,
-                            isCleanupEnabled = true,
-                            translationTarget = TranslationTarget.EN,
-                            llmModel = llmModel,
-                            apiKey = llmApiKey,
-                            llmProvider = llmProvider
-                        )
-                    }
-                    PostProcessingType.TRANSLATE_TO_DE -> {
-                        postProcessTextUseCase(
-                            transcriptionId,
-                            isCleanupEnabled = true,
-                            translationTarget = TranslationTarget.DE,
-                            llmModel = llmModel,
-                            apiKey = llmApiKey,
-                            llmProvider = llmProvider
-                        )
-                    }
-                }
-
-                postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
+                performPostProcessing(
+                    transcriptionId = transcriptionId,
+                    postProcessingType = postProcessingType,
+                    llmModel = llmModel,
+                    llmApiKey = llmApiKey,
+                    llmProvider = llmProvider
+                )
 
                 // Clear audio file path and delete file ONLY if post-processing succeeds
                 repository.clearAudioPath(transcriptionId)
                 cleanupAudioFile(audioPath)
 
             } catch (e: Exception) {
+                if (llmProvider == "zai") {
+                    val fallbackModel = resolveZaiFallbackModel(llmModel)
+                    if (!fallbackModel.isNullOrBlank() && fallbackModel != llmModel) {
+                        try {
+                            Log.w("TranscriptionWorker", "Retrying ZAI post-processing with fallback model=$fallbackModel")
+                            performPostProcessing(
+                                transcriptionId = transcriptionId,
+                                postProcessingType = postProcessingType,
+                                llmModel = fallbackModel,
+                                llmApiKey = llmApiKey,
+                                llmProvider = llmProvider
+                            )
+                            securePreferences.setProviderLlmModel("zai", fallbackModel)
+                            securePreferences.setLlmModel(fallbackModel)
+                            repository.clearAudioPath(transcriptionId)
+                            cleanupAudioFile(audioPath)
+                            cleanupOrphanedAudioFiles()
+                            return@withContext Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
+                        } catch (retryError: Exception) {
+                            Log.e("TranscriptionWorker", "ZAI fallback post-processing failed (non-fatal)", retryError)
+                        }
+                    }
+                }
                 Log.e("TranscriptionWorker", "Post-processing failed (non-fatal)", e)
                 repository.updateStatus(transcriptionId, TranscriptionStatus.COMPLETED_WITH_WARNING.name)
                 repository.recordError(transcriptionId, "Post-processing skipped: ${e.message}")
@@ -162,6 +162,59 @@ class TranscriptionWorker @AssistedInject constructor(
         cleanupOrphanedAudioFiles()
 
         Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
+    }
+
+    private suspend fun performPostProcessing(
+        transcriptionId: Long,
+        postProcessingType: PostProcessingType,
+        llmModel: String,
+        llmApiKey: String,
+        llmProvider: String
+    ) {
+        when (postProcessingType) {
+            PostProcessingType.RAW -> Unit
+            PostProcessingType.CLEANUP -> {
+                postProcessTextUseCase(
+                    transcriptionId,
+                    isCleanupEnabled = true,
+                    translationTarget = TranslationTarget.NONE,
+                    llmModel = llmModel,
+                    apiKey = llmApiKey,
+                    llmProvider = llmProvider
+                )
+            }
+            PostProcessingType.TRANSLATE_TO_EN -> {
+                postProcessTextUseCase(
+                    transcriptionId,
+                    isCleanupEnabled = true,
+                    translationTarget = TranslationTarget.EN,
+                    llmModel = llmModel,
+                    apiKey = llmApiKey,
+                    llmProvider = llmProvider
+                )
+            }
+            PostProcessingType.TRANSLATE_TO_DE -> {
+                postProcessTextUseCase(
+                    transcriptionId,
+                    isCleanupEnabled = true,
+                    translationTarget = TranslationTarget.DE,
+                    llmModel = llmModel,
+                    apiKey = llmApiKey,
+                    llmProvider = llmProvider
+                )
+            }
+        }
+
+        postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
+    }
+
+    private suspend fun resolveZaiFallbackModel(currentModel: String): String? {
+        val dynamic = providerModelDao.getModelsForProvider("zai").map { it.externalId }
+        val ordered = dynamic.sortedWith(
+            compareByDescending<String> { it.contains("4.5-flash", ignoreCase = true) }
+                .thenByDescending { it.contains("flash", ignoreCase = true) }
+        )
+        return ordered.firstOrNull { it != currentModel }
     }
 
     private suspend fun transcribeAudio(audioPath: String, sttModel: String): String {

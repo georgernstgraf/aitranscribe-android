@@ -149,3 +149,13 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Store provider auth token in `providers.api_token` (Room) as canonical runtime location, while retaining SecurePreferences fallback/backfill for compatibility.
 - **Reason**: Align runtime implementation with desired schema (`provider.api_token`) without breaking existing installs that only have preference-based tokens.
 - **Changed**: Added DB `version = 7` migration (`MIGRATION_6_7`) converting `display_name` to `name` and adding `api_token`; updated worker/settings auth reads to DB-first and writes to sync DB + SecurePreferences.
+
+## 2026-03-31: ZAI coding endpoint fallback for post-processing (#57)
+- **Choice**: For ZAI LLM post-processing, retry via coding endpoint (`/api/coding/paas/v4/chat/completions`) when general endpoint returns package/balance-style HTTP 429.
+- **Reason**: Coding-subscription keys can fail on the general endpoint with `insufficient balance/no resource package` despite being valid for coding endpoint usage.
+- **Changed**: Added `ZaiCodingApiService` and fallback logic in `PostProcessTextUseCase.callLlmApi`.
+
+## 2026-03-31: Auth-token storage no longer uses SecurePreferences keys (#57)
+- **Choice**: Treat `providers.api_token` as the only runtime auth-token source; keep `SecurePreferences` for non-auth settings only.
+- **Reason**: Reduce token-source drift and align provider auth behavior with DB governance.
+- **Changed**: Removed legacy auth-key helper usage paths and switched app auth lookups to DB-backed methods.

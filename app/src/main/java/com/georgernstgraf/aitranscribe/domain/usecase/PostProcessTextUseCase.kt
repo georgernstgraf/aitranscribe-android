@@ -3,6 +3,7 @@ package com.georgernstgraf.aitranscribe.domain.usecase
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
+import com.georgernstgraf.aitranscribe.data.remote.ZaiCodingApiService
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterMessage
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterRequest
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterResponse
@@ -19,6 +20,7 @@ import javax.inject.Inject
 class PostProcessTextUseCase @Inject constructor(
     private val openRouterApiService: OpenRouterApiService,
     private val zaiApiService: ZaiApiService,
+    private val zaiCodingApiService: ZaiCodingApiService,
     private val groqApiService: GroqApiService,
     private val repository: TranscriptionRepository,
     private val promptManager: PromptManager
@@ -249,9 +251,27 @@ class PostProcessTextUseCase @Inject constructor(
         val authorization = if (apiKey.startsWith("Bearer ")) apiKey else "Bearer $apiKey"
         return when (provider) {
             "groq" -> groqApiService.processText(authorization, request)
-            "zai" -> zaiApiService.processText(authorization, request)
+            "zai" -> {
+                val primary = zaiApiService.processText(authorization, request)
+                if (shouldRetryZaiWithCodingEndpoint(primary)) {
+                    zaiCodingApiService.processText(authorization, request)
+                } else {
+                    primary
+                }
+            }
             else -> openRouterApiService.processText(authorization, request)
         }
+    }
+
+    private fun shouldRetryZaiWithCodingEndpoint(response: Response<OpenRouterResponse>): Boolean {
+        if (response.code() != 429) return false
+        val errorText = runCatching { response.errorBody()?.string() }
+            .getOrNull()
+            ?.lowercase()
+            ?: return true
+        return errorText.contains("insufficient balance") ||
+            errorText.contains("no resource package") ||
+            errorText.contains("resource package")
     }
 
     private fun buildCleanupPrompt(): String {

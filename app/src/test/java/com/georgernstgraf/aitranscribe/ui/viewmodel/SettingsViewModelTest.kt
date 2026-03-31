@@ -53,16 +53,14 @@ class SettingsViewModelTest {
 
         coEvery { providerModelDao.getModelsForProvider(any()) } returns emptyList()
 
-        coEvery { securePreferences.getProviderApiKey("groq") } returns null
-        coEvery { securePreferences.getProviderApiKey("openrouter") } returns null
-        coEvery { securePreferences.getProviderApiKey("zai") } returns null
+        coEvery { securePreferences.getActiveAuthToken("groq") } returns null
+        coEvery { securePreferences.getActiveAuthToken("openrouter") } returns null
+        coEvery { securePreferences.getActiveAuthToken("zai") } returns null
         coEvery { securePreferences.getProviderSttModel("groq", any()) } returns "whisper-large-v3-turbo"
         coEvery { securePreferences.getProviderLlmModel("openrouter", any()) } returns "anthropic/claude-3-haiku"
         coEvery { securePreferences.getProviderLlmModel("zai", any()) } returns "glm-4.7"
         coEvery { securePreferences.getLlmProvider() } returns "openrouter"
         coEvery { securePreferences.getSttProvider() } returns "groq"
-        coEvery { securePreferences.getGroqApiKey() } returns null
-
         viewModel = SettingsViewModel(deleteUseCase, repository, securePreferences, validateApiKeysUseCase, providerModelDao, context)
     }
 

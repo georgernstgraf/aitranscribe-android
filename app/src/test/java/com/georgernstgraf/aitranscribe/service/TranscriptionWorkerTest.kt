@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
+import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
@@ -42,6 +43,7 @@ class TranscriptionWorkerTest {
     private lateinit var zaiApiService: ZaiApiService
     private lateinit var networkMonitor: NetworkMonitor
     private lateinit var securePreferences: SecurePreferences
+    private lateinit var providerModelDao: ProviderModelDao
     private lateinit var postProcessTextUseCase: PostProcessTextUseCase
 
     @Before
@@ -60,6 +62,7 @@ class TranscriptionWorkerTest {
         zaiApiService = mockk(relaxed = true)
         networkMonitor = mockk(relaxed = true)
         securePreferences = mockk(relaxed = true)
+        providerModelDao = mockk(relaxed = true)
         postProcessTextUseCase = mockk(relaxed = true)
 
         // Default network up
@@ -86,6 +89,7 @@ class TranscriptionWorkerTest {
             zaiApiService,
             networkMonitor,
             securePreferences,
+            providerModelDao,
             postProcessTextUseCase
         )
     }

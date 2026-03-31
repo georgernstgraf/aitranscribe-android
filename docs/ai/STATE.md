@@ -3,24 +3,20 @@
 Current status as of 2026-03-31.
 
 ## Current Focus
-Final runtime-to-desired alignment on transcription schema simplification (#53).
+Complete remaining desired/runtime convergence for transcription schema (#53) and full SecurePreferences removal (#56).
 
 ## Completed (this cycle)
-- [x] Closed #54 (DB governance) and codified desired-first workflow
-- [x] Closed #51 (desired schema hardening for indexes/constraints)
-- [x] Closed #52 (runtime provider-model-capability normalization in Room)
-- [x] Implemented #55 provider auth alignment:
-  - Room providers table now uses `name` + nullable `api_token`
-  - added migration `MIGRATION_6_7` (`display_name` -> `name`, add `api_token`)
-  - auth reads are DB-first with SecurePreferences fallback/backfill
-  - worker/settings writes now sync provider token into DB
-- [x] Refreshed runtime schema snapshot via `cd prisma && make`
+- [x] Closed #55 (provider auth storage aligned to `providers.api_token`)
+- [x] Implemented #57 ZAI coding-endpoint resilience for post-processing
+- [x] Unified runtime auth token reads to DB-backed provider tokens (removed legacy auth-key helper usage)
+- [x] Confirmed build/test health after changes (`./gradlew test`, `./gradlew assembleDebug`)
 
 ## Pending
 - [ ] #53 — Simplify transcription model to match desired schema contract
+- [ ] #56 — Remove `SecurePreferences` and migrate remaining app settings into Room + desired schema updates
 
 ## Blockers
-- `cd prisma && make check-schema` may still fail until #53 lands and desired/runtime schemas are reconciled
+- None hard; ZAI behavior depends on provider package/key type and endpoint compatibility
 
 ## Next Session Suggestion
-Start #53 by mapping each current `transcriptions` runtime field to desired target, then implement migration and app-layer updates in one pass.
+Start #56 by designing a Room-backed settings model in `prisma/desired/schema.prisma`, then migrate non-auth `SecurePreferences` values (provider/model selections, processing mode, share app) to DB.

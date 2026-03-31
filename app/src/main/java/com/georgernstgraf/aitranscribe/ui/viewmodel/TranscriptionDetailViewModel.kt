@@ -75,11 +75,8 @@ class TranscriptionDetailViewModel @Inject constructor(
         viewModelScope.launch {
             val transcription = _uiState.value.transcription ?: return@launch
             val llmProvider = securePreferences.getLlmProvider()
-            val apiKey = when (llmProvider) {
-                "zai" -> securePreferences.getZaiApiKey()
-                else -> securePreferences.getOpenRouterApiKey()
-            }
-            val llmModel = securePreferences.getLlmModel()
+            val apiKey = securePreferences.getActiveAuthToken(llmProvider)
+            val llmModel = securePreferences.getProviderLlmModel(llmProvider, securePreferences.getLlmModel())
 
             if (apiKey.isNullOrBlank()) {
                 viewModelScope.launch {

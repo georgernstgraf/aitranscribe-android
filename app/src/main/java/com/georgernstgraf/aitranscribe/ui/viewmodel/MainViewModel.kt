@@ -183,9 +183,11 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 Log.d("MainViewModel", "startTranscription: audioPath=$audioPath, duration=$duration")
-                
-                val sttModel = securePreferences.getSttModel()
-                val llmModel = securePreferences.getLlmModel()
+
+                val sttProvider = securePreferences.getSttProvider()
+                val llmProvider = securePreferences.getLlmProvider()
+                val sttModel = securePreferences.getProviderSttModel(sttProvider, securePreferences.getSttModel())
+                val llmModel = securePreferences.getProviderLlmModel(llmProvider, securePreferences.getLlmModel())
                 
                 Log.d("MainViewModel", "startTranscription: sttModel=$sttModel, llmModel=$llmModel")
                 

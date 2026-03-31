@@ -61,4 +61,15 @@ object NetworkModule {
             .build()
             .create(ZaiApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    fun provideZaiCodingApiService(okHttpClient: OkHttpClient): ZaiCodingApiService {
+        return Retrofit.Builder()
+            .baseUrl(ZaiCodingApiService.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ZaiCodingApiService::class.java)
+    }
 }

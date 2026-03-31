@@ -164,7 +164,6 @@ class SettingsViewModel @Inject constructor(
     fun saveProviderAuth(providerId: String, token: String) {
         viewModelScope.launch {
             securePreferences.setProviderAuthToken(providerId, token)
-            providerModelDao.updateProviderApiToken(providerId, token)
             // Refresh state to update auth status
             loadSettings()
         }
@@ -199,9 +198,9 @@ class SettingsViewModel @Inject constructor(
                         activeProviders = activeProviders,
                         availableProviders = availableProviders,
                         providerAuthStatus = authStatus,
-                        groqApiKey = securePreferences.getGroqApiKey(),
-                        openRouterApiKey = securePreferences.getProviderApiKey("openrouter"),
-                        zaiApiKey = securePreferences.getProviderApiKey("zai"),
+                        groqApiKey = securePreferences.getActiveAuthToken("groq"),
+                        openRouterApiKey = securePreferences.getActiveAuthToken("openrouter"),
+                        zaiApiKey = securePreferences.getActiveAuthToken("zai"),
                         sttModel = securePreferences.getProviderSttModel(sttProvider, sttFallback),
                         sttProvider = sttProvider,
                         llmModel = securePreferences.getProviderLlmModel(llmProvider, llmFallback),
@@ -217,14 +216,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun getEffectiveProviderToken(providerId: String): String? {
-        val dbToken = providerModelDao.getProviderApiToken(providerId)
-        if (!dbToken.isNullOrBlank()) return dbToken
-
-        val legacyToken = securePreferences.getActiveAuthToken(providerId)
-        if (!legacyToken.isNullOrBlank()) {
-            providerModelDao.updateProviderApiToken(providerId, legacyToken)
-        }
-        return legacyToken
+        return securePreferences.getActiveAuthToken(providerId)
     }
 
     private fun updateDropdownModels() {

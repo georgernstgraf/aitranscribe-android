@@ -104,3 +104,6 @@ In migrations that rebuild tables (e.g. `models_new` -> `models`), creating depe
 
 ## Cleanup/post-processing errors are often provider-side, not app crashes
 `TranscriptionWorker` logs like HTTP `429` (insufficient balance) or HTTP `400` unknown model during cleanup/LLM post-processing are handled as non-fatal warnings (`Worker result SUCCESS` with warning status path). Diagnose provider token/model/billing before suspecting crash bugs.
+
+## ZAI coding-plan keys may fail on general endpoint
+ZAI post-processing with coding-subscription keys can return HTTP `429` (`insufficient balance` / `no resource package`) on `https://api.z.ai/api/paas/v4/...` while succeeding on `https://api.z.ai/api/coding/paas/v4/...`. Keep provider pathing consistent with key/package type.

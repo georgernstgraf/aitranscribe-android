@@ -10,7 +10,8 @@ import javax.inject.Singleton
 
 @Singleton
 class SecurePreferences @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val providerModelDao: ProviderModelDao
 ) {
 
     private val masterKey = MasterKey.Builder(context)
@@ -26,33 +27,18 @@ class SecurePreferences @Inject constructor(
     )
 
     suspend fun setProviderAuthToken(providerId: String, token: String?) {
-        sharedPreferences.edit().putString("${providerId}_auth_token", token).apply()
+        providerModelDao.updateProviderApiToken(providerId, token)
     }
 
     suspend fun getActiveAuthToken(providerId: String): String? {
-        // Priority: New token system > Legacy individual keys
-        val newToken = getProviderAuthToken(providerId)
-        if (newToken != null) return newToken
-        
-        return when (providerId) {
-            "groq" -> getGroqApiKey()
-            "openrouter" -> getOpenRouterApiKey()
-            "zai" -> getZaiApiKey()
-            else -> null
-        }
+        return providerModelDao.getProviderApiToken(providerId)
     }
-
-    suspend fun getProviderAuthToken(providerId: String): String? = sharedPreferences.getString("${providerId}_auth_token", null)
 
     suspend fun setProviderSettings(providerId: String, apiKey: String?, model: String) {
-        sharedPreferences.edit()
-            .putString("${providerId}_api_key", apiKey)
-            .putString("${providerId}_llm_model", model)
-            .apply()
-        // Backward compatibility: maintain old keys if needed
+        providerModelDao.updateProviderApiToken(providerId, apiKey)
+        sharedPreferences.edit().putString("${providerId}_llm_model", model).apply()
     }
 
-    suspend fun getProviderApiKey(providerId: String): String? = sharedPreferences.getString("${providerId}_api_key", null)
     suspend fun getProviderLlmModel(providerId: String, defaultModel: String): String = 
         sharedPreferences.getString("${providerId}_llm_model", defaultModel) ?: defaultModel
 
@@ -68,22 +54,22 @@ class SecurePreferences @Inject constructor(
     }
 
     suspend fun setGroqApiKey(apiKey: String) {
-        sharedPreferences.edit().putString(GROQ_API_KEY, apiKey).apply()
+        providerModelDao.updateProviderApiToken("groq", apiKey)
     }
 
-    suspend fun getGroqApiKey(): String? = sharedPreferences.getString(GROQ_API_KEY, null)
+    suspend fun getGroqApiKey(): String? = providerModelDao.getProviderApiToken("groq")
 
     suspend fun setOpenRouterApiKey(apiKey: String) {
-        sharedPreferences.edit().putString(OPENROUTER_API_KEY, apiKey).apply()
+        providerModelDao.updateProviderApiToken("openrouter", apiKey)
     }
 
-    suspend fun getOpenRouterApiKey(): String? = sharedPreferences.getString(OPENROUTER_API_KEY, null)
+    suspend fun getOpenRouterApiKey(): String? = providerModelDao.getProviderApiToken("openrouter")
 
     suspend fun setZaiApiKey(apiKey: String) {
-        sharedPreferences.edit().putString(ZAI_API_KEY, apiKey).apply()
+        providerModelDao.updateProviderApiToken("zai", apiKey)
     }
 
-    suspend fun getZaiApiKey(): String? = sharedPreferences.getString(ZAI_API_KEY, null)
+    suspend fun getZaiApiKey(): String? = providerModelDao.getProviderApiToken("zai")
 
     suspend fun setSttModel(model: String) {
         sharedPreferences.edit().putString(STT_MODEL, model).apply()
@@ -135,14 +121,7 @@ class SecurePreferences @Inject constructor(
         sharedPreferences.edit().clear().apply()
     }
 
-    fun peekGroqApiKey(): String? = sharedPreferences.getString(GROQ_API_KEY, null)
-
-    fun peekOpenRouterApiKey(): String? = sharedPreferences.getString(OPENROUTER_API_KEY, null)
-
     companion object {
-        private const val GROQ_API_KEY = "groq_api_key"
-        private const val OPENROUTER_API_KEY = "openrouter_api_key"
-        private const val ZAI_API_KEY = "zai_api_key"
         private const val STT_MODEL = "stt_model"
         private const val STT_PROVIDER = "stt_provider"
         private const val LLM_MODEL = "llm_model"

@@ -21,7 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.TranscriptionDatabase
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.ui.components.CenteredToastHost
 import com.georgernstgraf.aitranscribe.ui.screen.MainScreen
@@ -34,6 +34,7 @@ import com.georgernstgraf.aitranscribe.ui.screen.auth.ProviderAuthScreen
 import com.georgernstgraf.aitranscribe.ui.theme.AITranscribeTheme
 import com.georgernstgraf.aitranscribe.util.ToastManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -90,8 +91,12 @@ class MainActivity : ComponentActivity() {
 fun MainNavigation() {
     val context = LocalContext.current
     val hasKeys = remember {
-        val prefs = SecurePreferences(context)
-        !prefs.peekGroqApiKey().isNullOrBlank() && !prefs.peekOpenRouterApiKey().isNullOrBlank()
+        runBlocking {
+            val providers = TranscriptionDatabase.getDatabase(context).providerModelDao().getAllProviders()
+            val hasGroq = providers.any { it.id == "groq" && !it.apiToken.isNullOrBlank() }
+            val hasOpenRouter = providers.any { it.id == "openrouter" && !it.apiToken.isNullOrBlank() }
+            hasGroq && hasOpenRouter
+        }
     }
     val startDestination = if (hasKeys) "main" else "setup"
     val navController = rememberNavController()
