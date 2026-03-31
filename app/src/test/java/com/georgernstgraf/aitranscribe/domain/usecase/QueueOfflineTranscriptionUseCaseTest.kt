@@ -22,10 +22,7 @@ class QueueOfflineTranscriptionUseCaseTest {
     @Test
     fun `invoke queues transcription for offline processing`() = runTest {
         val id = useCase(
-            audioPath = "/test.mp3",
-            sttModel = "whisper-large-v3",
-            llmModel = "claude-3-haiku",
-            postProcessingType = "CLEANUP"
+            audioPath = "/test.mp3"
         )
 
         assertEquals(1L, id)
@@ -37,20 +34,7 @@ class QueueOfflineTranscriptionUseCaseTest {
     @Test(expected = QueueOfflineTranscriptionUseCase.QueueException::class)
     fun `invoke throws exception when audio path is empty`() = runTest {
         useCase(
-            audioPath = "",
-            sttModel = "whisper-large-v3",
-            llmModel = null,
-            postProcessingType = null
-        )
-    }
-
-    @Test(expected = QueueOfflineTranscriptionUseCase.QueueException::class)
-    fun `invoke throws exception when sttModel is empty`() = runTest {
-        useCase(
-            audioPath = "/test.mp3",
-            sttModel = "",
-            llmModel = null,
-            postProcessingType = null
+            audioPath = ""
         )
     }
 }

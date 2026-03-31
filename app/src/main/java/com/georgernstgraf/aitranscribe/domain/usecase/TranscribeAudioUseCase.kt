@@ -77,11 +77,9 @@ class TranscribeAudioUseCase @Inject constructor(
                 processedText = null,
                 audioFilePath = audioPath,
                 createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                postProcessingType = null,
                 status = TranscriptionStatus.COMPLETED.name,
                 errorMessage = null,
-                seen = false,
-                retryCount = 0
+                seen = false
             )
 
             val id = repository.insert(entity)

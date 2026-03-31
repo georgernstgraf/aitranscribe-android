@@ -20,31 +20,20 @@ class QueueOfflineTranscriptionUseCase @Inject constructor(
 ) {
 
     suspend operator fun invoke(
-        audioPath: String,
-        sttModel: String,
-        llmModel: String?,
-        postProcessingType: String?
+        audioPath: String
     ) = withContext(Dispatchers.IO) {
         if (audioPath.isBlank()) {
             throw QueueException("Audio path cannot be empty")
-        }
-
-        if (sttModel.isBlank()) {
-            throw QueueException("STT model cannot be empty")
         }
 
         val queued = TranscriptionEntity(
             originalText = "",
             processedText = null,
             audioFilePath = audioPath,
-            sttModel = sttModel,
-            llmModel = llmModel,
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            postProcessingType = postProcessingType,
             status = TranscriptionStatus.NO_NETWORK.name,
             errorMessage = "No network available",
             seen = false,
-            retryCount = 0,
             summary = null
         )
 

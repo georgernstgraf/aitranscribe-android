@@ -220,7 +220,6 @@ class PostProcessTextUseCase @Inject constructor(
                 transcription.copy(
                     originalText = processedText,
                     processedText = null,
-                    postProcessingType = storedPostProcessingType,
                     status = TranscriptionStatus.COMPLETED.name,
                     errorMessage = null
                 )

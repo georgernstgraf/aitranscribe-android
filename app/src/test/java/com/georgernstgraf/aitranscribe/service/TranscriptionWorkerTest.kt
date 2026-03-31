@@ -104,20 +104,17 @@ class TranscriptionWorkerTest {
 
     @Test
     fun `worker processes raw transcription and clears audio path`() = runBlocking {
+        coEvery { appSettingsStore.getProcessingMode() } returns PostProcessingType.RAW.name
         val audioFile = createAudioFile()
         val queued = TranscriptionEntity(
             id = 1,
             originalText = "",
             processedText = null,
             audioFilePath = audioFile.absolutePath,
-            sttModel = "whisper-large-v3-turbo",
-            llmModel = "anthropic/claude-3-haiku",
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            postProcessingType = PostProcessingType.RAW.name,
             status = TranscriptionStatus.PENDING.name,
             errorMessage = null,
             seen = false,
-            retryCount = 0,
             summary = null
         )
         fakeRepository.insert(queued)
@@ -136,20 +133,17 @@ class TranscriptionWorkerTest {
 
     @Test
     fun `worker preserves audio path if llm fails`() = runBlocking {
+        coEvery { appSettingsStore.getProcessingMode() } returns PostProcessingType.CLEANUP.name
         val audioFile = createAudioFile()
         val queued = TranscriptionEntity(
             id = 1,
             originalText = "",
             processedText = null,
             audioFilePath = audioFile.absolutePath,
-            sttModel = "whisper-large-v3-turbo",
-            llmModel = "anthropic/claude-3-haiku",
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            postProcessingType = PostProcessingType.CLEANUP.name,
             status = TranscriptionStatus.PENDING.name,
             errorMessage = null,
             seen = false,
-            retryCount = 0,
             summary = null
         )
         fakeRepository.insert(queued)
@@ -174,20 +168,17 @@ class TranscriptionWorkerTest {
 
     @Test
     fun `worker clears audio path if llm succeeds`() = runBlocking {
+        coEvery { appSettingsStore.getProcessingMode() } returns PostProcessingType.CLEANUP.name
         val audioFile = createAudioFile()
         val queued = TranscriptionEntity(
             id = 1,
             originalText = "",
             processedText = null,
             audioFilePath = audioFile.absolutePath,
-            sttModel = "whisper-large-v3-turbo",
-            llmModel = "anthropic/claude-3-haiku",
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            postProcessingType = PostProcessingType.CLEANUP.name,
             status = TranscriptionStatus.PENDING.name,
             errorMessage = null,
             seen = false,
-            retryCount = 0,
             summary = null
         )
         fakeRepository.insert(queued)

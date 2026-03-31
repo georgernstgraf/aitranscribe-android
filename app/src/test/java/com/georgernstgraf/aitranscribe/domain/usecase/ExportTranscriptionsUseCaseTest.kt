@@ -32,11 +32,9 @@ class ExportTranscriptionsUseCaseTest {
                 processedText = "Processed",
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
-                postProcessingType = null,
                 status = "COMPLETED",
                 errorMessage = null,
-                seen = false,
-                retryCount = 0
+                seen = false
             )
         )
 

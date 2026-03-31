@@ -114,7 +114,7 @@ interface TranscriptionDao {
 
     @Query("""
         UPDATE transcriptions 
-        SET error_message = :error, retry_count = retry_count + 1 
+        SET error_message = :error
         WHERE id = :id
     """)
     suspend fun recordError(id: Long, error: String): Int
@@ -147,9 +147,6 @@ interface TranscriptionDao {
 
     @Query("UPDATE transcriptions SET status = :status, error_message = :errorMessage WHERE id = :id")
     suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?)
-
-    @Query("UPDATE transcriptions SET stt_model = :sttModel WHERE id = :id")
-    suspend fun updateSttModel(id: Long, sttModel: String)
 
     @Query("""
         SELECT id FROM transcriptions 

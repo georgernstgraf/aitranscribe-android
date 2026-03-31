@@ -28,11 +28,9 @@ class ResetViewStatusUseCaseTest {
                 processedText = null,
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
-                postProcessingType = null,
                 status = "COMPLETED",
                 errorMessage = null,
-                seen = true,
-                retryCount = 0
+                seen = true
             )
         )
 

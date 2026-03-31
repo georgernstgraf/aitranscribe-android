@@ -87,10 +87,8 @@ class ShareTranscriptionUseCaseTest {
         processedText = processedText,
         audioFilePath = null,
         createdAt = LocalDateTime.now().toString(),
-        postProcessingType = null,
         status = "COMPLETED",
         errorMessage = null,
-        seen = false,
-        retryCount = 0
+        seen = false
     )
 }

@@ -146,10 +146,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
 
     override suspend fun recordError(id: Long, error: String): Int {
         transcriptions.value = transcriptions.value.map {
-            if (it.id == id) it.copy(
-                errorMessage = error,
-                retryCount = it.retryCount + 1
-            ) else it
+            if (it.id == id) it.copy(errorMessage = error) else it
         }
         return 1
     }
@@ -173,12 +170,6 @@ class FakeTranscriptionRepository : TranscriptionRepository {
     override suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?) {
         transcriptions.value = transcriptions.value.map {
             if (it.id == id) it.copy(status = status, errorMessage = errorMessage) else it
-        }
-    }
-
-    override suspend fun updateSttModel(id: Long, sttModel: String) {
-        transcriptions.value = transcriptions.value.map {
-            if (it.id == id) it.copy(sttModel = sttModel) else it
         }
     }
 
@@ -221,19 +212,10 @@ class FakeTranscriptionRepository : TranscriptionRepository {
             processedText = processedText,
             audioFilePath = audioFilePath,
             createdAt = java.time.LocalDateTime.parse(createdAt),
-            postProcessingType = postProcessingType?.let {
-                when (it) {
-                    "ENGLISH" -> com.georgernstgraf.aitranscribe.domain.model.PostProcessingType.TRANSLATE_TO_EN
-                    else -> runCatching {
-                        com.georgernstgraf.aitranscribe.domain.model.PostProcessingType.valueOf(it)
-                    }.getOrNull()
-                }
-            },
             status = com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.valueOf(status),
             errorMessage = errorMessage,
             playedCount = if (seen) 1 else 0,
             seen = seen,
-            retryCount = retryCount,
             summary = summary
         )
     }

@@ -85,11 +85,9 @@ class ImportTranscriptionsUseCase @Inject constructor(
                         processedText = if (fields[2].isBlank()) null else unescapeCsv(fields[2]),
                         audioFilePath = fields[3],
                         createdAt = fields[4],
-                        postProcessingType = null,
                         status = fields[5],
                         errorMessage = null,
-                        seen = (fields.getOrNull(6)?.toIntOrNull() ?: 0) > 0,
-                        retryCount = 0
+                        seen = (fields.getOrNull(6)?.toIntOrNull() ?: 0) > 0
                     )
                     
                     repository.insert(entity)

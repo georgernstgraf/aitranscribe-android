@@ -127,7 +127,7 @@ class SettingsViewModel @Inject constructor(
             appSettingsStore.setSttProvider(state.sttProvider)
             appSettingsStore.setLlmProvider(state.llmProvider)
 
-            retryQueuedTranscriptions(state.sttModel)
+            retryQueuedTranscriptions()
 
             _uiState.update { it.copy(isValidating = false, isSaved = true) }
         }
@@ -230,14 +230,13 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private suspend fun retryQueuedTranscriptions(sttModel: String) {
+    private suspend fun retryQueuedTranscriptions() {
         val queuedItems = repository.getByStatuses(
             listOf(TranscriptionStatus.STT_ERROR_PERMANENT.name)
         )
         if (queuedItems.isEmpty()) return
 
         for (transcription in queuedItems) {
-            repository.updateSttModel(transcription.id, sttModel)
             repository.updateStatusAndError(transcription.id, TranscriptionStatus.PENDING.name, null)
             val workRequest = OneTimeWorkRequestBuilder<TranscriptionWorker>()
                 .setInputData(TranscriptionWorker.createInputData(transcriptionId = transcription.id))
@@ -250,7 +249,7 @@ class SettingsViewModel @Inject constructor(
                 )
                 .enqueue()
         }
-        Log.d("SettingsViewModel", "Retrying ${queuedItems.size} queued transcription(s) with model=$sttModel")
+        Log.d("SettingsViewModel", "Retrying ${queuedItems.size} queued transcription(s)")
     }
 }
 

@@ -8,12 +8,10 @@ data class Transcription(
     val processedText: String?,
     val audioFilePath: String?,
     val createdAt: LocalDateTime,
-    val postProcessingType: PostProcessingType?,
     val status: TranscriptionStatus,
     val errorMessage: String?,
     val playedCount: Int = 0,
     val seen: Boolean = false,
-    val retryCount: Int = 0,
     val summary: String? = null
 ) {
     val isViewed: Boolean

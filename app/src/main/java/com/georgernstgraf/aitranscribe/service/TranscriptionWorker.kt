@@ -62,14 +62,10 @@ class TranscriptionWorker @AssistedInject constructor(
         repository.updateStatusAndError(transcriptionId, TranscriptionStatus.PROCESSING.name, null)
 
         val sttProvider = appSettingsStore.getSttProvider()
-        val sttModel = transcription.sttModel
-            ?: appSettingsStore.getProviderSttModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider))
+        val sttModel = appSettingsStore.getProviderSttModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider))
         val llmProvider = appSettingsStore.getLlmProvider()
-        val llmModel = appSettingsStore.getProviderLlmModel(
-            llmProvider,
-            transcription.llmModel ?: ProviderConfig.getDefaultLlmModel(llmProvider)
-        )
-        val processingMode = transcription.postProcessingType ?: PostProcessingType.RAW.name
+        val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, ProviderConfig.getDefaultLlmModel(llmProvider))
+        val processingMode = appSettingsStore.getProcessingMode()
 
         val transcriptionText = try {
             transcribeAudio(audioPath, sttModel)
@@ -96,10 +92,7 @@ class TranscriptionWorker @AssistedInject constructor(
                 originalText = transcriptionText,
                 processedText = null,
                 status = TranscriptionStatus.COMPLETED.name,
-                errorMessage = null,
-                sttModel = sttModel,
-                llmModel = llmModel,
-                postProcessingType = processingMode
+                errorMessage = null
             )
         )
 

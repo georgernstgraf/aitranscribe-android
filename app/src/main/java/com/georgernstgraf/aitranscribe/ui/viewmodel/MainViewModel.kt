@@ -196,10 +196,7 @@ class MainViewModel @Inject constructor(
                     originalText = "",
                     processedText = null,
                     audioFilePath = audioPath,
-                    sttModel = sttModel,
-                    llmModel = llmModel,
                     createdAt = LocalDateTime.now().toString(),
-                    postProcessingType = _uiState.value.processingMode.name,
                     status = if (networkMonitor.isConnected()) {
                         TranscriptionStatus.PENDING.name
                     } else {
@@ -207,7 +204,6 @@ class MainViewModel @Inject constructor(
                     },
                     errorMessage = null,
                     seen = false,
-                    retryCount = 0,
                     summary = null
                 )
 
@@ -345,9 +341,7 @@ class MainViewModel @Inject constructor(
         if (queuedItems.isEmpty()) return
 
         val sttProvider = appSettingsStore.getSttProvider()
-        val sttModel = appSettingsStore.getProviderSttModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider))
         for (transcription in queuedItems) {
-            repository.updateSttModel(transcription.id, sttModel)
             repository.updateStatusAndError(transcription.id, TranscriptionStatus.PENDING.name, null)
             enqueueTranscriptionWork(transcription.id)
         }

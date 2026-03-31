@@ -94,7 +94,6 @@ class TranscriptionTest {
         processedText = processedText,
         audioFilePath = null,
         createdAt = LocalDateTime.now(),
-        postProcessingType = null,
         status = TranscriptionStatus.COMPLETED,
         errorMessage = null,
         summary = summary

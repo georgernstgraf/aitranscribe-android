@@ -176,10 +176,7 @@ class SettingsViewModelTest {
                 originalText = "",
                 processedText = null,
                 audioFilePath = "/a.m4a",
-                sttModel = "old",
-                llmModel = "llm",
                 createdAt = "2026-01-01T00:00:00",
-                postProcessingType = "RAW",
                 status = TranscriptionStatus.STT_ERROR_PERMANENT.name,
                 errorMessage = "Model invalid"
             )
@@ -192,6 +189,6 @@ class SettingsViewModelTest {
         viewModel.saveSettings()
         testDispatcher.scheduler.runCurrent()
 
-        assertEquals("whisper-large-v3-turbo", repository.getById(1)?.sttModel)
+        assertEquals(TranscriptionStatus.PENDING.name, repository.getById(1)?.status)
     }
 }

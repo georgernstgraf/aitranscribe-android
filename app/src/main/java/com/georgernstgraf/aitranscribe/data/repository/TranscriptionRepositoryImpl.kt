@@ -121,10 +121,6 @@ class TranscriptionRepositoryImpl @Inject constructor(
         transcriptionDao.updateStatusAndError(id, status, errorMessage)
     }
 
-    override suspend fun updateSttModel(id: Long, sttModel: String) {
-        transcriptionDao.updateSttModel(id, sttModel)
-    }
-
     override suspend fun getAllAudioPaths(): List<String> {
         return transcriptionDao.getAllAudioPaths()
     }

@@ -169,3 +169,13 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Replaced `SecurePreferences` with `AppSettingsStore` backed by `app_preferences` + `providers.api_token`.
 - **Reason**: Single DB-backed persistence path reduces settings/token drift and aligns runtime behavior with device-introspected schema truth.
 - **Changed**: Added `MIGRATION_7_8` for `app_preferences`, migrated production callers (viewmodels/workers/setup), and deleted `SecurePreferences` from production code.
+
+## 2026-03-31: Transcription view state migrated from `played_count` to `seen` (#53)
+- **Choice**: Use `seen` as the canonical read/unread state, with `playedCount` derived only in domain mapping for compatibility.
+- **Reason**: Desired model uses `seen`; `played_count` caused coupling and extra query complexity.
+- **Changed**: Added `MIGRATION_8_9` to map `seen = played_count > 0`; updated DAO filters and view-state toggles to `seen` semantics.
+
+## 2026-03-31: Removed transcription execution-context columns from runtime table (#53)
+- **Choice**: Removed `stt_model`, `llm_model`, `post_processing_type`, and `retry_count` from `transcriptions` runtime schema.
+- **Reason**: Desired schema excludes these fields; they represent operational context better sourced from current settings and worker flow.
+- **Changed**: Added `MIGRATION_9_10` to rebuild `transcriptions` without those columns; updated repositories/use-cases/workers/tests accordingly.

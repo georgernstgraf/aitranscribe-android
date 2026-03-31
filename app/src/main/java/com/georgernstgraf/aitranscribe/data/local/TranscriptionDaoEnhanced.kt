@@ -70,7 +70,7 @@ interface TranscriptionDaoEnhanced {
     @Query("UPDATE transcriptions SET status = :status WHERE id = :id")
     suspend fun updateStatus(id: Long, status: String): Int
 
-    @Query("UPDATE transcriptions SET error_message = :error, retry_count = retry_count + 1 WHERE id = :id")
+    @Query("UPDATE transcriptions SET error_message = :error WHERE id = :id")
     suspend fun recordError(id: Long, error: String): Int
 
     @Query("SELECT COUNT(*) FROM transcriptions")

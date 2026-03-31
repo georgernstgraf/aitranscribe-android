@@ -1,9 +1,8 @@
 Branch: main
 
-1. [ ] See #53 — Transcription schema simplification alignment
-   - Remaining gap between current runtime and desired transcription model fields/types.
+1. [ ] See #50 — Prisma
 
 Context:
-- #56 is complete: production `SecurePreferences` removed and replaced by `AppSettingsStore` with Room-backed settings/auth.
-- Device-introspected schema (`cd prisma && make`) is the reference for current runtime truth.
+- #53 is complete: runtime `transcriptions` now uses `seen` and no longer stores `stt_model`, `llm_model`, `post_processing_type`, `retry_count`.
+- Device-introspected schema (`cd prisma && make`) is the current runtime truth reference.
 - Do not modify `prisma/desired/schema.prisma` unless explicitly requested by the user.

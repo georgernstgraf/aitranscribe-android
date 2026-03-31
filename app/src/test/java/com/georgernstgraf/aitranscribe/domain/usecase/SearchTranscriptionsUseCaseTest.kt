@@ -30,11 +30,9 @@ class SearchTranscriptionsUseCaseTest {
                 processedText = null,
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
-                postProcessingType = null,
                 status = "COMPLETED",
                 errorMessage = null,
-                seen = false,
-                retryCount = 0
+                seen = false
             )
         )
 
@@ -53,11 +51,9 @@ class SearchTranscriptionsUseCaseTest {
                 processedText = null,
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
-                postProcessingType = null,
                 status = "COMPLETED",
                 errorMessage = null,
-                seen = false,
-                retryCount = 0
+                seen = false
             )
         )
         repository.insert(
@@ -67,11 +63,9 @@ class SearchTranscriptionsUseCaseTest {
                 processedText = null,
                 audioFilePath = "/test2.mp3",
                 createdAt = LocalDateTime.now().toString(),
-                postProcessingType = null,
                 status = "COMPLETED",
                 errorMessage = null,
-                seen = false,
-                retryCount = 0
+                seen = false
             )
         )
 

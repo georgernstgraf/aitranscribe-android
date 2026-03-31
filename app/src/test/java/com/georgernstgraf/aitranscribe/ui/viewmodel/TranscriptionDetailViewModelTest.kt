@@ -77,11 +77,9 @@ class TranscriptionDetailViewModelTest {
                 processedText = processedText,
                 audioFilePath = null,
                 createdAt = LocalDateTime.now().toString(),
-                postProcessingType = null,
                 status = "COMPLETED",
                 errorMessage = null,
                 seen = seen,
-                retryCount = 0
             )
         )
     }

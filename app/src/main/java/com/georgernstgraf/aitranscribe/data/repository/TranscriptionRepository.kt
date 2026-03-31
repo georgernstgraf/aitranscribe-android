@@ -56,8 +56,6 @@ interface TranscriptionRepository {
 
     suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?)
 
-    suspend fun updateSttModel(id: Long, sttModel: String)
-
     suspend fun getAllAudioPaths(): List<String>
 
     suspend fun getNextTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long?

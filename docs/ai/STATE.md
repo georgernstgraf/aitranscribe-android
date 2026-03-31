@@ -3,21 +3,21 @@
 Current status as of 2026-03-31.
 
 ## Current Focus
-Transcription schema convergence work (#53) after SecurePreferences removal completion.
+Post-#53 stabilization and next issue selection after transcription model convergence.
 
 ## Completed (this cycle)
-- [x] Completed #56: removed `SecurePreferences` from production code
-- [x] Added `AppSettingsStore` as Room-backed settings/auth abstraction
-- [x] Added Room DB support for `app_preferences` (`version 8`, `MIGRATION_7_8`, DAO provider)
-- [x] Migrated production callers (viewmodels/workers/setup) to `AppSettingsStore`
-- [x] Refreshed runtime schema via `cd prisma && make`
-- [x] Verified build/test health (`./gradlew testDebugUnitTest`, `./gradlew test`, `./gradlew assembleDebug`)
+- [x] Finished #53 transcription simplification alignment in runtime schema
+- [x] Migrated read/unread semantics from `played_count` to `seen` with Room migration `8->9`
+- [x] Removed `stt_model`, `llm_model`, `post_processing_type`, `retry_count` from runtime `transcriptions` with migration `9->10`
+- [x] Updated DAO/repository/worker/viewmodel/use-case paths to match new transcription shape
+- [x] Refreshed device schema via `cd prisma && make` and verified removed columns are gone
+- [x] Verified test/build health (`./gradlew testDebugUnitTest`, `./gradlew test`, `./gradlew assembleDebug`)
 
 ## Pending
-- [ ] #53 — Simplify transcription model to match desired schema contract
+- [ ] #50 — Prisma follow-up workstream
 
 ## Blockers
 - None hard
 
 ## Next Session Suggestion
-Start #53 by mapping runtime transcription fields against current device schema and implementing a single migration pass with updated app-layer usage.
+Start #50 with an explicit scope breakdown, then run a fresh device schema refresh before coding.
