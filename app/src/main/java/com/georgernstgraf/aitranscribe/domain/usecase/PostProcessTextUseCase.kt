@@ -1,5 +1,6 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
+import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterMessage
@@ -18,6 +19,7 @@ import javax.inject.Inject
 class PostProcessTextUseCase @Inject constructor(
     private val openRouterApiService: OpenRouterApiService,
     private val zaiApiService: ZaiApiService,
+    private val groqApiService: GroqApiService,
     private val repository: TranscriptionRepository,
     private val promptManager: PromptManager
 ) {
@@ -244,9 +246,11 @@ class PostProcessTextUseCase @Inject constructor(
         apiKey: String,
         request: OpenRouterRequest
     ): Response<OpenRouterResponse> {
+        val authorization = if (apiKey.startsWith("Bearer ")) apiKey else "Bearer $apiKey"
         return when (provider) {
-            "zai" -> zaiApiService.processText("Bearer $apiKey", request)
-            else -> openRouterApiService.processText("Bearer $apiKey", request)
+            "groq" -> groqApiService.processText(authorization, request)
+            "zai" -> zaiApiService.processText(authorization, request)
+            else -> openRouterApiService.processText(authorization, request)
         }
     }
 

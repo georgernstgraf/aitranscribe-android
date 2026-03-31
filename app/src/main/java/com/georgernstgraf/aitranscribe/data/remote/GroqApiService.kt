@@ -11,7 +11,10 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.GET
 import retrofit2.http.Query
+import retrofit2.http.Body
 import com.georgernstgraf.aitranscribe.data.remote.dto.ModelsResponse
+import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterRequest
+import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterResponse
 
 /**
  * GROQ API Service for speech-to-text transcription.
@@ -22,6 +25,12 @@ interface GroqApiService {
     suspend fun getModels(
         @Header("Authorization") authorization: String
     ): Response<ModelsResponse>
+
+    @POST("openai/v1/chat/completions")
+    suspend fun processText(
+        @Header("Authorization") authorization: String,
+        @Body request: OpenRouterRequest
+    ): Response<OpenRouterResponse>
 
     @POST("openai/v1/audio/transcriptions")
     @Multipart

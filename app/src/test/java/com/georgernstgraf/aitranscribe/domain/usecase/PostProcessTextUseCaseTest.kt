@@ -2,6 +2,7 @@ package com.georgernstgraf.aitranscribe.domain.usecase
 
 import com.georgernstgraf.aitranscribe.domain.util.PromptManager
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
+import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterResponse
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterChoice
@@ -24,6 +25,7 @@ class PostProcessTextUseCaseTest {
     private lateinit var repository: FakeTranscriptionRepository
     private lateinit var apiService: OpenRouterApiService
     private lateinit var zaiApiService: ZaiApiService
+    private lateinit var groqApiService: GroqApiService
     private lateinit var promptManager: PromptManager
     private lateinit var useCase: PostProcessTextUseCase
 
@@ -32,8 +34,9 @@ class PostProcessTextUseCaseTest {
         repository = FakeTranscriptionRepository()
         apiService = mockk()
         zaiApiService = mockk()
+        groqApiService = mockk()
         promptManager = mockk()
-        useCase = PostProcessTextUseCase(apiService, zaiApiService, repository, promptManager)
+        useCase = PostProcessTextUseCase(apiService, zaiApiService, groqApiService, repository, promptManager)
         
         every { promptManager.get(any()) } answers { firstArg() }
     }
