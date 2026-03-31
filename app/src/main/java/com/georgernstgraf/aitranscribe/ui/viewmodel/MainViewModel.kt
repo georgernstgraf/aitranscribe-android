@@ -7,7 +7,9 @@ import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
 import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
@@ -20,6 +22,8 @@ import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.service.RecordingService
 import com.georgernstgraf.aitranscribe.service.TranscriptionWorker
+import com.georgernstgraf.aitranscribe.util.NetworkMonitor
+import com.georgernstgraf.aitranscribe.util.ToastManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
@@ -39,6 +43,8 @@ class MainViewModel @Inject constructor(
     private val repository: TranscriptionRepository,
     private val queuedTranscriptionDao: QueuedTranscriptionDao,
     private val securePreferences: SecurePreferences,
+    private val toastManager: ToastManager,
+    private val networkMonitor: NetworkMonitor,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -51,11 +57,11 @@ class MainViewModel @Inject constructor(
     private var transcriptionsJob: Job? = null
 
     init {
-        Log.e("MainViewModel", "=== INIT: MainViewModel created ===")
-        Log.e("MainViewModel", "=== INIT: context=$context ===")
+        Log.d("MainViewModel", "MainViewModel created")
         loadRecentTranscriptions()
         registerRecordingResultReceiver()
         loadProcessingMode()
+        observeNetworkForRetry()
     }
 
     override fun onCleared() {
@@ -173,13 +179,11 @@ class MainViewModel @Inject constructor(
             try {
                 Log.d("MainViewModel", "startTranscription: audioPath=$audioPath, duration=$duration")
                 
-                // Get STT and LLM models from preferences
                 val sttModel = securePreferences.getSttModel()
                 val llmModel = securePreferences.getLlmModel()
                 
                 Log.d("MainViewModel", "startTranscription: sttModel=$sttModel, llmModel=$llmModel")
                 
-                // Create queued transcription entity
                 val queuedTranscription = QueuedTranscriptionEntity(
                     audioFilePath = audioPath,
                     sttModel = sttModel,
@@ -189,21 +193,12 @@ class MainViewModel @Inject constructor(
                     priority = 0
                 )
                 
-                // Insert into database
                 val queuedId = queuedTranscriptionDao.insert(queuedTranscription)
                 Log.d("MainViewModel", "startTranscription: queuedId=$queuedId")
                 
-                // Start transcription worker
-                val workRequest = OneTimeWorkRequestBuilder<TranscriptionWorker>()
-                    .setInputData(
-                        TranscriptionWorker.createInputData(queuedId = queuedId)
-                    )
-                    .build()
-                
-                WorkManager.getInstance(context).enqueue(workRequest)
+                enqueueTranscriptionWork(queuedId)
                 Log.d("MainViewModel", "startTranscription: WorkManager enqueued")
                 
-                // Refresh transcriptions list
                 loadRecentTranscriptions()
             } catch (e: Exception) {
                 Log.e("MainViewModel", "startTranscription: error", e)
@@ -295,6 +290,66 @@ class MainViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(recentTranscriptions = emptyList()) }
+            }
+        }
+    }
+
+    private fun observeNetworkForRetry() {
+        viewModelScope.launch {
+            var wasConnected = networkMonitor.isConnected()
+            networkMonitor.networkState.collect { isConnected ->
+                if (!wasConnected && isConnected) {
+                    Log.d("MainViewModel", "Network restored, retrying queued transcriptions")
+                    retryQueuedTranscriptions()
+                }
+                wasConnected = isConnected
+            }
+        }
+    }
+
+    private suspend fun retryQueuedTranscriptions() {
+        val queuedItems = queuedTranscriptionDao.getAllSync()
+        if (queuedItems.isEmpty()) return
+
+        val sttModel = securePreferences.getSttModel()
+        for (queued in queuedItems) {
+            queuedTranscriptionDao.updateSttModel(queued.id, sttModel)
+            enqueueTranscriptionWork(queued.id)
+        }
+        Log.d("MainViewModel", "Retrying ${queuedItems.size} queued transcription(s)")
+    }
+
+    private fun enqueueTranscriptionWork(queuedId: Long) {
+        val workRequest = OneTimeWorkRequestBuilder<TranscriptionWorker>()
+            .setInputData(TranscriptionWorker.createInputData(queuedId = queuedId))
+            .build()
+
+        WorkManager.getInstance(context)
+            .beginUniqueWork(
+                "transcription_$queuedId",
+                ExistingWorkPolicy.KEEP,
+                workRequest
+            )
+            .enqueue()
+
+        observeWorkResult(workRequest.id, queuedId)
+    }
+
+    private fun observeWorkResult(workId: java.util.UUID, queuedId: Long) {
+        viewModelScope.launch {
+            WorkManager.getInstance(context).getWorkInfoByIdFlow(workId).collect { workInfo ->
+                if (workInfo != null && workInfo.state.isFinished) {
+                    when (workInfo.state) {
+                        WorkInfo.State.FAILED -> {
+                            Log.e("MainViewModel", "Transcription work failed for queuedId=$queuedId")
+                            toastManager.showToast(
+                                "Transcription failed — audio kept for retry",
+                                isError = true
+                            )
+                        }
+                        else -> {}
+                    }
+                }
             }
         }
     }

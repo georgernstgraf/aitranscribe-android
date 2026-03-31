@@ -1,16 +1,24 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
+import com.georgernstgraf.aitranscribe.service.TranscriptionWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.georgernstgraf.aitranscribe.data.local.ModelEntity
 import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +31,9 @@ class SettingsViewModel @Inject constructor(
     private val deleteTranscriptionUseCase: DeleteTranscriptionUseCase,
     private val securePreferences: SecurePreferences,
     private val validateApiKeysUseCase: ValidateApiKeysUseCase,
-    private val providerModelDao: ProviderModelDao
+    private val providerModelDao: ProviderModelDao,
+    private val queuedTranscriptionDao: QueuedTranscriptionDao,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -117,6 +127,8 @@ class SettingsViewModel @Inject constructor(
             securePreferences.setLlmModel(state.llmModel)
             securePreferences.setSttProvider(state.sttProvider)
             securePreferences.setLlmProvider(state.llmProvider)
+
+            retryQueuedTranscriptions(state.sttModel)
 
             _uiState.update { it.copy(isValidating = false, isSaved = true) }
         }
@@ -213,6 +225,26 @@ class SettingsViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    private suspend fun retryQueuedTranscriptions(sttModel: String) {
+        val queuedItems = queuedTranscriptionDao.getAllSync()
+        if (queuedItems.isEmpty()) return
+
+        for (queued in queuedItems) {
+            queuedTranscriptionDao.updateSttModel(queued.id, sttModel)
+            val workRequest = OneTimeWorkRequestBuilder<TranscriptionWorker>()
+                .setInputData(TranscriptionWorker.createInputData(queuedId = queued.id))
+                .build()
+            WorkManager.getInstance(context)
+                .beginUniqueWork(
+                    "transcription_${queued.id}",
+                    ExistingWorkPolicy.KEEP,
+                    workRequest
+                )
+                .enqueue()
+        }
+        Log.d("SettingsViewModel", "Retrying ${queuedItems.size} queued transcription(s) with model=$sttModel")
     }
 }
 

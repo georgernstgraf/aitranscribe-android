@@ -42,4 +42,10 @@ interface QueuedTranscriptionDao {
 
     @Query("DELETE FROM queued_transcriptions")
     suspend fun clearAll(): Int
+
+    @Query("SELECT * FROM queued_transcriptions")
+    suspend fun getAllSync(): List<QueuedTranscriptionEntity>
+
+    @Query("UPDATE queued_transcriptions SET sttModel = :model WHERE id = :id")
+    suspend fun updateSttModel(id: Long, model: String)
 }

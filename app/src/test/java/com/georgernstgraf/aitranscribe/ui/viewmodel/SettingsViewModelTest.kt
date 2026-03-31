@@ -1,12 +1,15 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
 import androidx.lifecycle.viewModelScope
+import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
+import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,6 +38,8 @@ class SettingsViewModelTest {
     private lateinit var validateApiKeysUseCase: ValidateApiKeysUseCase
     private lateinit var securePreferences: SecurePreferences
     private lateinit var providerModelDao: ProviderModelDao
+    private lateinit var queuedTranscriptionDao: QueuedTranscriptionDao
+    private lateinit var context: android.content.Context
     private lateinit var viewModel: SettingsViewModel
     private val testDispatcher = StandardTestDispatcher()
 
@@ -45,6 +50,8 @@ class SettingsViewModelTest {
         deleteUseCase = DeleteTranscriptionUseCase(repository)
         securePreferences = mockk(relaxed = true)
         providerModelDao = mockk(relaxed = true)
+        queuedTranscriptionDao = mockk(relaxed = true)
+        context = mockk(relaxed = true)
         validateApiKeysUseCase = ValidateApiKeysUseCase(OkHttpClient())
 
         coEvery { providerModelDao.getModelsForProvider(any()) } returns emptyList()
@@ -59,7 +66,7 @@ class SettingsViewModelTest {
         coEvery { securePreferences.getSttProvider() } returns "groq"
         coEvery { securePreferences.getGroqApiKey() } returns null
 
-        viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase, providerModelDao)
+        viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase, providerModelDao, queuedTranscriptionDao, context)
     }
 
     @Test
@@ -79,7 +86,7 @@ class SettingsViewModelTest {
         coEvery { securePreferences.getActiveAuthToken("zai") } returns null
         
         // Need to recreate ViewModel to trigger init { loadSettings() } with new mocks
-        viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase, providerModelDao)
+        viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase, providerModelDao, queuedTranscriptionDao, context)
         testDispatcher.scheduler.runCurrent()
         
         val state = viewModel.uiState.value
@@ -164,5 +171,22 @@ class SettingsViewModelTest {
 
         val state = viewModel.uiState.value
         assertEquals(ViewFilter.ALL, state.deleteViewFilter)
+    }
+
+    @Test
+    fun `saveSettings retries queued transcriptions with new model`() = runBlocking {
+        val queuedItems = listOf(
+            QueuedTranscriptionEntity(id = 10, audioFilePath = "/a.m4a", sttModel = "old", llmModel = "llm", postProcessingType = "RAW", createdAt = "2026-01-01T00:00:00", priority = 0)
+        )
+        coEvery { queuedTranscriptionDao.getAllSync() } returns queuedItems
+        coEvery { securePreferences.getActiveAuthToken("groq") } returns "groq-key"
+        coEvery { securePreferences.getActiveAuthToken("openrouter") } returns "or-key"
+
+        viewModel.onSttModelChanged("whisper-large-v3-turbo")
+        viewModel.onLlmModelChanged("inception/mercury")
+        viewModel.saveSettings()
+        testDispatcher.scheduler.runCurrent()
+
+        coVerify { queuedTranscriptionDao.updateSttModel(10, "whisper-large-v3-turbo") }
     }
 }
