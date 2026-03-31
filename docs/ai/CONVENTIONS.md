@@ -68,8 +68,10 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - If direct inspection is necessary, copy the database to a readable directory (e.g., `/data/local/tmp/`) using `run-as` if possible, then query it. Ensure cleanup of sensitive data afterwards.
 - Canonical schema is `prisma/desired/schema.prisma`; observed runtime schema is `prisma/device/schema.prisma`.
 - Refresh runtime schema with `cd prisma && make`.
+- For current implementation truth checks, treat freshly introspected `prisma/device/schema.prisma` as authoritative.
 - Check schema drift with `cd prisma && make check-schema`.
 - Any desired-schema change must have a linked implementation issue for Kotlin/Room migration work before considering drift a bug.
+- Never change `prisma/desired/schema.prisma` unless the user explicitly requests that specific change.
 
 ## Companion Project
 - `../aitranscribe` (Python/TUI) is the **lead and authoritative project** for pipeline logic, prompts, and feature design

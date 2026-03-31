@@ -11,7 +11,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
@@ -38,7 +38,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: TranscriptionRepository,
-    private val securePreferences: SecurePreferences,
+    private val appSettingsStore: AppSettingsStore,
     private val toastManager: ToastManager,
     private val networkMonitor: NetworkMonitor,
     @ApplicationContext private val context: Context
@@ -184,10 +184,10 @@ class MainViewModel @Inject constructor(
             try {
                 Log.d("MainViewModel", "startTranscription: audioPath=$audioPath, duration=$duration")
 
-                val sttProvider = securePreferences.getSttProvider()
-                val llmProvider = securePreferences.getLlmProvider()
-                val sttModel = securePreferences.getProviderSttModel(sttProvider, securePreferences.getSttModel())
-                val llmModel = securePreferences.getProviderLlmModel(llmProvider, securePreferences.getLlmModel())
+                val sttProvider = appSettingsStore.getSttProvider()
+                val llmProvider = appSettingsStore.getLlmProvider()
+                val sttModel = appSettingsStore.getProviderSttModel(sttProvider, appSettingsStore.getSttModel())
+                val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, appSettingsStore.getLlmModel())
                 
                 Log.d("MainViewModel", "startTranscription: sttModel=$sttModel, llmModel=$llmModel")
                 
@@ -236,7 +236,7 @@ class MainViewModel @Inject constructor(
 
     fun shareTranscription(transcription: Transcription): Intent {
         val text = transcription.getShareText()
-        val preferredApp = securePreferences.getPreferredShareApp()
+        val preferredApp = appSettingsStore.getPreferredShareApp()
 
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
@@ -254,7 +254,7 @@ class MainViewModel @Inject constructor(
                 intent
             } catch (_: Exception) {
                 // App uninstalled, clear preference
-                viewModelScope.launch { securePreferences.setPreferredShareApp(null) }
+                viewModelScope.launch { appSettingsStore.setPreferredShareApp(null) }
                 Intent.createChooser(Intent(intent).setPackage(null), "Share transcription")
             }
         } else {
@@ -264,7 +264,7 @@ class MainViewModel @Inject constructor(
 
     fun savePreferredShareApp(packageName: String?) {
         viewModelScope.launch {
-            securePreferences.setPreferredShareApp(packageName)
+            appSettingsStore.setPreferredShareApp(packageName)
         }
     }
 
@@ -276,13 +276,13 @@ class MainViewModel @Inject constructor(
     fun setProcessingMode(mode: PostProcessingType) {
         _uiState.update { it.copy(processingMode = mode) }
         viewModelScope.launch {
-            securePreferences.setProcessingMode(mode.name)
+            appSettingsStore.setProcessingMode(mode.name)
         }
     }
 
     private fun loadProcessingMode() {
         viewModelScope.launch {
-            val modeName = securePreferences.getProcessingMode()
+            val modeName = appSettingsStore.getProcessingMode()
             val mode = when (modeName) {
                 PostProcessingType.CLEANUP.name,
                 PostProcessingType.TRANSLATE_TO_EN.name,
@@ -304,8 +304,8 @@ class MainViewModel @Inject constructor(
                     ViewFilter.VIEWED -> repository.getViewed(limit = 50)
                 }
                 flow.collect { transcriptions ->
-                    val sttProvider = securePreferences.getSttProvider()
-                    val hasSttToken = !securePreferences.getActiveAuthToken(sttProvider).isNullOrBlank()
+                    val sttProvider = appSettingsStore.getSttProvider()
+                    val hasSttToken = !appSettingsStore.getActiveAuthToken(sttProvider).isNullOrBlank()
                     _uiState.update { 
                         it.copy(
                             recentTranscriptions = transcriptions,
@@ -343,7 +343,7 @@ class MainViewModel @Inject constructor(
         )
         if (queuedItems.isEmpty()) return
 
-        val sttModel = securePreferences.getSttModel()
+        val sttModel = appSettingsStore.getSttModel()
         for (transcription in queuedItems) {
             repository.updateSttModel(transcription.id, sttModel)
             repository.updateStatusAndError(transcription.id, TranscriptionStatus.PENDING.name, null)

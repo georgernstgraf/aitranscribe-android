@@ -5,10 +5,10 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.CapabilityEntity
 import com.georgernstgraf.aitranscribe.data.local.ModelCatalogEntry
 import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
@@ -25,7 +25,7 @@ class ModelSyncWorker @AssistedInject constructor(
     private val groqApiService: GroqApiService,
     private val openRouterApiService: OpenRouterApiService,
     private val zaiApiService: ZaiApiService,
-    private val securePreferences: SecurePreferences
+    private val appSettingsStore: AppSettingsStore
 ) : CoroutineWorker(context, workerParams) {
 
     companion object {
@@ -57,7 +57,7 @@ class ModelSyncWorker @AssistedInject constructor(
     private suspend fun syncProvider(providerId: String, timestamp: Long) {
         var token = providerModelDao.getProviderApiToken(providerId)
         if (token.isNullOrBlank()) {
-            token = securePreferences.getActiveAuthToken(providerId)
+            token = appSettingsStore.getActiveAuthToken(providerId)
             if (!token.isNullOrBlank()) {
                 providerModelDao.updateProviderApiToken(providerId, token)
             }

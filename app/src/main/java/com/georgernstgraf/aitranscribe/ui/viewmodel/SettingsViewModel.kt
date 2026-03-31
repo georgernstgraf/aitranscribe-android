@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
@@ -31,7 +31,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val deleteTranscriptionUseCase: DeleteTranscriptionUseCase,
     private val repository: TranscriptionRepository,
-    private val securePreferences: SecurePreferences,
+    private val appSettingsStore: AppSettingsStore,
     private val validateApiKeysUseCase: ValidateApiKeysUseCase,
     private val providerModelDao: ProviderModelDao,
     @ApplicationContext private val context: Context
@@ -60,7 +60,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val models = providerModelDao.getModelsForProvider(providerId).map { it.externalId }
             val fallback = models.firstOrNull() ?: ProviderConfig.getSttModelsForProvider(providerId).firstOrNull() ?: ""
-            val model = securePreferences.getProviderSttModel(providerId, fallback)
+            val model = appSettingsStore.getProviderSttModel(providerId, fallback)
             _uiState.update { it.copy(sttProvider = providerId, sttModel = model) }
             updateDropdownModels()
         }
@@ -74,7 +74,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val models = providerModelDao.getModelsForProvider(providerId).map { it.externalId }
             val fallback = models.firstOrNull() ?: ProviderConfig.getLlmModelsForProvider(providerId).firstOrNull() ?: ""
-            val model = securePreferences.getProviderLlmModel(providerId, fallback)
+            val model = appSettingsStore.getProviderLlmModel(providerId, fallback)
             _uiState.update { it.copy(llmProvider = providerId, llmModel = model) }
             updateDropdownModels()
         }
@@ -120,14 +120,14 @@ class SettingsViewModel @Inject constructor(
             }
 
             // Save provider-specific models
-            securePreferences.setProviderLlmModel(state.llmProvider, state.llmModel)
-            securePreferences.setProviderSttModel(state.sttProvider, state.sttModel)
+            appSettingsStore.setProviderLlmModel(state.llmProvider, state.llmModel)
+            appSettingsStore.setProviderSttModel(state.sttProvider, state.sttModel)
             
             // Save global active providers
-            securePreferences.setSttModel(state.sttModel)
-            securePreferences.setLlmModel(state.llmModel)
-            securePreferences.setSttProvider(state.sttProvider)
-            securePreferences.setLlmProvider(state.llmProvider)
+            appSettingsStore.setSttModel(state.sttModel)
+            appSettingsStore.setLlmModel(state.llmModel)
+            appSettingsStore.setSttProvider(state.sttProvider)
+            appSettingsStore.setLlmProvider(state.llmProvider)
 
             retryQueuedTranscriptions(state.sttModel)
 
@@ -163,7 +163,7 @@ class SettingsViewModel @Inject constructor(
 
     fun saveProviderAuth(providerId: String, token: String) {
         viewModelScope.launch {
-            securePreferences.setProviderAuthToken(providerId, token)
+            appSettingsStore.setProviderAuthToken(providerId, token)
             // Refresh state to update auth status
             loadSettings()
         }
@@ -176,8 +176,8 @@ class SettingsViewModel @Inject constructor(
     private fun loadSettings() {
         viewModelScope.launch {
             try {
-                val sttProvider = securePreferences.getSttProvider()
-                val llmProvider = securePreferences.getLlmProvider()
+                val sttProvider = appSettingsStore.getSttProvider()
+                val llmProvider = appSettingsStore.getLlmProvider()
                 
                 // Track only providers with valid auth tokens
                 val allProviderIds = ProviderConfig.allProviderIds
@@ -198,12 +198,12 @@ class SettingsViewModel @Inject constructor(
                         activeProviders = activeProviders,
                         availableProviders = availableProviders,
                         providerAuthStatus = authStatus,
-                        groqApiKey = securePreferences.getActiveAuthToken("groq"),
-                        openRouterApiKey = securePreferences.getActiveAuthToken("openrouter"),
-                        zaiApiKey = securePreferences.getActiveAuthToken("zai"),
-                        sttModel = securePreferences.getProviderSttModel(sttProvider, sttFallback),
+                        groqApiKey = appSettingsStore.getActiveAuthToken("groq"),
+                        openRouterApiKey = appSettingsStore.getActiveAuthToken("openrouter"),
+                        zaiApiKey = appSettingsStore.getActiveAuthToken("zai"),
+                        sttModel = appSettingsStore.getProviderSttModel(sttProvider, sttFallback),
                         sttProvider = sttProvider,
-                        llmModel = securePreferences.getProviderLlmModel(llmProvider, llmFallback),
+                        llmModel = appSettingsStore.getProviderLlmModel(llmProvider, llmFallback),
                         llmProvider = llmProvider,
                         sttAvailableModels = sttModels,
                         llmAvailableModels = llmModels
@@ -216,7 +216,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun getEffectiveProviderToken(providerId: String): String? {
-        return securePreferences.getActiveAuthToken(providerId)
+        return appSettingsStore.getActiveAuthToken(providerId)
     }
 
     private fun updateDropdownModels() {

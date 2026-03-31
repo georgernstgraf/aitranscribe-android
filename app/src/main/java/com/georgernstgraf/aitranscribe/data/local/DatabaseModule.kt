@@ -35,4 +35,12 @@ object DatabaseModule {
     ): ProviderModelDao {
         return database.providerModelDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideAppPreferencesDao(
+        database: TranscriptionDatabase
+    ): AppPreferencesDao {
+        return database.appPreferencesDao()
+    }
 }

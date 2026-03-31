@@ -2,7 +2,7 @@ package com.georgernstgraf.aitranscribe.ui.viewmodel
 
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
@@ -33,7 +33,7 @@ import java.time.LocalDateTime
 class MainViewModelTest {
 
     private lateinit var repository: FakeTranscriptionRepository
-    private lateinit var securePreferences: SecurePreferences
+    private lateinit var appSettingsStore: AppSettingsStore
     private lateinit var toastManager: ToastManager
     private lateinit var networkMonitor: NetworkMonitor
     private lateinit var context: android.content.Context
@@ -47,15 +47,18 @@ class MainViewModelTest {
         Dispatchers.setMain(testDispatcher)
         repository = FakeTranscriptionRepository()
 
-        securePreferences = mockk(relaxed = true)
+        appSettingsStore = mockk(relaxed = true)
         toastManager = mockk(relaxed = true)
         networkMonitor = mockk(relaxed = true)
         context = mockk(relaxed = true)
 
-        coEvery { securePreferences.getSttModel() } returns "whisper-large-v3"
-        coEvery { securePreferences.getLlmModel() } returns "claude-3-haiku"
-        coEvery { securePreferences.getSttProvider() } returns "groq"
-        coEvery { securePreferences.getActiveAuthToken("groq") } returns "test-key"
+        coEvery { appSettingsStore.getSttModel() } returns "whisper-large-v3"
+        coEvery { appSettingsStore.getLlmModel() } returns "claude-3-haiku"
+        coEvery { appSettingsStore.getProviderSttModel(any(), any()) } answers { secondArg() }
+        coEvery { appSettingsStore.getProviderLlmModel(any(), any()) } answers { secondArg() }
+        coEvery { appSettingsStore.getSttProvider() } returns "groq"
+        coEvery { appSettingsStore.getLlmProvider() } returns "openrouter"
+        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "test-key"
         every { context.registerReceiver(any(), any()) } returns null
         every { networkMonitor.isConnected() } returns false
         every { networkMonitor.networkState } returns networkStateFlow
@@ -71,7 +74,7 @@ class MainViewModelTest {
     }
 
     private fun createViewModel(): MainViewModel {
-        return MainViewModel(repository, securePreferences, toastManager, networkMonitor, context)
+        return MainViewModel(repository, appSettingsStore, toastManager, networkMonitor, context)
     }
 
     @Test
@@ -114,7 +117,7 @@ class MainViewModelTest {
     fun `network reconnect retries queued transcriptions with updated model`() = runBlocking {
         repository.insert(TranscriptionEntity(originalText = "", processedText = null, audioFilePath = "/a.m4a", sttModel = "old-model", llmModel = "llm", createdAt = LocalDateTime.now().toString(), postProcessingType = "RAW", status = TranscriptionStatus.NO_NETWORK.name, errorMessage = null))
         repository.insert(TranscriptionEntity(originalText = "", processedText = null, audioFilePath = "/b.m4a", sttModel = "old-model", llmModel = "llm", createdAt = LocalDateTime.now().toString(), postProcessingType = "RAW", status = TranscriptionStatus.STT_ERROR_RETRYABLE.name, errorMessage = null))
-        coEvery { securePreferences.getSttModel() } returns "whisper-large-v3-turbo"
+        coEvery { appSettingsStore.getSttModel() } returns "whisper-large-v3-turbo"
 
         val workManager = mockk<androidx.work.WorkManager>(relaxed = true)
         mockkStatic(androidx.work.WorkManager::class)
@@ -172,7 +175,7 @@ class MainViewModelTest {
                 errorMessage = null
             )
         )
-        coEvery { securePreferences.getSttModel() } returns "whisper-large-v3-turbo"
+        coEvery { appSettingsStore.getSttModel() } returns "whisper-large-v3-turbo"
 
         val workManager = mockk<androidx.work.WorkManager>(relaxed = true)
         mockkStatic(androidx.work.WorkManager::class)

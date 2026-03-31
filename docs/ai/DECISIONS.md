@@ -159,3 +159,13 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Treat `providers.api_token` as the only runtime auth-token source; keep `SecurePreferences` for non-auth settings only.
 - **Reason**: Reduce token-source drift and align provider auth behavior with DB governance.
 - **Changed**: Removed legacy auth-key helper usage paths and switched app auth lookups to DB-backed methods.
+
+## 2026-03-31: Device introspection is the source of current DB truth during migration work
+- **Choice**: Use freshly generated `prisma/device/schema.prisma` from `cd prisma && make` as the current implementation truth reference.
+- **Reason**: Runtime schema must be validated against what actually exists on device/emulator, not assumed from planned schema changes.
+- **Changed**: Re-ran `cd prisma && make` and persisted the convention to always refresh device truth before drift evaluation.
+
+## 2026-03-31: Removed SecurePreferences from production and moved settings to Room-backed store (#56)
+- **Choice**: Replaced `SecurePreferences` with `AppSettingsStore` backed by `app_preferences` + `providers.api_token`.
+- **Reason**: Single DB-backed persistence path reduces settings/token drift and aligns runtime behavior with device-introspected schema truth.
+- **Changed**: Added `MIGRATION_7_8` for `app_preferences`, migrated production callers (viewmodels/workers/setup), and deleted `SecurePreferences` from production code.

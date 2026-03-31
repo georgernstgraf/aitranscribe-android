@@ -5,7 +5,7 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.toDomain
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
@@ -30,7 +30,7 @@ import javax.inject.Inject
 class TranscriptionDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val repository: TranscriptionRepository,
-    private val securePreferences: SecurePreferences,
+    private val appSettingsStore: AppSettingsStore,
     private val postProcessTextUseCase: PostProcessTextUseCase,
     private val toastManager: ToastManager,
     @ApplicationContext private val context: Context
@@ -74,9 +74,9 @@ class TranscriptionDetailViewModel @Inject constructor(
     private fun translate(target: TranslationTarget) {
         viewModelScope.launch {
             val transcription = _uiState.value.transcription ?: return@launch
-            val llmProvider = securePreferences.getLlmProvider()
-            val apiKey = securePreferences.getActiveAuthToken(llmProvider)
-            val llmModel = securePreferences.getProviderLlmModel(llmProvider, securePreferences.getLlmModel())
+            val llmProvider = appSettingsStore.getLlmProvider()
+            val apiKey = appSettingsStore.getActiveAuthToken(llmProvider)
+            val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, appSettingsStore.getLlmModel())
 
             if (apiKey.isNullOrBlank()) {
                 viewModelScope.launch {
@@ -191,7 +191,7 @@ class TranscriptionDetailViewModel @Inject constructor(
 
     fun shareTranscription(transcription: Transcription): Intent {
         val text = transcription.getShareText()
-        val preferredApp = securePreferences.getPreferredShareApp()
+        val preferredApp = appSettingsStore.getPreferredShareApp()
 
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
@@ -207,7 +207,7 @@ class TranscriptionDetailViewModel @Inject constructor(
                 context.packageManager.getPackageInfo(preferredApp, 0)
                 intent
             } catch (_: Exception) {
-                viewModelScope.launch { securePreferences.setPreferredShareApp(null) }
+                viewModelScope.launch { appSettingsStore.setPreferredShareApp(null) }
                 Intent.createChooser(Intent(intent).setPackage(null), "Share transcription")
             }
         } else {

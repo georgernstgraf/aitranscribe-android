@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
@@ -42,7 +42,7 @@ class TranscriptionWorkerTest {
     private lateinit var openRouterApiService: OpenRouterApiService
     private lateinit var zaiApiService: ZaiApiService
     private lateinit var networkMonitor: NetworkMonitor
-    private lateinit var securePreferences: SecurePreferences
+    private lateinit var appSettingsStore: AppSettingsStore
     private lateinit var providerModelDao: ProviderModelDao
     private lateinit var postProcessTextUseCase: PostProcessTextUseCase
 
@@ -61,7 +61,7 @@ class TranscriptionWorkerTest {
         openRouterApiService = mockk(relaxed = true)
         zaiApiService = mockk(relaxed = true)
         networkMonitor = mockk(relaxed = true)
-        securePreferences = mockk(relaxed = true)
+        appSettingsStore = mockk(relaxed = true)
         providerModelDao = mockk(relaxed = true)
         postProcessTextUseCase = mockk(relaxed = true)
 
@@ -69,10 +69,13 @@ class TranscriptionWorkerTest {
         every { networkMonitor.isConnected() } returns true
 
         // Default API Key
-        coEvery { securePreferences.getGroqApiKey() } returns "fake-groq-key"
-        coEvery { securePreferences.getActiveAuthToken(any()) } returns "fake-llm-token"
-        coEvery { securePreferences.getSttProvider() } returns "groq"
-        coEvery { securePreferences.getLlmProvider() } returns "openrouter"
+        coEvery { appSettingsStore.getGroqApiKey() } returns "fake-groq-key"
+        coEvery { appSettingsStore.getActiveAuthToken(any()) } returns "fake-llm-token"
+        coEvery { appSettingsStore.getSttProvider() } returns "groq"
+        coEvery { appSettingsStore.getLlmProvider() } returns "openrouter"
+        coEvery { appSettingsStore.getProviderLlmModel(any(), any()) } answers { secondArg() }
+        coEvery { appSettingsStore.getLlmModel() } returns "anthropic/claude-3-haiku"
+        coEvery { appSettingsStore.getSttModel() } returns "whisper-large-v3-turbo"
 
         // Default Groq success
         val fakeResponse = GroqTranscriptionResponse(text = "Hello world")
@@ -88,7 +91,7 @@ class TranscriptionWorkerTest {
             openRouterApiService,
             zaiApiService,
             networkMonitor,
-            securePreferences,
+            appSettingsStore,
             providerModelDao,
             postProcessTextUseCase
         )

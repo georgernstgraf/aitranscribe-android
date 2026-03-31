@@ -29,6 +29,9 @@ interface ProviderModelDao {
     @Query("UPDATE providers SET api_token = :token WHERE id = :providerId")
     suspend fun updateProviderApiToken(providerId: String, token: String?)
 
+    @Query("UPDATE providers SET api_token = NULL")
+    suspend fun clearAllProviderApiTokens()
+
     @Query("SELECT api_token FROM providers WHERE id = :providerId LIMIT 1")
     suspend fun getProviderApiToken(providerId: String): String?
 

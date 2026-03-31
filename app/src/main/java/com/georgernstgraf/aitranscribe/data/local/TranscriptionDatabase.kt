@@ -13,15 +13,17 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ProviderEntity::class,
         ModelEntity::class,
         CapabilityEntity::class,
-        ModelCapabilityEntity::class
+        ModelCapabilityEntity::class,
+        AppPreferenceEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class TranscriptionDatabase : RoomDatabase() {
 
     abstract fun transcriptionDao(): TranscriptionDao
     abstract fun providerModelDao(): ProviderModelDao
+    abstract fun appPreferencesDao(): AppPreferencesDao
 
     companion object {
         private const val DATABASE_NAME = "aitranscribe.db"
@@ -36,7 +38,7 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                     TranscriptionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .addCallback(ProviderPrepopulateCallback())
                     .fallbackToDestructiveMigration()
                     .build()
@@ -317,6 +319,21 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                 db.execSQL("DROP TABLE IF EXISTS `providers`")
                 db.execSQL("ALTER TABLE `providers_new` RENAME TO `providers`")
                 db.execSQL("PRAGMA foreign_keys=ON")
+            }
+        }
+
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `app_preferences` (
+                        `key` TEXT NOT NULL,
+                        `value` TEXT NOT NULL,
+                        `updated_at` TEXT NOT NULL,
+                        PRIMARY KEY(`key`)
+                    )
+                    """.trimIndent()
+                )
             }
         }
     }

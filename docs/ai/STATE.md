@@ -3,20 +3,21 @@
 Current status as of 2026-03-31.
 
 ## Current Focus
-Complete remaining desired/runtime convergence for transcription schema (#53) and full SecurePreferences removal (#56).
+Transcription schema convergence work (#53) after SecurePreferences removal completion.
 
 ## Completed (this cycle)
-- [x] Closed #55 (provider auth storage aligned to `providers.api_token`)
-- [x] Implemented #57 ZAI coding-endpoint resilience for post-processing
-- [x] Unified runtime auth token reads to DB-backed provider tokens (removed legacy auth-key helper usage)
-- [x] Confirmed build/test health after changes (`./gradlew test`, `./gradlew assembleDebug`)
+- [x] Completed #56: removed `SecurePreferences` from production code
+- [x] Added `AppSettingsStore` as Room-backed settings/auth abstraction
+- [x] Added Room DB support for `app_preferences` (`version 8`, `MIGRATION_7_8`, DAO provider)
+- [x] Migrated production callers (viewmodels/workers/setup) to `AppSettingsStore`
+- [x] Refreshed runtime schema via `cd prisma && make`
+- [x] Verified build/test health (`./gradlew testDebugUnitTest`, `./gradlew test`, `./gradlew assembleDebug`)
 
 ## Pending
 - [ ] #53 — Simplify transcription model to match desired schema contract
-- [ ] #56 — Remove `SecurePreferences` and migrate remaining app settings into Room + desired schema updates
 
 ## Blockers
-- None hard; ZAI behavior depends on provider package/key type and endpoint compatibility
+- None hard
 
 ## Next Session Suggestion
-Start #56 by designing a Room-backed settings model in `prisma/desired/schema.prisma`, then migrate non-auth `SecurePreferences` values (provider/model selections, processing mode, share app) to DB.
+Start #53 by mapping runtime transcription fields against current device schema and implementing a single migration pass with updated app-layer usage.

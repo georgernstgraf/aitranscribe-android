@@ -8,7 +8,7 @@ import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
@@ -37,7 +37,7 @@ class TranscriptionWorker @AssistedInject constructor(
     private val openRouterApiService: OpenRouterApiService,
     private val zaiApiService: ZaiApiService,
     private val networkMonitor: NetworkMonitor,
-    private val securePreferences: SecurePreferences,
+    private val appSettingsStore: AppSettingsStore,
     private val providerModelDao: ProviderModelDao,
     private val postProcessTextUseCase: PostProcessTextUseCase
 ) : CoroutineWorker(context, params) {
@@ -60,11 +60,11 @@ class TranscriptionWorker @AssistedInject constructor(
 
         repository.updateStatusAndError(transcriptionId, TranscriptionStatus.PROCESSING.name, null)
 
-        val sttModel = transcription.sttModel ?: securePreferences.getSttModel()
-        val llmProvider = securePreferences.getLlmProvider()
-        val llmModel = securePreferences.getProviderLlmModel(
+        val sttModel = transcription.sttModel ?: appSettingsStore.getSttModel()
+        val llmProvider = appSettingsStore.getLlmProvider()
+        val llmModel = appSettingsStore.getProviderLlmModel(
             llmProvider,
-            transcription.llmModel ?: securePreferences.getLlmModel()
+            transcription.llmModel ?: appSettingsStore.getLlmModel()
         )
         val processingMode = transcription.postProcessingType ?: PostProcessingType.RAW.name
 
@@ -100,7 +100,7 @@ class TranscriptionWorker @AssistedInject constructor(
             )
         )
 
-        val llmApiKey = securePreferences.getActiveAuthToken(llmProvider)
+        val llmApiKey = appSettingsStore.getActiveAuthToken(llmProvider)
 
         val postProcessingType = when (processingMode) {
             PostProcessingType.CLEANUP.name,
@@ -137,8 +137,8 @@ class TranscriptionWorker @AssistedInject constructor(
                                 llmApiKey = llmApiKey,
                                 llmProvider = llmProvider
                             )
-                            securePreferences.setProviderLlmModel("zai", fallbackModel)
-                            securePreferences.setLlmModel(fallbackModel)
+                            appSettingsStore.setProviderLlmModel("zai", fallbackModel)
+                            appSettingsStore.setLlmModel(fallbackModel)
                             repository.clearAudioPath(transcriptionId)
                             cleanupAudioFile(audioPath)
                             cleanupOrphanedAudioFiles()
@@ -221,8 +221,8 @@ class TranscriptionWorker @AssistedInject constructor(
         val audioFile = File(audioPath)
         if (!audioFile.exists()) throw Exception("Audio file not found: $audioPath")
 
-        val sttProvider = securePreferences.getSttProvider()
-        val token = securePreferences.getActiveAuthToken(sttProvider)
+        val sttProvider = appSettingsStore.getSttProvider()
+        val token = appSettingsStore.getActiveAuthToken(sttProvider)
         if (token.isNullOrBlank()) throw Exception("${sttProvider.replaceFirstChar { it.uppercase() }} API token not configured")
         val authorization = if (token.startsWith("Bearer ")) token else "Bearer $token"
 

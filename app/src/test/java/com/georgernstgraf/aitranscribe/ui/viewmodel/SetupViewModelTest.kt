@@ -1,7 +1,7 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.domain.usecase.ApiKeyError
 import com.georgernstgraf.aitranscribe.domain.usecase.ApiKeyValidationResult
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
@@ -26,7 +26,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class SetupViewModelTest {
 
-    private lateinit var securePreferences: SecurePreferences
+    private lateinit var appSettingsStore: AppSettingsStore
     private lateinit var validateApiKeysUseCase: ValidateApiKeysUseCase
     private lateinit var viewModel: SetupViewModel
     private val testDispatcher = StandardTestDispatcher()
@@ -34,7 +34,7 @@ class SetupViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        securePreferences = mockk(relaxed = true)
+        appSettingsStore = mockk(relaxed = true)
         validateApiKeysUseCase = mockk()
     }
 
@@ -47,19 +47,19 @@ class SetupViewModelTest {
     }
 
     private suspend fun createViewModel(): SetupViewModel {
-        coEvery { securePreferences.getGroqApiKey() } returns null
-        coEvery { securePreferences.getOpenRouterApiKey() } returns null
-        val vm = SetupViewModel(securePreferences, validateApiKeysUseCase)
+        coEvery { appSettingsStore.getGroqApiKey() } returns null
+        coEvery { appSettingsStore.getOpenRouterApiKey() } returns null
+        val vm = SetupViewModel(appSettingsStore, validateApiKeysUseCase)
         testDispatcher.scheduler.runCurrent()
         return vm
     }
 
     @Test
     fun `initial state has default values`() = runBlocking {
-        coEvery { securePreferences.getGroqApiKey() } returns null
-        coEvery { securePreferences.getOpenRouterApiKey() } returns null
+        coEvery { appSettingsStore.getGroqApiKey() } returns null
+        coEvery { appSettingsStore.getOpenRouterApiKey() } returns null
 
-        viewModel = SetupViewModel(securePreferences, validateApiKeysUseCase)
+        viewModel = SetupViewModel(appSettingsStore, validateApiKeysUseCase)
 
         val state = viewModel.uiState.value
         assertNull(state.groqApiKey)
@@ -70,8 +70,8 @@ class SetupViewModelTest {
 
     @Test
     fun `loadExistingKeys populates keys from secure preferences`() = runBlocking {
-        coEvery { securePreferences.getGroqApiKey() } returns "gsk_test1234567890123456"
-        coEvery { securePreferences.getOpenRouterApiKey() } returns "sk-or-test1234567890123"
+        coEvery { appSettingsStore.getGroqApiKey() } returns "gsk_test1234567890123456"
+        coEvery { appSettingsStore.getOpenRouterApiKey() } returns "sk-or-test1234567890123"
         coEvery {
             validateApiKeysUseCase("gsk_test1234567890123456", "sk-or-test1234567890123")
         } returns ApiKeyValidationResult(
@@ -82,7 +82,7 @@ class SetupViewModelTest {
             isValid = true
         )
 
-        viewModel = SetupViewModel(securePreferences, validateApiKeysUseCase)
+        viewModel = SetupViewModel(appSettingsStore, validateApiKeysUseCase)
         testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.uiState.value
@@ -117,8 +117,8 @@ class SetupViewModelTest {
 
     @Test
     fun `validateAndSave sets isSetupComplete on success`() = runBlocking {
-        coEvery { securePreferences.setGroqApiKey(any()) } returns Unit
-        coEvery { securePreferences.setOpenRouterApiKey(any()) } returns Unit
+        coEvery { appSettingsStore.setGroqApiKey(any()) } returns Unit
+        coEvery { appSettingsStore.setOpenRouterApiKey(any()) } returns Unit
         coEvery {
             validateApiKeysUseCase("gsk_test1234567890123456", "sk-or-test1234567890123")
         } returns ApiKeyValidationResult(

@@ -1,7 +1,7 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.ModelEntity
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
@@ -35,7 +35,7 @@ class SettingsViewModelTest {
     private lateinit var repository: FakeTranscriptionRepository
     private lateinit var deleteUseCase: DeleteTranscriptionUseCase
     private lateinit var validateApiKeysUseCase: ValidateApiKeysUseCase
-    private lateinit var securePreferences: SecurePreferences
+    private lateinit var appSettingsStore: AppSettingsStore
     private lateinit var providerModelDao: ProviderModelDao
     private lateinit var context: android.content.Context
     private lateinit var viewModel: SettingsViewModel
@@ -46,22 +46,22 @@ class SettingsViewModelTest {
         Dispatchers.setMain(testDispatcher)
         repository = FakeTranscriptionRepository()
         deleteUseCase = DeleteTranscriptionUseCase(repository)
-        securePreferences = mockk(relaxed = true)
+        appSettingsStore = mockk(relaxed = true)
         providerModelDao = mockk(relaxed = true)
         context = mockk(relaxed = true)
         validateApiKeysUseCase = ValidateApiKeysUseCase(OkHttpClient())
 
         coEvery { providerModelDao.getModelsForProvider(any()) } returns emptyList()
 
-        coEvery { securePreferences.getActiveAuthToken("groq") } returns null
-        coEvery { securePreferences.getActiveAuthToken("openrouter") } returns null
-        coEvery { securePreferences.getActiveAuthToken("zai") } returns null
-        coEvery { securePreferences.getProviderSttModel("groq", any()) } returns "whisper-large-v3-turbo"
-        coEvery { securePreferences.getProviderLlmModel("openrouter", any()) } returns "anthropic/claude-3-haiku"
-        coEvery { securePreferences.getProviderLlmModel("zai", any()) } returns "glm-4.7"
-        coEvery { securePreferences.getLlmProvider() } returns "openrouter"
-        coEvery { securePreferences.getSttProvider() } returns "groq"
-        viewModel = SettingsViewModel(deleteUseCase, repository, securePreferences, validateApiKeysUseCase, providerModelDao, context)
+        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns null
+        coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns null
+        coEvery { appSettingsStore.getActiveAuthToken("zai") } returns null
+        coEvery { appSettingsStore.getProviderSttModel("groq", any()) } returns "whisper-large-v3-turbo"
+        coEvery { appSettingsStore.getProviderLlmModel("openrouter", any()) } returns "anthropic/claude-3-haiku"
+        coEvery { appSettingsStore.getProviderLlmModel("zai", any()) } returns "glm-4.7"
+        coEvery { appSettingsStore.getLlmProvider() } returns "openrouter"
+        coEvery { appSettingsStore.getSttProvider() } returns "groq"
+        viewModel = SettingsViewModel(deleteUseCase, repository, appSettingsStore, validateApiKeysUseCase, providerModelDao, context)
     }
 
     @Test
@@ -76,12 +76,12 @@ class SettingsViewModelTest {
     @Test
     fun `activeProviders excludes providers without active token`() = runBlocking {
         // Setup: Groq has token, OpenRouter has old flat key, ZAI has nothing
-        coEvery { securePreferences.getActiveAuthToken("groq") } returns "token_groq"
-        coEvery { securePreferences.getActiveAuthToken("openrouter") } returns "token_or"
-        coEvery { securePreferences.getActiveAuthToken("zai") } returns null
+        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "token_groq"
+        coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "token_or"
+        coEvery { appSettingsStore.getActiveAuthToken("zai") } returns null
         
         // Need to recreate ViewModel to trigger init { loadSettings() } with new mocks
-        viewModel = SettingsViewModel(deleteUseCase, repository, securePreferences, validateApiKeysUseCase, providerModelDao, context)
+        viewModel = SettingsViewModel(deleteUseCase, repository, appSettingsStore, validateApiKeysUseCase, providerModelDao, context)
         testDispatcher.scheduler.runCurrent()
         
         val state = viewModel.uiState.value
@@ -184,8 +184,8 @@ class SettingsViewModelTest {
                 errorMessage = "Model invalid"
             )
         )
-        coEvery { securePreferences.getActiveAuthToken("groq") } returns "groq-key"
-        coEvery { securePreferences.getActiveAuthToken("openrouter") } returns "or-key"
+        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "groq-key"
+        coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "or-key"
 
         viewModel.onSttModelChanged("whisper-large-v3-turbo")
         viewModel.onLlmModelChanged("inception/mercury")

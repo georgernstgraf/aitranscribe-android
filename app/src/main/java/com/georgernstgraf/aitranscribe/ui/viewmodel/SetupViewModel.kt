@@ -2,7 +2,7 @@ package com.georgernstgraf.aitranscribe.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.domain.usecase.ApiKeyError
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SetupViewModel @Inject constructor(
-    private val securePreferences: SecurePreferences,
+    private val appSettingsStore: AppSettingsStore,
     private val validateApiKeysUseCase: ValidateApiKeysUseCase
 ) : ViewModel() {
 
@@ -62,14 +62,14 @@ class SetupViewModel @Inject constructor(
     }
 
     private suspend fun saveApiKeys() {
-        _uiState.value.groqApiKey?.let { securePreferences.setGroqApiKey(it) }
-        _uiState.value.openRouterApiKey?.let { securePreferences.setOpenRouterApiKey(it) }
+        _uiState.value.groqApiKey?.let { appSettingsStore.setGroqApiKey(it) }
+        _uiState.value.openRouterApiKey?.let { appSettingsStore.setOpenRouterApiKey(it) }
     }
 
     private fun loadExistingKeys() {
         viewModelScope.launch {
-            val savedGroqKey = securePreferences.getGroqApiKey()
-            val savedOpenRouterKey = securePreferences.getOpenRouterApiKey()
+            val savedGroqKey = appSettingsStore.getGroqApiKey()
+            val savedOpenRouterKey = appSettingsStore.getOpenRouterApiKey()
 
             _uiState.update {
                 it.copy(

@@ -3,10 +3,10 @@ package com.georgernstgraf.aitranscribe.service
 import android.content.Context
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
+import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.ModelEntity
 import com.georgernstgraf.aitranscribe.data.local.ProviderEntity
 import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
-import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
@@ -28,7 +28,7 @@ class ModelSyncWorkerTest {
     private lateinit var groqApiService: GroqApiService
     private lateinit var openRouterApiService: OpenRouterApiService
     private lateinit var zaiApiService: ZaiApiService
-    private lateinit var securePreferences: SecurePreferences
+    private lateinit var appSettingsStore: AppSettingsStore
     private lateinit var context: Context
     private lateinit var workerParams: WorkerParameters
 
@@ -40,7 +40,7 @@ class ModelSyncWorkerTest {
         groqApiService = mockk(relaxed = true)
         openRouterApiService = mockk(relaxed = true)
         zaiApiService = mockk(relaxed = true)
-        securePreferences = mockk(relaxed = true)
+        appSettingsStore = mockk(relaxed = true)
 
         worker = ModelSyncWorker(
             context,
@@ -49,7 +49,7 @@ class ModelSyncWorkerTest {
             groqApiService,
             openRouterApiService,
             zaiApiService,
-            securePreferences
+            appSettingsStore
         )
     }
 
@@ -90,7 +90,7 @@ class ModelSyncWorkerTest {
         coEvery { providerModelDao.getAllProviders() } returns listOf(
             ProviderEntity("groq", "Groq", oldTime)
         )
-        coEvery { securePreferences.getActiveAuthToken("groq") } returns null
+        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns null
 
         val result = worker.doWork()
 
