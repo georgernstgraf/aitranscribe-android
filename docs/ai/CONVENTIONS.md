@@ -73,6 +73,13 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Any desired-schema change must have a linked implementation issue for Kotlin/Room migration work before considering drift a bug.
 - Never change `prisma/desired/schema.prisma` unless the user explicitly requests that specific change.
 
+## Transcription Pipeline
+- Runtime transcription content uses a single nullable `text` field; do not re-introduce dual original/processed fields.
+- Treat unfinished STT work as `text IS NULL AND audio_file_path IS NOT NULL`.
+- Keep STT success atomic in DB: update `text` and clear `audio_file_path` in one statement.
+- Cleanup post-processing runs only when cleanup mode is requested; summary request runs after STT success when LLM is configured.
+- Recordings must be stored under `filesDir/recordings` (not `cacheDir`) for restart persistence.
+
 ## Companion Project
 - `../aitranscribe` (Python/TUI) is the **lead and authoritative project** for pipeline logic, prompts, and feature design
 - This Android app is the companion/follower — prompts, modes, and workflow must mirror the Python project

@@ -11,10 +11,12 @@ AI Transcribe is a voice-to-text Android app. Users record speech, which is tran
 ## Core Workflow
 1. **Setup:** User enters GROQ and OpenRouter API keys
 2. **Record:** User taps record button -> foreground service captures audio as .m4a (AAC/MP4)
-3. **Transcribe:** On stop, WorkManager job uploads audio to GROQ Whisper API
-4. **Post-process:** Optionally cleanup/translate via LLM (OpenRouter), generate summary
-5. **Display:** Transcription text stored in Room DB, shown in list with summary as title
-6. **Cleanup:** Audio file deleted after successful transcription; no audio stored on device
+3. **Queue:** On stop, Room row is created with `text = null` and persisted `audio_file_path`
+4. **Transcribe:** WorkManager uploads queued audio to STT provider
+5. **After STT success:** Atomically set `text` and clear `audio_file_path`
+6. **Post-process:** Cleanup only if cleanup mode is enabled
+7. **Summary:** Request summary after STT success (uses current text)
+8. **Display:** UI shows `text` and optional summary
 
 ## Post-processing Modes (Android UI)
 - **RAW:** No LLM call — text saved as-is.
@@ -70,19 +72,20 @@ Please correct grammatical errors, remove filler words, and structure the follow
 
 ## Data Model
 - **QueuedTranscription:** Pending transcription job (audio file path, STT model, processing mode)
-- **Transcription:** Completed transcription (original text, processed text, summary, timestamps, viewed flag)
-- **audioFilePath:** Set to `null` in saved entities (file deleted after successful transcription)
+- **Transcription:** Single `text` field (nullable until STT success), summary, timestamps, seen flag
+- **Retry invariant:** unfinished STT == `text = null` and `audio_file_path != null`
+- **audioFilePath:** Cleared on STT success; rows with missing files are marked warning and detached from retry
 
 ## Recording Pipeline
 ```
 Record Button tap
   -> RecordingService starts (foreground, notification)
-  -> MediaRecorder captures to .m4a file in app cache dir
+  -> MediaRecorder captures to .m4a file in app files dir (`files/recordings`)
   -> On stop: broadcasts ACTION_RECORDING_RESULT with file path + duration
   -> MainViewModel receives broadcast
-  -> Creates QueuedTranscription in Room DB
+  -> Creates queued row in Room (`text = null`, `audio_file_path = path`)
   -> Enqueues TranscriptionWorker with queued ID
-  -> Worker: transcribe → save to DB → delete audio → post-process (non-fatal) → summary (non-fatal)
+  -> Worker: STT → atomic DB update (`text`, clear `audio_file_path`) → optional cleanup → summary
   -> UI observes Room Flow, updates automatically
 ```
 
@@ -100,4 +103,3 @@ Record Button tap
 - Settings screen (API key management)
 - Search functionality across transcriptions
 - Export functionality
-

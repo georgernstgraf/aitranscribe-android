@@ -164,29 +164,12 @@ class TranscriptionWorker @AssistedInject constructor(
                     apiKey = llmApiKey,
                     llmProvider = llmProvider
                 )
-                postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
             }
-            PostProcessingType.TRANSLATE_TO_EN -> {
-                postProcessTextUseCase(
-                    transcriptionId,
-                    isCleanupEnabled = true,
-                    translationTarget = TranslationTarget.EN,
-                    llmModel = llmModel,
-                    apiKey = llmApiKey,
-                    llmProvider = llmProvider
-                )
-            }
-            PostProcessingType.TRANSLATE_TO_DE -> {
-                postProcessTextUseCase(
-                    transcriptionId,
-                    isCleanupEnabled = true,
-                    translationTarget = TranslationTarget.DE,
-                    llmModel = llmModel,
-                    apiKey = llmApiKey,
-                    llmProvider = llmProvider
-                )
-            }
+            PostProcessingType.TRANSLATE_TO_EN -> Unit
+            PostProcessingType.TRANSLATE_TO_DE -> Unit
         }
+
+        postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
     }
 
     private suspend fun resolveZaiFallbackModel(currentModel: String): String? {

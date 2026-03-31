@@ -62,6 +62,7 @@ model transcriptions {
     audio_file_path String?
     text            String?
     summary         String?
+    language        String?
     created_at      DateTime @default(now())
     error_message   String?
     seen            Boolean  @default(false)

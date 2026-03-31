@@ -179,3 +179,33 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Removed `stt_model`, `llm_model`, `post_processing_type`, and `retry_count` from `transcriptions` runtime schema.
 - **Reason**: Desired schema excludes these fields; they represent operational context better sourced from current settings and worker flow.
 - **Changed**: Added `MIGRATION_9_10` to rebuild `transcriptions` without those columns; updated repositories/use-cases/workers/tests accordingly.
+
+## 2026-03-31: Transcription text unified to a single nullable `text` field (#44)
+- **Choice**: Replaced dual text columns (`original_text`, `processed_text`) with one nullable runtime field (`text`) and updated app models to `text`.
+- **Reason**: STT and cleanup pipeline only need one current text value; pending STT is represented by `text = NULL` with retained `audio_file_path`.
+- **Changed**: Added `MIGRATION_11_12` with `text = COALESCE(processed_text, original_text)` backfill; removed `processedText` from Kotlin models and query paths.
+
+## 2026-03-31: Retry queue inferred from data invariants, not status enum (#44)
+- **Choice**: Unfinished STT items are selected by `text IS NULL AND audio_file_path IS NOT NULL`.
+- **Reason**: This invariant is simpler and aligns with offline/airplane-mode queue semantics.
+- **Changed**: Added DAO/repository `getUnfinishedSttTranscriptions()` and switched main/settings retry triggers to it.
+
+## 2026-03-31: STT success writes text and clears audio path atomically (#44)
+- **Choice**: On STT success, perform a single SQL update setting `text`, clearing `audio_file_path`, and resetting error state.
+- **Reason**: Prevent intermediate inconsistent states and duplicate retry behavior.
+- **Changed**: Added DAO/repository `markSttSuccess(...)` and used it in `TranscriptionWorker` before post-processing.
+
+## 2026-03-31: Recording files moved from cache to persistent app files dir (#44)
+- **Choice**: Store recordings in `filesDir/recordings` using `createNewFile()` uniqueness checks.
+- **Reason**: `cacheDir` is not reliable for queued audio across app restarts and system cache cleanup.
+- **Changed**: `RecordingService.createTempAudioFile()` now writes to `filesDir/recordings`; worker orphan cleanup scans same directory with a grace period.
+
+## 2026-03-31: Missing-audio rows become terminal warning, not retry loops (#44)
+- **Choice**: If worker cannot find referenced audio file, mark row warning and clear `audio_file_path` instead of failing/retrying forever.
+- **Reason**: Prevent repeated startup failure toasts and stuck work for irrecoverable missing files.
+- **Changed**: Added `markAudioMissing(...)` DAO/repository path; worker handles `AudioFileMissingException` with success + warning status.
+
+## 2026-03-31: Post-STT summary generation is always requested when LLM is configured (#44)
+- **Choice**: After STT success, summary generation runs regardless of cleanup mode; cleanup itself runs only in CLEANUP mode.
+- **Reason**: Matches product rule: cleanup is optional, summary is requested when text exists.
+- **Changed**: `TranscriptionWorker.performPostProcessing()` now gates cleanup by mode and calls `generateSummary(...)` in all modes.

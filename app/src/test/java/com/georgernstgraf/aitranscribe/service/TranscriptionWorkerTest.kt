@@ -14,6 +14,7 @@ import com.georgernstgraf.aitranscribe.data.remote.dto.GroqTranscriptionResponse
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
+import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
 import io.mockk.coEvery
@@ -128,6 +129,13 @@ class TranscriptionWorkerTest {
         val saved = fakeRepository.getById(1)
         assertNotNull(saved)
         assertNull(saved!!.audioFilePath)
+
+        coVerify(exactly = 0) {
+            postProcessTextUseCase(any(), any(), any(), any(), any(), any())
+        }
+        coVerify(exactly = 1) {
+            postProcessTextUseCase.generateSummary(queued.id, any(), any(), any())
+        }
     }
 
     @Test
@@ -193,5 +201,12 @@ class TranscriptionWorkerTest {
         assertNotNull(saved)
         assertNull(saved!!.audioFilePath)
         assertEquals(TranscriptionStatus.COMPLETED.name, saved.status)
+
+        coVerify(exactly = 1) {
+            postProcessTextUseCase(queued.id, true, TranslationTarget.NONE, any(), any(), any())
+        }
+        coVerify(exactly = 1) {
+            postProcessTextUseCase.generateSummary(queued.id, any(), any(), any())
+        }
     }
 }

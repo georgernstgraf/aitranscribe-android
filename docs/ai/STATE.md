@@ -3,21 +3,24 @@
 Current status as of 2026-03-31.
 
 ## Current Focus
-Post-#53 stabilization and next issue selection after transcription model convergence.
+Finish #44 retry/queue hardening and persistence alignment.
 
 ## Completed (this cycle)
-- [x] Finished #53 transcription simplification alignment in runtime schema
-- [x] Migrated read/unread semantics from `played_count` to `seen` with Room migration `8->9`
-- [x] Removed `stt_model`, `llm_model`, `post_processing_type`, `retry_count` from runtime `transcriptions` with migration `9->10`
-- [x] Updated DAO/repository/worker/viewmodel/use-case paths to match new transcription shape
-- [x] Refreshed device schema via `cd prisma && make` and verified removed columns are gone
-- [x] Verified test/build health (`./gradlew testDebugUnitTest`, `./gradlew test`, `./gradlew assembleDebug`)
+- [x] Made transcription text model single-field (`text`) and removed runtime `processedText` usage.
+- [x] Added migration `11->12` backfilling `text = COALESCE(processed_text, original_text)`.
+- [x] Changed retry queue selection to invariant predicate (`text IS NULL AND audio_file_path IS NOT NULL`).
+- [x] Implemented atomic STT success update to set `text` and clear `audio_file_path` together.
+- [x] Moved recording storage from `cacheDir` to `filesDir/recordings` and enforced no-overwrite creation.
+- [x] Added terminal missing-audio handling (`markAudioMissing`) to avoid infinite retry/toast loops.
+- [x] Added startup diagnostics log (`startup_audio_diagnostics`) for recordings/unfinished/missing refs.
+- [x] Updated workflow so cleanup runs only when requested; summary request runs after STT success.
+- [x] Updated unit tests and relevant androidTest files to the renamed `text` model.
 
 ## Pending
-- [ ] #50 — Prisma follow-up workstream
+- [ ] Run full instrumentation test suite after resolving pre-existing androidTest compile blockers outside #44 scope.
 
 ## Blockers
-- None hard
+- `compileDebugAndroidTestKotlin` currently fails due to pre-existing issues in `RecordingServiceTest` and `AudioRecordingButtonTest`.
 
 ## Next Session Suggestion
-Start #50 with an explicit scope breakdown, then run a fresh device schema refresh before coding.
+Close #44 after final push/issue close, then open a dedicated issue to fix androidTest compile blockers and restore full instrumentation gate.

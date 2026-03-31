@@ -107,3 +107,9 @@ In migrations that rebuild tables (e.g. `models_new` -> `models`), creating depe
 
 ## ZAI coding-plan keys may fail on general endpoint
 ZAI post-processing with coding-subscription keys can return HTTP `429` (`insufficient balance` / `no resource package`) on `https://api.z.ai/api/paas/v4/...` while succeeding on `https://api.z.ai/api/coding/paas/v4/...`. Keep provider pathing consistent with key/package type.
+
+## Queued recordings stored in `cacheDir` can disappear between sessions
+Android may evict app cache files, which causes queued STT rows to reference missing audio and repeatedly fail on startup. Store queued recordings in `filesDir/recordings` instead.
+
+## Missing queued audio should be terminal, not retried forever
+When `audio_file_path` points to a non-existent file, mark the row as warning and clear `audio_file_path`; returning worker failure causes repeated retries/toasts with no recovery path.
