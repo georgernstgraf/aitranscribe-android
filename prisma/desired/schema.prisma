@@ -13,9 +13,11 @@ model android_metadata {
 model provider {
     id             String           @id
     name           String           @unique
-    last_synced_at Int
+    last_synced_at Int              @default(0)
     models         provider_model[]
     api_token      String?
+
+    @@index([last_synced_at])
 }
 
 model provider_model {
@@ -23,11 +25,13 @@ model provider_model {
     providerId        String
     externalId        String
     name              String
-    provider          provider           @relation(fields: [providerId], references: [id], onDelete: Cascade)
+    provider          provider           @relation(fields: [providerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
     modelCapabilities model_capability[]
 
     @@unique([providerId, externalId])
+    @@index([externalId])
     @@index([providerId])
+    @@index([providerId, name])
     @@index([name])
 }
 
@@ -38,15 +42,14 @@ model capability {
 }
 
 model model_capability {
-    modelId          Int
+    modelId         Int
     capabilityId    String
     source          String?
-    capability      capability     @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
-    model           provider_model @relation(fields: [modelId], references: [id], onDelete: Cascade)
+    capability      capability     @relation(fields: [capabilityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    model           provider_model @relation(fields: [modelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
     @@id([modelId, capabilityId])
     @@index([capabilityId])
-    @@index([modelId])
 }
 
 model room_master_table {
@@ -67,4 +70,6 @@ model transcriptions {
 
     @@index([created_at])
     @@index([status])
+    @@index([seen, created_at])
+    @@index([status, created_at])
 }

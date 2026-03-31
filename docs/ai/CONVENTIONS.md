@@ -69,6 +69,7 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Canonical schema is `prisma/desired/schema.prisma`; observed runtime schema is `prisma/device/schema.prisma`.
 - Refresh runtime schema with `cd prisma && make`.
 - Check schema drift with `cd prisma && make check-schema`.
+- Any desired-schema change must have a linked implementation issue for Kotlin/Room migration work before considering drift a bug.
 
 ## Companion Project
 - `../aitranscribe` (Python/TUI) is the **lead and authoritative project** for pipeline logic, prompts, and feature design

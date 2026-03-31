@@ -3,22 +3,22 @@
 Current status as of 2026-03-31.
 
 ## Current Focus
-DB governance rollout with desired-first Prisma schema workflow and follow-up schema improvement issues.
+Kotlin/Room implementation work to align runtime DB with desired schema (#52, #53, #55).
 
 ## Completed (this cycle)
-- [x] Added root `Makefile` target `pull-db` to force-stop app, clean local copies, and pull DB/WAL/SHM via `adb` + `run-as`
-- [x] Created schema roadmap issues: #51 (schema hardening), #52 (provider-model-capability normalization), #53 (transcription simplification)
-- [x] Created governance issue #54
-- [x] Added `prisma/GOVERNANCE.md` documenting desired-first schema workflow
-- [x] Updated `prisma/Makefile` with `refresh-device` and `check-schema` targets
+- [x] Closed governance issue #54 after adding desired-first Prisma governance docs and Make targets
+- [x] Updated desired schema for normalized provider-model-capability shape in #52 (`7ef511a`)
+- [x] Added `provider.api_token` to desired schema in #52 (`5a6a637`)
+- [x] Completed desired-schema hardening pass in #51 (defaults, index coverage, FK update cascades, redundant index cleanup)
+- [x] Created gap issue #55 for provider auth storage migration from `SecurePreferences` to schema-aligned storage
 
 ## Pending
-- [ ] #51 — Improve `prisma/desired/schema.prisma` indexes/constraints while keeping runtime compatibility
-- [ ] #52 — Normalize provider-model-capability relationship with migration/backfill plan
-- [ ] #53 — Reduce transcription schema/object complexity with migration plan
+- [ ] #52 — Implement Kotlin/Room normalization for provider-model-capability and migration/backfill
+- [ ] #53 — Simplify transcription model to match desired schema contract
+- [ ] #55 — Align provider auth storage (`api_token`) with desired schema and migrate from `SecurePreferences`
 
 ## Blockers
-- `make check-schema` currently fails because `prisma/desired/schema.prisma` intentionally drifts from `prisma/device/schema.prisma`
+- `cd prisma && make check-schema` still fails due expected desired-vs-runtime drift until #52/#53/#55 implementation work lands
 
 ## Next Session Suggestion
-Start with issue #51: align `prisma/desired/schema.prisma` to current runtime schema first, then apply hardening changes incrementally with passing `make check-schema`.
+Start #52 Kotlin migration: add capability/join entities and Room migration from legacy `models.capabilities` string storage.

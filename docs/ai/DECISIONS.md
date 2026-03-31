@@ -124,3 +124,18 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Treat `prisma/desired/schema.prisma` as the canonical DB contract and `prisma/device/schema.prisma` as observed runtime state.
 - **Reason**: The team wants DB evolution to be desired-first and explicitly detect runtime drift.
 - **Changed**: Added `prisma/GOVERNANCE.md` and Make targets `refresh-device`/`check-schema` to support the workflow.
+
+## 2026-03-31: Desired provider-model-capability schema normalized (#52)
+- **Choice**: Keep normalized provider-model-capability representation in `prisma/desired/schema.prisma` using explicit `model_capability` join mapping.
+- **Reason**: Current runtime storage is denormalized (`models.capabilities` string), and desired-first governance requires target schema to be explicit before Kotlin migration work.
+- **Changed**: `provider_model` now has surrogate `id` plus `@@unique([providerId, externalId])`; `capability` and `model_capability` represent capabilities relationally.
+
+## 2026-03-31: Provider API token modeled as scalar field on provider (#52)
+- **Choice**: Store provider token as nullable `provider.api_token` in desired schema, not in a separate token table.
+- **Reason**: Simpler desired model and straightforward provider-centric reads.
+- **Tradeoff**: Requires auth storage migration from `SecurePreferences` to Room-aligned schema in Kotlin implementation.
+
+## 2026-03-31: Desired schema hardening pass for indexes and constraints (#51)
+- **Choice**: Hardened `prisma/desired/schema.prisma` with targeted defaults, FK update cascades, and query-oriented indexes without changing domain structure.
+- **Reason**: Improve data integrity and lookup performance while keeping schema redesign work isolated to #52/#53.
+- **Changed**: Added defaults/indexes on `provider` and `transcriptions`, added `onUpdate: Cascade` on provider/capability relations, and removed redundant `model_capability.modelId` index covered by PK prefix.
