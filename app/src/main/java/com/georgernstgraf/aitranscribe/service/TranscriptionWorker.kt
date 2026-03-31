@@ -7,9 +7,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
-import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
@@ -28,8 +26,6 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @HiltWorker
 class TranscriptionWorker @AssistedInject constructor(
@@ -45,39 +41,61 @@ class TranscriptionWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
-        val queuedId = inputData.getLong(KEY_QUEUED_ID, -1)
-        if (queuedId == -1L) return@withContext Result.failure()
+        val transcriptionId = inputData.getLong(KEY_TRANSCRIPTION_ID, -1)
+        if (transcriptionId == -1L) return@withContext Result.failure()
 
-        val queued = repository.getQueuedById(queuedId) ?: return@withContext Result.failure()
-        if (!networkMonitor.isConnected()) return@withContext Result.retry()
+        val transcription = repository.getById(transcriptionId) ?: return@withContext Result.failure()
+        val audioPath = transcription.audioFilePath ?: return@withContext Result.failure()
 
-        val transcriptionText = try {
-            transcribeAudio(queued)
-        } catch (e: Exception) {
-            Log.e("TranscriptionWorker", "transcribeAudio failed", e)
-            return@withContext Result.retry()
+        if (!networkMonitor.isConnected()) {
+            repository.updateStatusAndError(
+                transcriptionId,
+                TranscriptionStatus.NO_NETWORK.name,
+                "No network available"
+            )
+            return@withContext Result.failure()
         }
 
-        val processingMode = queued.postProcessingType ?: PostProcessingType.RAW.name
-        val entity = TranscriptionEntity(
-            originalText = transcriptionText,
-            processedText = null,
-            audioFilePath = queued.audioFilePath, // Keep audio file initially
-            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            postProcessingType = processingMode,
-            status = TranscriptionStatus.COMPLETED.name,
-            errorMessage = null,
-            playedCount = 0,
-            retryCount = 0,
-            summary = null
-        )
+        repository.updateStatusAndError(transcriptionId, TranscriptionStatus.PROCESSING.name, null)
 
-        val transcriptionId = repository.insert(entity)
-        repository.removeQueued(queuedId)
+        val sttModel = transcription.sttModel ?: securePreferences.getSttModel()
+        val llmModel = transcription.llmModel ?: securePreferences.getLlmModel()
+        val processingMode = transcription.postProcessingType ?: PostProcessingType.RAW.name
+
+        val transcriptionText = try {
+            transcribeAudio(audioPath, sttModel)
+        } catch (e: SttPermanentException) {
+            Log.e("TranscriptionWorker", "Permanent STT failure", e)
+            repository.updateStatusAndError(
+                transcriptionId,
+                TranscriptionStatus.STT_ERROR_PERMANENT.name,
+                e.message
+            )
+            return@withContext Result.failure()
+        } catch (e: Exception) {
+            Log.e("TranscriptionWorker", "Retryable STT failure", e)
+            repository.updateStatusAndError(
+                transcriptionId,
+                TranscriptionStatus.STT_ERROR_RETRYABLE.name,
+                e.message
+            )
+            return@withContext Result.failure()
+        }
+
+        repository.update(
+            transcription.copy(
+                originalText = transcriptionText,
+                processedText = null,
+                status = TranscriptionStatus.COMPLETED.name,
+                errorMessage = null,
+                sttModel = sttModel,
+                llmModel = llmModel,
+                postProcessingType = processingMode
+            )
+        )
 
         val llmProvider = securePreferences.getLlmProvider()
         val llmApiKey = securePreferences.getActiveAuthToken(llmProvider)
-        val llmModel = securePreferences.getLlmModel()
 
         val postProcessingType = when (processingMode) {
             PostProcessingType.CLEANUP.name,
@@ -124,11 +142,11 @@ class TranscriptionWorker @AssistedInject constructor(
                 }
 
                 postProcessTextUseCase.generateSummary(transcriptionId, llmModel, llmApiKey, llmProvider)
-                
+
                 // Clear audio file path and delete file ONLY if post-processing succeeds
                 repository.clearAudioPath(transcriptionId)
-                cleanupAudioFile(queued.audioFilePath)
-                
+                cleanupAudioFile(audioPath)
+
             } catch (e: Exception) {
                 Log.e("TranscriptionWorker", "Post-processing failed (non-fatal)", e)
                 repository.updateStatus(transcriptionId, TranscriptionStatus.COMPLETED_WITH_WARNING.name)
@@ -137,7 +155,7 @@ class TranscriptionWorker @AssistedInject constructor(
         } else {
             if (postProcessingType == PostProcessingType.RAW) {
                 repository.clearAudioPath(transcriptionId)
-                cleanupAudioFile(queued.audioFilePath)
+                cleanupAudioFile(audioPath)
             }
         }
 
@@ -146,9 +164,9 @@ class TranscriptionWorker @AssistedInject constructor(
         Result.success(workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId))
     }
 
-    private suspend fun transcribeAudio(queued: QueuedTranscriptionEntity): String {
-        val audioFile = File(queued.audioFilePath)
-        if (!audioFile.exists()) throw Exception("Audio file not found: ${queued.audioFilePath}")
+    private suspend fun transcribeAudio(audioPath: String, sttModel: String): String {
+        val audioFile = File(audioPath)
+        if (!audioFile.exists()) throw Exception("Audio file not found: $audioPath")
 
         val sttProvider = securePreferences.getSttProvider()
         val token = securePreferences.getActiveAuthToken(sttProvider)
@@ -159,25 +177,39 @@ class TranscriptionWorker @AssistedInject constructor(
             "groq" -> groqApiService.transcribeAudio(
                 authorization = authorization,
                 file = createAudioPart(audioFile),
-                model = createModelPart(queued.sttModel),
+                model = createModelPart(sttModel),
                 responseFormat = createFormatPart()
             )
             "openrouter" -> openRouterApiService.transcribeAudio(
                 authorization = authorization,
                 file = createAudioPart(audioFile),
-                model = createModelPart(queued.sttModel),
+                model = createModelPart(sttModel),
                 responseFormat = createFormatPart()
             )
             "zai" -> zaiApiService.transcribeAudio(
                 authorization = authorization,
                 file = createAudioPart(audioFile),
-                model = createModelPart(queued.sttModel),
+                model = createModelPart(sttModel),
                 responseFormat = createFormatPart()
             )
             else -> throw Exception("Unknown STT Provider: $sttProvider")
         }
 
+        if (!response.isSuccessful) {
+            val code = response.code()
+            val errorText = runCatching { response.errorBody()?.string() }.getOrNull()
+            val message = "STT request failed ($code): ${errorText ?: "No response body"}"
+            if (isPermanentErrorCode(code)) {
+                throw SttPermanentException(message)
+            }
+            throw Exception(message)
+        }
+
         return response.body()?.text ?: throw Exception("Empty transcription response from $sttProvider (Code: ${response.code()})")
+    }
+
+    private fun isPermanentErrorCode(code: Int): Boolean {
+        return code in setOf(400, 401, 402, 403, 404, 409, 422, 429)
     }
 
     private fun createAudioPart(audioFile: File): MultipartBody.Part {
@@ -199,7 +231,7 @@ class TranscriptionWorker @AssistedInject constructor(
 
     private suspend fun cleanupOrphanedAudioFiles() {
         try {
-            val queuedPaths = repository.getQueuedAudioPaths().toSet()
+            val queuedPaths = repository.getAllAudioPaths().toSet()
             context.cacheDir.listFiles()?.filter {
                 it.name.startsWith("recording_") && it.name.endsWith(".m4a") &&
                     it.absolutePath !in queuedPaths
@@ -209,9 +241,10 @@ class TranscriptionWorker @AssistedInject constructor(
     }
 
     companion object {
-        const val KEY_QUEUED_ID = "queued_id"
         const val KEY_TRANSCRIPTION_ID = "transcription_id"
 
-        fun createInputData(queuedId: Long): Data = workDataOf(KEY_QUEUED_ID to queuedId)
+        fun createInputData(transcriptionId: Long): Data = workDataOf(KEY_TRANSCRIPTION_ID to transcriptionId)
     }
+
+    private class SttPermanentException(message: String) : Exception(message)
 }

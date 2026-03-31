@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.georgernstgraf.aitranscribe.util.ToastManager
 import com.georgernstgraf.aitranscribe.util.ToastMessage
@@ -45,15 +46,21 @@ fun CenteredToastHost(
                         .clickable { toastState = null }
                         .padding(16.dp),
                     shape = RoundedCornerShape(8.dp),
-                    color = if (toast.isError) MaterialTheme.colorScheme.errorContainer 
-                            else MaterialTheme.colorScheme.surfaceVariant,
+                    color = when {
+                        toast.isError -> MaterialTheme.colorScheme.errorContainer
+                        toast.isWarning -> Color(0xFFFFF3CD)
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    },
                     shadowElevation = 8.dp
                 ) {
                     Text(
                         text = toast.message,
                         modifier = Modifier.padding(16.dp),
-                        color = if (toast.isError) MaterialTheme.colorScheme.onErrorContainer
-                                else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = when {
+                            toast.isError -> MaterialTheme.colorScheme.onErrorContainer
+                            toast.isWarning -> Color(0xFF856404)
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        }
                     )
                 }
             }

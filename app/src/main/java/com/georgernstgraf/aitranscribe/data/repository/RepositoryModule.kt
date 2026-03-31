@@ -1,6 +1,5 @@
 package com.georgernstgraf.aitranscribe.data.repository
 
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionDao
 import dagger.Module
 import dagger.Provides
@@ -15,9 +14,8 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun provideTranscriptionRepository(
-        transcriptionDao: TranscriptionDao,
-        queuedTranscriptionDao: QueuedTranscriptionDao
+        transcriptionDao: TranscriptionDao
     ): TranscriptionRepository {
-        return TranscriptionRepositoryImpl(transcriptionDao, queuedTranscriptionDao)
+        return TranscriptionRepositoryImpl(transcriptionDao)
     }
 }

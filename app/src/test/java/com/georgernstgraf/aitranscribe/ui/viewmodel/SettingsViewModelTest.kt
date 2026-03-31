@@ -1,15 +1,14 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
 import androidx.lifecycle.viewModelScope
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,7 +37,6 @@ class SettingsViewModelTest {
     private lateinit var validateApiKeysUseCase: ValidateApiKeysUseCase
     private lateinit var securePreferences: SecurePreferences
     private lateinit var providerModelDao: ProviderModelDao
-    private lateinit var queuedTranscriptionDao: QueuedTranscriptionDao
     private lateinit var context: android.content.Context
     private lateinit var viewModel: SettingsViewModel
     private val testDispatcher = StandardTestDispatcher()
@@ -50,7 +48,6 @@ class SettingsViewModelTest {
         deleteUseCase = DeleteTranscriptionUseCase(repository)
         securePreferences = mockk(relaxed = true)
         providerModelDao = mockk(relaxed = true)
-        queuedTranscriptionDao = mockk(relaxed = true)
         context = mockk(relaxed = true)
         validateApiKeysUseCase = ValidateApiKeysUseCase(OkHttpClient())
 
@@ -66,7 +63,7 @@ class SettingsViewModelTest {
         coEvery { securePreferences.getSttProvider() } returns "groq"
         coEvery { securePreferences.getGroqApiKey() } returns null
 
-        viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase, providerModelDao, queuedTranscriptionDao, context)
+        viewModel = SettingsViewModel(deleteUseCase, repository, securePreferences, validateApiKeysUseCase, providerModelDao, context)
     }
 
     @Test
@@ -86,7 +83,7 @@ class SettingsViewModelTest {
         coEvery { securePreferences.getActiveAuthToken("zai") } returns null
         
         // Need to recreate ViewModel to trigger init { loadSettings() } with new mocks
-        viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase, providerModelDao, queuedTranscriptionDao, context)
+        viewModel = SettingsViewModel(deleteUseCase, repository, securePreferences, validateApiKeysUseCase, providerModelDao, context)
         testDispatcher.scheduler.runCurrent()
         
         val state = viewModel.uiState.value
@@ -175,10 +172,20 @@ class SettingsViewModelTest {
 
     @Test
     fun `saveSettings retries queued transcriptions with new model`() = runBlocking {
-        val queuedItems = listOf(
-            QueuedTranscriptionEntity(id = 10, audioFilePath = "/a.m4a", sttModel = "old", llmModel = "llm", postProcessingType = "RAW", createdAt = "2026-01-01T00:00:00", priority = 0)
+        repository.insert(
+            TranscriptionEntity(
+                id = 10,
+                originalText = "",
+                processedText = null,
+                audioFilePath = "/a.m4a",
+                sttModel = "old",
+                llmModel = "llm",
+                createdAt = "2026-01-01T00:00:00",
+                postProcessingType = "RAW",
+                status = TranscriptionStatus.STT_ERROR_PERMANENT.name,
+                errorMessage = "Model invalid"
+            )
         )
-        coEvery { queuedTranscriptionDao.getAllSync() } returns queuedItems
         coEvery { securePreferences.getActiveAuthToken("groq") } returns "groq-key"
         coEvery { securePreferences.getActiveAuthToken("openrouter") } returns "or-key"
 
@@ -187,6 +194,6 @@ class SettingsViewModelTest {
         viewModel.saveSettings()
         testDispatcher.scheduler.runCurrent()
 
-        coVerify { queuedTranscriptionDao.updateSttModel(10, "whisper-large-v3-turbo") }
+        assertEquals("whisper-large-v3-turbo", repository.getById(1)?.sttModel)
     }
 }

@@ -1,6 +1,7 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -28,7 +29,9 @@ class QueueOfflineTranscriptionUseCaseTest {
         )
 
         assertEquals(1L, id)
-        assertNotNull(repository.getQueuedById(id))
+        val saved = repository.getById(id)
+        assertNotNull(saved)
+        assertEquals(TranscriptionStatus.NO_NETWORK.name, saved?.status)
     }
 
     @Test(expected = QueueOfflineTranscriptionUseCase.QueueException::class)

@@ -1,8 +1,6 @@
 package com.georgernstgraf.aitranscribe.data.repository
 
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
-import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import kotlinx.coroutines.flow.Flow
@@ -54,19 +52,13 @@ interface TranscriptionRepository {
 
     suspend fun updateSummary(id: Long, summary: String)
 
-    suspend fun queueForOffline(queued: QueuedTranscriptionEntity): Long
+    suspend fun getByStatuses(statuses: List<String>): List<TranscriptionEntity>
 
-    suspend fun getQueuedById(id: Long): QueuedTranscriptionEntity?
+    suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?)
 
-    fun getAllQueued(): Flow<List<QueuedTranscriptionEntity>>
+    suspend fun updateSttModel(id: Long, sttModel: String)
 
-    suspend fun removeQueued(id: Long): Int
-
-    suspend fun clearQueue(): Int
-
-    suspend fun getQueueCount(): Int
-
-    suspend fun getQueuedAudioPaths(): List<String>
+    suspend fun getAllAudioPaths(): List<String>
 
     suspend fun getNextTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long?
 

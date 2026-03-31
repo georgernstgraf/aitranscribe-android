@@ -30,14 +30,6 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideQueuedTranscriptionDao(
-        database: TranscriptionDatabase
-    ): QueuedTranscriptionDao {
-        return database.queuedTranscriptionDao()
-    }
-
-    @Provides
-    @Singleton
     fun provideProviderModelDao(
         database: TranscriptionDatabase
     ): ProviderModelDao {

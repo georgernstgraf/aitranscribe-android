@@ -4,24 +4,21 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
         TranscriptionEntity::class,
-        QueuedTranscriptionEntity::class,
         ProviderEntity::class,
         ModelEntity::class
     ],
-    version = 3,
+    version = 5,
     exportSchema = false
 )
 abstract class TranscriptionDatabase : RoomDatabase() {
 
     abstract fun transcriptionDao(): TranscriptionDao
-    abstract fun queuedTranscriptionDao(): QueuedTranscriptionDao
     abstract fun providerModelDao(): ProviderModelDao
 
     companion object {
@@ -37,7 +34,7 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                     TranscriptionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .addCallback(ProviderPrepopulateCallback())
                     .fallbackToDestructiveMigration()
                     .build()
@@ -89,6 +86,55 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                 db.execSQL("INSERT OR IGNORE INTO providers (id, display_name, last_synced_at) VALUES ('groq', 'Groq', 0)")
                 db.execSQL("INSERT OR IGNORE INTO providers (id, display_name, last_synced_at) VALUES ('openrouter', 'OpenRouter', 0)")
                 db.execSQL("INSERT OR IGNORE INTO providers (id, display_name, last_synced_at) VALUES ('zai', 'ZAI', 0)")
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE queued_transcriptions ADD COLUMN status TEXT NOT NULL DEFAULT 'PENDING'")
+                db.execSQL("ALTER TABLE queued_transcriptions ADD COLUMN error_message TEXT")
+            }
+        }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE transcriptions ADD COLUMN stt_model TEXT")
+                db.execSQL("ALTER TABLE transcriptions ADD COLUMN llm_model TEXT")
+
+                db.execSQL(
+                    """
+                    INSERT INTO transcriptions (
+                        original_text,
+                        processed_text,
+                        audio_file_path,
+                        stt_model,
+                        llm_model,
+                        created_at,
+                        post_processing_type,
+                        status,
+                        error_message,
+                        played_count,
+                        retry_count,
+                        summary
+                    )
+                    SELECT
+                        '',
+                        NULL,
+                        audioFilePath,
+                        sttModel,
+                        llmModel,
+                        created_at,
+                        postProcessingType,
+                        status,
+                        error_message,
+                        0,
+                        0,
+                        NULL
+                    FROM queued_transcriptions
+                    """.trimIndent()
+                )
+
+                db.execSQL("DROP TABLE IF EXISTS queued_transcriptions")
             }
         }
     }

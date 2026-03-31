@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
@@ -99,17 +99,24 @@ class TranscriptionWorkerTest {
     @Test
     fun `worker processes raw transcription and clears audio path`() = runBlocking {
         val audioFile = createAudioFile()
-        val queued = QueuedTranscriptionEntity(
+        val queued = TranscriptionEntity(
             id = 1,
+            originalText = "",
+            processedText = null,
             audioFilePath = audioFile.absolutePath,
             sttModel = "whisper-large-v3-turbo",
             llmModel = "anthropic/claude-3-haiku",
+            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             postProcessingType = PostProcessingType.RAW.name,
-            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            status = TranscriptionStatus.PENDING.name,
+            errorMessage = null,
+            playedCount = 0,
+            retryCount = 0,
+            summary = null
         )
-        fakeRepository.queueForOffline(queued)
+        fakeRepository.insert(queued)
 
-        every { params.inputData } returns Data.Builder().putLong("queued_id", queued.id).build()
+        every { params.inputData } returns Data.Builder().putLong("transcription_id", queued.id).build()
 
         val result = worker.doWork()
 
@@ -124,17 +131,24 @@ class TranscriptionWorkerTest {
     @Test
     fun `worker preserves audio path if llm fails`() = runBlocking {
         val audioFile = createAudioFile()
-        val queued = QueuedTranscriptionEntity(
+        val queued = TranscriptionEntity(
             id = 1,
+            originalText = "",
+            processedText = null,
             audioFilePath = audioFile.absolutePath,
             sttModel = "whisper-large-v3-turbo",
             llmModel = "anthropic/claude-3-haiku",
+            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             postProcessingType = PostProcessingType.CLEANUP.name,
-            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            status = TranscriptionStatus.PENDING.name,
+            errorMessage = null,
+            playedCount = 0,
+            retryCount = 0,
+            summary = null
         )
-        fakeRepository.queueForOffline(queued)
+        fakeRepository.insert(queued)
 
-        every { params.inputData } returns Data.Builder().putLong("queued_id", queued.id).build()
+        every { params.inputData } returns Data.Builder().putLong("transcription_id", queued.id).build()
 
         // Force LLM to fail
         coEvery { 
@@ -155,17 +169,24 @@ class TranscriptionWorkerTest {
     @Test
     fun `worker clears audio path if llm succeeds`() = runBlocking {
         val audioFile = createAudioFile()
-        val queued = QueuedTranscriptionEntity(
+        val queued = TranscriptionEntity(
             id = 1,
+            originalText = "",
+            processedText = null,
             audioFilePath = audioFile.absolutePath,
             sttModel = "whisper-large-v3-turbo",
             llmModel = "anthropic/claude-3-haiku",
+            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
             postProcessingType = PostProcessingType.CLEANUP.name,
-            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            status = TranscriptionStatus.PENDING.name,
+            errorMessage = null,
+            playedCount = 0,
+            retryCount = 0,
+            summary = null
         )
-        fakeRepository.queueForOffline(queued)
+        fakeRepository.insert(queued)
 
-        every { params.inputData } returns Data.Builder().putLong("queued_id", queued.id).build()
+        every { params.inputData } returns Data.Builder().putLong("transcription_id", queued.id).build()
 
         // LLM succeeds normally (mock is relaxed)
 

@@ -1,6 +1,5 @@
 package com.georgernstgraf.aitranscribe.data.testing
 
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
@@ -17,7 +16,6 @@ import kotlinx.coroutines.flow.map
 class FakeTranscriptionRepository : TranscriptionRepository {
 
     private val transcriptions = MutableStateFlow<List<TranscriptionEntity>>(emptyList())
-    private val queuedTranscriptions = MutableStateFlow<List<QueuedTranscriptionEntity>>(emptyList())
 
     override suspend fun insert(transcription: TranscriptionEntity): Long {
         val newId = (transcriptions.value.maxOfOrNull { it.id } ?: 0) + 1
@@ -168,34 +166,20 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         }
     }
 
-    override suspend fun queueForOffline(queued: QueuedTranscriptionEntity): Long {
-        val newId = (queuedTranscriptions.value.maxOfOrNull { it.id } ?: 0) + 1
-        val newEntity = queued.copy(id = newId)
-        queuedTranscriptions.value = queuedTranscriptions.value + newEntity
-        return newId
+    override suspend fun getByStatuses(statuses: List<String>): List<TranscriptionEntity> {
+        return transcriptions.value.filter { it.status in statuses }
     }
 
-    override suspend fun getQueuedById(id: Long): QueuedTranscriptionEntity? {
-        return queuedTranscriptions.value.find { it.id == id }
+    override suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?) {
+        transcriptions.value = transcriptions.value.map {
+            if (it.id == id) it.copy(status = status, errorMessage = errorMessage) else it
+        }
     }
 
-    override fun getAllQueued(): Flow<List<QueuedTranscriptionEntity>> {
-        return queuedTranscriptions
-    }
-
-    override suspend fun removeQueued(id: Long): Int {
-        queuedTranscriptions.value = queuedTranscriptions.value.filterNot { it.id == id }
-        return 1
-    }
-
-    override suspend fun clearQueue(): Int {
-        val count = queuedTranscriptions.value.size
-        queuedTranscriptions.value = emptyList()
-        return count
-    }
-
-    override suspend fun getQueueCount(): Int {
-        return queuedTranscriptions.value.size
+    override suspend fun updateSttModel(id: Long, sttModel: String) {
+        transcriptions.value = transcriptions.value.map {
+            if (it.id == id) it.copy(sttModel = sttModel) else it
+        }
     }
 
     override suspend fun updateSummary(id: Long, summary: String) {
@@ -210,8 +194,8 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         }
     }
 
-    override suspend fun getQueuedAudioPaths(): List<String> {
-        return queuedTranscriptions.value.mapNotNull { it.audioFilePath }
+    override suspend fun getAllAudioPaths(): List<String> {
+        return transcriptions.value.mapNotNull { it.audioFilePath }
     }
 
     override suspend fun getNextTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long? {
@@ -228,7 +212,6 @@ class FakeTranscriptionRepository : TranscriptionRepository {
 
     fun clear() {
         transcriptions.value = emptyList()
-        queuedTranscriptions.value = emptyList()
     }
 
     private fun TranscriptionEntity.toDomain(): Transcription {

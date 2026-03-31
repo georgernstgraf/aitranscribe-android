@@ -2,10 +2,10 @@ package com.georgernstgraf.aitranscribe.ui.viewmodel
 
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
 import com.georgernstgraf.aitranscribe.util.ToastManager
 import io.mockk.coEvery
@@ -34,7 +34,6 @@ import java.time.LocalDateTime
 class MainViewModelTest {
 
     private lateinit var repository: FakeTranscriptionRepository
-    private lateinit var queuedTranscriptionDao: QueuedTranscriptionDao
     private lateinit var securePreferences: SecurePreferences
     private lateinit var toastManager: ToastManager
     private lateinit var networkMonitor: NetworkMonitor
@@ -49,7 +48,6 @@ class MainViewModelTest {
         Dispatchers.setMain(testDispatcher)
         repository = FakeTranscriptionRepository()
 
-        queuedTranscriptionDao = mockk(relaxed = true)
         securePreferences = mockk(relaxed = true)
         toastManager = mockk(relaxed = true)
         networkMonitor = mockk(relaxed = true)
@@ -60,7 +58,6 @@ class MainViewModelTest {
         coEvery { securePreferences.getSttProvider() } returns "groq"
         coEvery { securePreferences.getActiveAuthToken("groq") } returns "test-key"
         every { context.registerReceiver(any(), any()) } returns null
-        coEvery { queuedTranscriptionDao.insert(any()) } returns 1L
         every { networkMonitor.isConnected() } returns false
         every { networkMonitor.networkState } returns networkStateFlow
 
@@ -75,7 +72,7 @@ class MainViewModelTest {
     }
 
     private fun createViewModel(): MainViewModel {
-        return MainViewModel(repository, queuedTranscriptionDao, securePreferences, toastManager, networkMonitor, context)
+        return MainViewModel(repository, securePreferences, toastManager, networkMonitor, context)
     }
 
     @Test
@@ -116,11 +113,8 @@ class MainViewModelTest {
 
     @Test
     fun `network reconnect retries queued transcriptions with updated model`() = runBlocking {
-        val queuedItems = listOf(
-            QueuedTranscriptionEntity(id = 1, audioFilePath = "/a.m4a", sttModel = "old-model", llmModel = "llm", postProcessingType = "RAW", createdAt = LocalDateTime.now().toString(), priority = 0),
-            QueuedTranscriptionEntity(id = 2, audioFilePath = "/b.m4a", sttModel = "old-model", llmModel = "llm", postProcessingType = "RAW", createdAt = LocalDateTime.now().toString(), priority = 0)
-        )
-        coEvery { queuedTranscriptionDao.getAllSync() } returns queuedItems
+        repository.insert(TranscriptionEntity(originalText = "", processedText = null, audioFilePath = "/a.m4a", sttModel = "old-model", llmModel = "llm", createdAt = LocalDateTime.now().toString(), postProcessingType = "RAW", status = TranscriptionStatus.NO_NETWORK.name, errorMessage = null))
+        repository.insert(TranscriptionEntity(originalText = "", processedText = null, audioFilePath = "/b.m4a", sttModel = "old-model", llmModel = "llm", createdAt = LocalDateTime.now().toString(), postProcessingType = "RAW", status = TranscriptionStatus.STT_ERROR_RETRYABLE.name, errorMessage = null))
         coEvery { securePreferences.getSttModel() } returns "whisper-large-v3-turbo"
 
         val workManager = mockk<androidx.work.WorkManager>(relaxed = true)
@@ -134,29 +128,24 @@ class MainViewModelTest {
         networkStateFlow.value = true
         testDispatcher.scheduler.runCurrent()
 
-        coVerify { queuedTranscriptionDao.updateSttModel(1, "whisper-large-v3-turbo") }
-        coVerify { queuedTranscriptionDao.updateSttModel(2, "whisper-large-v3-turbo") }
+        assertEquals("whisper-large-v3-turbo", repository.getById(1)?.sttModel)
+        assertEquals("whisper-large-v3-turbo", repository.getById(2)?.sttModel)
     }
 
     @Test
     fun `network reconnect does not retry when queue is empty`() = runBlocking {
-        coEvery { queuedTranscriptionDao.getAllSync() } returns emptyList()
-
         viewModel = createViewModel()
         testDispatcher.scheduler.runCurrent()
 
         networkStateFlow.value = true
         testDispatcher.scheduler.runCurrent()
-
-        coVerify(exactly = 0) { queuedTranscriptionDao.updateSttModel(any(), any()) }
+        assertEquals(null, repository.getById(1))
     }
 
     @Test
     fun `network disconnect does not trigger retry`() = runBlocking {
-        val queuedItems = listOf(
-            QueuedTranscriptionEntity(id = 1, audioFilePath = "/a.m4a", sttModel = "old-model", llmModel = "llm", postProcessingType = "RAW", createdAt = LocalDateTime.now().toString(), priority = 0)
-        )
-        coEvery { queuedTranscriptionDao.getAllSync() } returns queuedItems
+        val queuedItem = TranscriptionEntity(id = 1, originalText = "", processedText = null, audioFilePath = "/a.m4a", sttModel = "old-model", llmModel = "llm", createdAt = LocalDateTime.now().toString(), postProcessingType = "RAW", status = TranscriptionStatus.NO_NETWORK.name, errorMessage = null)
+        repository.insert(queuedItem)
 
         every { networkMonitor.isConnected() } returns true
         networkStateFlow.value = true
@@ -166,6 +155,6 @@ class MainViewModelTest {
         networkStateFlow.value = false
         testDispatcher.scheduler.runCurrent()
 
-        coVerify(exactly = 0) { queuedTranscriptionDao.updateSttModel(any(), any()) }
+        assertEquals("old-model", repository.getById(1)?.sttModel)
     }
 }

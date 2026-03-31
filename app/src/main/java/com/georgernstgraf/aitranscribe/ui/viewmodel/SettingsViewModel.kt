@@ -7,10 +7,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
+import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
+import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
@@ -29,10 +30,10 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val deleteTranscriptionUseCase: DeleteTranscriptionUseCase,
+    private val repository: TranscriptionRepository,
     private val securePreferences: SecurePreferences,
     private val validateApiKeysUseCase: ValidateApiKeysUseCase,
     private val providerModelDao: ProviderModelDao,
-    private val queuedTranscriptionDao: QueuedTranscriptionDao,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -228,17 +229,20 @@ class SettingsViewModel @Inject constructor(
     }
 
     private suspend fun retryQueuedTranscriptions(sttModel: String) {
-        val queuedItems = queuedTranscriptionDao.getAllSync()
+        val queuedItems = repository.getByStatuses(
+            listOf(TranscriptionStatus.STT_ERROR_PERMANENT.name)
+        )
         if (queuedItems.isEmpty()) return
 
-        for (queued in queuedItems) {
-            queuedTranscriptionDao.updateSttModel(queued.id, sttModel)
+        for (transcription in queuedItems) {
+            repository.updateSttModel(transcription.id, sttModel)
+            repository.updateStatusAndError(transcription.id, TranscriptionStatus.PENDING.name, null)
             val workRequest = OneTimeWorkRequestBuilder<TranscriptionWorker>()
-                .setInputData(TranscriptionWorker.createInputData(queuedId = queued.id))
+                .setInputData(TranscriptionWorker.createInputData(transcriptionId = transcription.id))
                 .build()
             WorkManager.getInstance(context)
                 .beginUniqueWork(
-                    "transcription_${queued.id}",
+                    "transcription_${transcription.id}",
                     ExistingWorkPolicy.KEEP,
                     workRequest
                 )

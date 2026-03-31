@@ -18,6 +18,10 @@ data class TranscriptionEntity(
     val processedText: String?,
     @ColumnInfo(name = "audio_file_path")
     val audioFilePath: String?,
+    @ColumnInfo(name = "stt_model")
+    val sttModel: String? = null,
+    @ColumnInfo(name = "llm_model")
+    val llmModel: String? = null,
     @ColumnInfo(name = "created_at")
     val createdAt: String,
     @ColumnInfo(name = "post_processing_type")

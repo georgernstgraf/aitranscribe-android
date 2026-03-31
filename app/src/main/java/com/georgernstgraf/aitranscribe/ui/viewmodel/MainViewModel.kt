@@ -11,8 +11,6 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.SecurePreferences
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
@@ -35,13 +33,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: TranscriptionRepository,
-    private val queuedTranscriptionDao: QueuedTranscriptionDao,
     private val securePreferences: SecurePreferences,
     private val toastManager: ToastManager,
     private val networkMonitor: NetworkMonitor,
@@ -184,20 +180,38 @@ class MainViewModel @Inject constructor(
                 
                 Log.d("MainViewModel", "startTranscription: sttModel=$sttModel, llmModel=$llmModel")
                 
-                val queuedTranscription = QueuedTranscriptionEntity(
+                val queuedTranscription = TranscriptionEntity(
+                    originalText = "",
+                    processedText = null,
                     audioFilePath = audioPath,
                     sttModel = sttModel,
                     llmModel = llmModel,
-                    postProcessingType = _uiState.value.processingMode.name,
                     createdAt = LocalDateTime.now().toString(),
-                    priority = 0
+                    postProcessingType = _uiState.value.processingMode.name,
+                    status = if (networkMonitor.isConnected()) {
+                        TranscriptionStatus.PENDING.name
+                    } else {
+                        TranscriptionStatus.NO_NETWORK.name
+                    },
+                    errorMessage = null,
+                    playedCount = 0,
+                    retryCount = 0,
+                    summary = null
                 )
-                
-                val queuedId = queuedTranscriptionDao.insert(queuedTranscription)
-                Log.d("MainViewModel", "startTranscription: queuedId=$queuedId")
-                
-                enqueueTranscriptionWork(queuedId)
-                Log.d("MainViewModel", "startTranscription: WorkManager enqueued")
+
+                val transcriptionId = repository.insert(queuedTranscription)
+                Log.d("MainViewModel", "startTranscription: transcriptionId=$transcriptionId")
+
+                if (networkMonitor.isConnected()) {
+                    enqueueTranscriptionWork(transcriptionId)
+                    Log.d("MainViewModel", "startTranscription: WorkManager enqueued")
+                } else {
+                    toastManager.showToast(
+                        "Your transcription will be resumed when the network is available.",
+                        isWarning = true
+                    )
+                    Log.d("MainViewModel", "startTranscription: queued for no-network retry")
+                }
                 
                 loadRecentTranscriptions()
             } catch (e: Exception) {
@@ -308,44 +322,68 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun retryQueuedTranscriptions() {
-        val queuedItems = queuedTranscriptionDao.getAllSync()
+        val queuedItems = repository.getByStatuses(
+            listOf(
+                TranscriptionStatus.NO_NETWORK.name,
+                TranscriptionStatus.STT_ERROR_RETRYABLE.name
+            )
+        )
         if (queuedItems.isEmpty()) return
 
         val sttModel = securePreferences.getSttModel()
-        for (queued in queuedItems) {
-            queuedTranscriptionDao.updateSttModel(queued.id, sttModel)
-            enqueueTranscriptionWork(queued.id)
+        for (transcription in queuedItems) {
+            repository.updateSttModel(transcription.id, sttModel)
+            repository.updateStatusAndError(transcription.id, TranscriptionStatus.PENDING.name, null)
+            enqueueTranscriptionWork(transcription.id)
         }
         Log.d("MainViewModel", "Retrying ${queuedItems.size} queued transcription(s)")
     }
 
-    private fun enqueueTranscriptionWork(queuedId: Long) {
+    private fun enqueueTranscriptionWork(transcriptionId: Long) {
         val workRequest = OneTimeWorkRequestBuilder<TranscriptionWorker>()
-            .setInputData(TranscriptionWorker.createInputData(queuedId = queuedId))
+            .setInputData(TranscriptionWorker.createInputData(transcriptionId = transcriptionId))
             .build()
 
         WorkManager.getInstance(context)
             .beginUniqueWork(
-                "transcription_$queuedId",
+                "transcription_$transcriptionId",
                 ExistingWorkPolicy.KEEP,
                 workRequest
             )
             .enqueue()
 
-        observeWorkResult(workRequest.id, queuedId)
+        observeWorkResult(workRequest.id, transcriptionId)
     }
 
-    private fun observeWorkResult(workId: java.util.UUID, queuedId: Long) {
+    private fun observeWorkResult(workId: java.util.UUID, transcriptionId: Long) {
         viewModelScope.launch {
             WorkManager.getInstance(context).getWorkInfoByIdFlow(workId).collect { workInfo ->
                 if (workInfo != null && workInfo.state.isFinished) {
                     when (workInfo.state) {
                         WorkInfo.State.FAILED -> {
-                            Log.e("MainViewModel", "Transcription work failed for queuedId=$queuedId")
-                            toastManager.showToast(
-                                "Transcription failed — audio kept for retry",
-                                isError = true
-                            )
+                            Log.e("MainViewModel", "Transcription work failed for transcriptionId=$transcriptionId")
+                            val transcription = repository.getById(transcriptionId)
+                            when (transcription?.status) {
+                                TranscriptionStatus.NO_NETWORK.name -> Unit
+                                TranscriptionStatus.STT_ERROR_RETRYABLE.name -> {
+                                    toastManager.showToast(
+                                        "Transcription failed and is queued for retry.",
+                                        isWarning = true
+                                    )
+                                }
+                                TranscriptionStatus.STT_ERROR_PERMANENT.name -> {
+                                    toastManager.showToast(
+                                        transcription.errorMessage ?: "Transcription failed due to provider/model configuration.",
+                                        isError = true
+                                    )
+                                }
+                                else -> {
+                                    toastManager.showToast(
+                                        "Transcription failed — audio kept for retry",
+                                        isError = true
+                                    )
+                                }
+                            }
                         }
                         else -> {}
                     }

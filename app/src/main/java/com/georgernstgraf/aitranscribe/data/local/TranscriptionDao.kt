@@ -139,6 +139,18 @@ interface TranscriptionDao {
     @Query("UPDATE transcriptions SET audio_file_path = NULL WHERE id = :id")
     suspend fun clearAudioPath(id: Long)
 
+    @Query("SELECT audio_file_path FROM transcriptions WHERE audio_file_path IS NOT NULL")
+    suspend fun getAllAudioPaths(): List<String>
+
+    @Query("SELECT * FROM transcriptions WHERE status IN (:statuses)")
+    suspend fun getByStatuses(statuses: List<String>): List<TranscriptionEntity>
+
+    @Query("UPDATE transcriptions SET status = :status, error_message = :errorMessage WHERE id = :id")
+    suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?)
+
+    @Query("UPDATE transcriptions SET stt_model = :sttModel WHERE id = :id")
+    suspend fun updateSttModel(id: Long, sttModel: String)
+
     @Query("""
         SELECT id FROM transcriptions 
         WHERE created_at < (SELECT created_at FROM transcriptions WHERE id = :currentId)

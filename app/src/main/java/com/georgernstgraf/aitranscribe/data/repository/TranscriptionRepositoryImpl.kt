@@ -1,13 +1,9 @@
 package com.georgernstgraf.aitranscribe.data.repository
 
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionDao
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionDao
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.toDomain
-import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,8 +12,7 @@ import javax.inject.Singleton
 
 @Singleton
 class TranscriptionRepositoryImpl @Inject constructor(
-    private val transcriptionDao: TranscriptionDao,
-    private val queuedTranscriptionDao: QueuedTranscriptionDao
+    private val transcriptionDao: TranscriptionDao
 ) : TranscriptionRepository {
 
     override suspend fun insert(transcription: TranscriptionEntity): Long {
@@ -118,32 +113,20 @@ class TranscriptionRepositoryImpl @Inject constructor(
         transcriptionDao.clearAudioPath(id)
     }
 
-    override suspend fun queueForOffline(queued: QueuedTranscriptionEntity): Long {
-        return queuedTranscriptionDao.insert(queued)
+    override suspend fun getByStatuses(statuses: List<String>): List<TranscriptionEntity> {
+        return transcriptionDao.getByStatuses(statuses)
     }
 
-    override suspend fun getQueuedById(id: Long): QueuedTranscriptionEntity? {
-        return queuedTranscriptionDao.getById(id)
+    override suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?) {
+        transcriptionDao.updateStatusAndError(id, status, errorMessage)
     }
 
-    override fun getAllQueued(): Flow<List<QueuedTranscriptionEntity>> {
-        return queuedTranscriptionDao.getAll()
+    override suspend fun updateSttModel(id: Long, sttModel: String) {
+        transcriptionDao.updateSttModel(id, sttModel)
     }
 
-    override suspend fun removeQueued(id: Long): Int {
-        return queuedTranscriptionDao.deleteById(id)
-    }
-
-    override suspend fun clearQueue(): Int {
-        return queuedTranscriptionDao.clearAll()
-    }
-
-    override suspend fun getQueueCount(): Int {
-        return queuedTranscriptionDao.getCount()
-    }
-
-    override suspend fun getQueuedAudioPaths(): List<String> {
-        return queuedTranscriptionDao.getAllAudioPaths()
+    override suspend fun getAllAudioPaths(): List<String> {
+        return transcriptionDao.getAllAudioPaths()
     }
 
     override suspend fun getNextTranscriptionId(currentId: Long, viewFilter: ViewFilter): Long? {

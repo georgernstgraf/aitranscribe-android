@@ -178,6 +178,8 @@ class TranscriptionDetailViewModel @Inject constructor(
                     originalText = newText,
                     processedText = transcription.processedText,
                     audioFilePath = transcription.audioFilePath,
+                    sttModel = null,
+                    llmModel = null,
                     createdAt = transcription.createdAt.toString(),
                     postProcessingType = transcription.postProcessingType?.name,
                     status = transcription.status.name,

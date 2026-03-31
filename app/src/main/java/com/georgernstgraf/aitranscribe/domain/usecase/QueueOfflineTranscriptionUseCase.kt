@@ -1,7 +1,8 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
-import com.georgernstgraf.aitranscribe.data.local.QueuedTranscriptionEntity
+import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,16 +33,22 @@ class QueueOfflineTranscriptionUseCase @Inject constructor(
             throw QueueException("STT model cannot be empty")
         }
 
-        val queued = QueuedTranscriptionEntity(
+        val queued = TranscriptionEntity(
+            originalText = "",
+            processedText = null,
             audioFilePath = audioPath,
             sttModel = sttModel,
             llmModel = llmModel,
-            postProcessingType = postProcessingType,
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            priority = 0
+            postProcessingType = postProcessingType,
+            status = TranscriptionStatus.NO_NETWORK.name,
+            errorMessage = "No network available",
+            playedCount = 0,
+            retryCount = 0,
+            summary = null
         )
 
-        repository.queueForOffline(queued)
+        repository.insert(queued)
     }
 
     class QueueException(message: String) : Exception(message)
