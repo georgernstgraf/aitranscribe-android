@@ -19,6 +19,9 @@ import kotlinx.coroutines.test.setMain
 import okhttp3.OkHttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
+import com.georgernstgraf.aitranscribe.data.local.ModelEntity
 import org.junit.Before
 import org.junit.Test
 
@@ -66,6 +69,46 @@ class SettingsViewModelTest {
 
         assertEquals("whisper-large-v3-turbo", state.sttModel)
         assertEquals("anthropic/claude-3-haiku", state.llmModel)
+    }
+
+    @Test
+    fun `activeProviders excludes providers without active token`() = runBlocking {
+        // Setup: Groq has token, OpenRouter has old flat key, ZAI has nothing
+        coEvery { securePreferences.getActiveAuthToken("groq") } returns "token_groq"
+        coEvery { securePreferences.getActiveAuthToken("openrouter") } returns "token_or"
+        coEvery { securePreferences.getActiveAuthToken("zai") } returns null
+        
+        // Need to recreate ViewModel to trigger init { loadSettings() } with new mocks
+        viewModel = SettingsViewModel(deleteUseCase, securePreferences, validateApiKeysUseCase, providerModelDao)
+        testDispatcher.scheduler.runCurrent()
+        
+        val state = viewModel.uiState.value
+        
+        assertEquals(true, state.providerAuthStatus["groq"])
+        assertEquals(true, state.providerAuthStatus["openrouter"])
+        assertEquals(false, state.providerAuthStatus["zai"])
+        
+        assertTrue(state.activeProviders.contains("groq"))
+        assertTrue(state.activeProviders.contains("openrouter"))
+        assertFalse(state.activeProviders.contains("zai"))
+        
+        assertFalse(state.availableProviders.contains("groq"))
+        assertTrue(state.availableProviders.contains("zai"))
+    }
+    
+    @Test
+    fun `changing provider updates available models from dao`() = runBlocking {
+        val orModels = listOf(ModelEntity("model1", "openrouter", "Model 1"))
+        coEvery { providerModelDao.getModelsForProvider("openrouter") } returns orModels
+        
+        testDispatcher.scheduler.runCurrent()
+        
+        viewModel.onLlmProviderChanged("openrouter")
+        testDispatcher.scheduler.runCurrent()
+        
+        val state = viewModel.uiState.value
+        assertEquals("openrouter", state.llmProvider)
+        assertEquals(orModels, state.llmAvailableModels)
     }
 
 

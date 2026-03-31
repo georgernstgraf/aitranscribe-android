@@ -201,9 +201,11 @@ dependencies {
     // Android Instrumentation Testing
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.4")
     androidTestImplementation("io.mockk:mockk-android:1.13.9")
     androidTestImplementation("com.google.dagger:hilt-android-testing:2.50")
     androidTestImplementation("androidx.arch.core:core-testing:2.2.0")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    androidTestImplementation("androidx.work:work-testing:2.9.0")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.4")
 }
