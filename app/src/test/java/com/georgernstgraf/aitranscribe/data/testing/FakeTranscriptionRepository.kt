@@ -47,7 +47,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         val filtered = if (viewFilter == ViewFilter.ALL) {
             transcriptions.value.filter { it.createdAt < cutoffDate }
         } else {
-            transcriptions.value.filter { it.createdAt < cutoffDate && it.playedCount == 0 }
+            transcriptions.value.filter { it.createdAt < cutoffDate && !it.seen }
         }
         transcriptions.value = transcriptions.value.filterNot { it in filtered }
         return filtered.size
@@ -82,7 +82,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
                         (it.processedText?.contains(searchQuery, ignoreCase = true) == true))
                 }
                 .filter {
-                    viewFilter == ViewFilter.ALL || it.playedCount == 0
+                    viewFilter == ViewFilter.ALL || !it.seen
                 }
                 .map { it.toDomain() }
         }
@@ -108,7 +108,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
     override fun getUnviewed(limit: Int): Flow<List<Transcription>> {
         return transcriptions.map { entities ->
             entities
-                .filter { it.playedCount == 0 }
+                .filter { !it.seen }
                 .take(limit)
                 .map { it.toDomain() }
         }
@@ -117,7 +117,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
     override fun getViewed(limit: Int): Flow<List<Transcription>> {
         return transcriptions.map { entities ->
             entities
-                .filter { it.playedCount > 0 }
+                .filter { it.seen }
                 .take(limit)
                 .map { it.toDomain() }
         }
@@ -125,14 +125,14 @@ class FakeTranscriptionRepository : TranscriptionRepository {
 
     override suspend fun markAsViewed(id: Long): Int {
         transcriptions.value = transcriptions.value.map {
-            if (it.id == id) it.copy(playedCount = it.playedCount + 1) else it
+            if (it.id == id) it.copy(seen = true) else it
         }
         return 1
     }
 
     override suspend fun resetViewStatus(id: Long): Int {
         transcriptions.value = transcriptions.value.map {
-            if (it.id == id) it.copy(playedCount = 0) else it
+            if (it.id == id) it.copy(seen = false) else it
         }
         return 1
     }
@@ -162,7 +162,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         return if (viewFilter == ViewFilter.ALL) {
             transcriptions.value.count { it.createdAt < cutoffDate }
         } else {
-            transcriptions.value.count { it.createdAt < cutoffDate && it.playedCount == 0 }
+            transcriptions.value.count { it.createdAt < cutoffDate && !it.seen }
         }
     }
 
@@ -231,7 +231,8 @@ class FakeTranscriptionRepository : TranscriptionRepository {
             },
             status = com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.valueOf(status),
             errorMessage = errorMessage,
-            playedCount = playedCount,
+            playedCount = if (seen) 1 else 0,
+            seen = seen,
             retryCount = retryCount,
             summary = summary
         )
@@ -239,7 +240,7 @@ class FakeTranscriptionRepository : TranscriptionRepository {
 
     override fun getFilteredIds(viewFilter: ViewFilter): Flow<List<Long>> {
         val ids = transcriptions.value
-            .filter { viewFilter == ViewFilter.ALL || it.playedCount == 0 }
+            .filter { viewFilter == ViewFilter.ALL || !it.seen }
             .map { it.id }
         return kotlinx.coroutines.flow.flowOf(ids)
     }

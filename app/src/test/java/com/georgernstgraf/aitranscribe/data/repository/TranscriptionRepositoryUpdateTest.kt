@@ -28,7 +28,7 @@ class TranscriptionRepositoryUpdateTest {
             postProcessingType = "CLEANUP",
             status = "COMPLETED",
             errorMessage = null,
-            playedCount = 3,
+            seen = true,
             retryCount = 1,
             summary = "A summary"
         )
@@ -46,7 +46,7 @@ class TranscriptionRepositoryUpdateTest {
         assertEquals("processed", reloaded.processedText)
         assertEquals("/audio.m4a", reloaded.audioFilePath)
         assertEquals("CLEANUP", reloaded.postProcessingType)
-        assertEquals(3, reloaded.playedCount)
+        assertEquals(true, reloaded.seen)
         assertEquals(1, reloaded.retryCount)
         assertEquals("A summary", reloaded.summary)
     }
@@ -64,7 +64,7 @@ class TranscriptionRepositoryUpdateTest {
         assertEquals(entity.processedText, reloaded.processedText)
         assertEquals(entity.audioFilePath, reloaded.audioFilePath)
         assertEquals(entity.postProcessingType, reloaded.postProcessingType)
-        assertEquals(entity.playedCount, reloaded.playedCount)
+        assertEquals(entity.seen, reloaded.seen)
     }
 
     @Test

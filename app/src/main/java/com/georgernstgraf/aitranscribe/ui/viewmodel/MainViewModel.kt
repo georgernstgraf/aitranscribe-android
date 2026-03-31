@@ -206,7 +206,7 @@ class MainViewModel @Inject constructor(
                         TranscriptionStatus.NO_NETWORK.name
                     },
                     errorMessage = null,
-                    playedCount = 0,
+                    seen = false,
                     retryCount = 0,
                     summary = null
                 )

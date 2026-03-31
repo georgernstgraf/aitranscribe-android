@@ -30,8 +30,8 @@ data class TranscriptionEntity(
     val status: String,
     @ColumnInfo(name = "error_message")
     val errorMessage: String?,
-    @ColumnInfo(name = "played_count")
-    val playedCount: Int = 0,
+    @ColumnInfo(name = "seen")
+    val seen: Boolean = false,
     @ColumnInfo(name = "retry_count")
     val retryCount: Int = 0,
     @ColumnInfo(name = "summary")
@@ -48,7 +48,8 @@ fun TranscriptionEntity.toDomain(): Transcription {
         postProcessingType = postProcessingType?.toPostProcessingTypeOrNull(),
         status = TranscriptionStatus.valueOf(status),
         errorMessage = errorMessage,
-        playedCount = playedCount,
+        playedCount = if (seen) 1 else 0,
+        seen = seen,
         retryCount = retryCount,
         summary = summary
     )

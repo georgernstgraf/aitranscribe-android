@@ -16,7 +16,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ModelCapabilityEntity::class,
         AppPreferenceEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class TranscriptionDatabase : RoomDatabase() {
@@ -38,7 +38,7 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                     TranscriptionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                     .addCallback(ProviderPrepopulateCallback())
                     .fallbackToDestructiveMigration()
                     .build()
@@ -334,6 +334,48 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
+            }
+        }
+
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `transcriptions_new` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `original_text` TEXT NOT NULL,
+                        `processed_text` TEXT,
+                        `audio_file_path` TEXT,
+                        `stt_model` TEXT,
+                        `llm_model` TEXT,
+                        `created_at` TEXT NOT NULL,
+                        `post_processing_type` TEXT,
+                        `status` TEXT NOT NULL,
+                        `error_message` TEXT,
+                        `seen` INTEGER NOT NULL DEFAULT 0,
+                        `retry_count` INTEGER NOT NULL DEFAULT 0,
+                        `summary` TEXT
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO `transcriptions_new` (
+                        `id`, `original_text`, `processed_text`, `audio_file_path`,
+                        `stt_model`, `llm_model`, `created_at`, `post_processing_type`,
+                        `status`, `error_message`, `seen`, `retry_count`, `summary`
+                    )
+                    SELECT
+                        `id`, `original_text`, `processed_text`, `audio_file_path`,
+                        `stt_model`, `llm_model`, `created_at`, `post_processing_type`,
+                        `status`, `error_message`,
+                        CASE WHEN `played_count` > 0 THEN 1 ELSE 0 END,
+                        `retry_count`, `summary`
+                    FROM `transcriptions`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `transcriptions`")
+                db.execSQL("ALTER TABLE `transcriptions_new` RENAME TO `transcriptions`")
             }
         }
     }

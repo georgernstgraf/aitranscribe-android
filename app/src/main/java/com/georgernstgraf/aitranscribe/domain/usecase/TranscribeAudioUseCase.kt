@@ -80,7 +80,7 @@ class TranscribeAudioUseCase @Inject constructor(
                 postProcessingType = null,
                 status = TranscriptionStatus.COMPLETED.name,
                 errorMessage = null,
-                playedCount = 0,
+                seen = false,
                 retryCount = 0
             )
 

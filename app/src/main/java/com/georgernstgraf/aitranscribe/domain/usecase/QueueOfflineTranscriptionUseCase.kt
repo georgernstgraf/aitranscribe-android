@@ -43,7 +43,7 @@ class QueueOfflineTranscriptionUseCase @Inject constructor(
             postProcessingType = postProcessingType,
             status = TranscriptionStatus.NO_NETWORK.name,
             errorMessage = "No network available",
-            playedCount = 0,
+            seen = false,
             retryCount = 0,
             summary = null
         )

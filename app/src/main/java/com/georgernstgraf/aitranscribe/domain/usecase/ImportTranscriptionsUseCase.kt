@@ -88,7 +88,7 @@ class ImportTranscriptionsUseCase @Inject constructor(
                         postProcessingType = null,
                         status = fields[5],
                         errorMessage = null,
-                        playedCount = fields.getOrNull(6)?.toIntOrNull() ?: 0,
+                        seen = (fields.getOrNull(6)?.toIntOrNull() ?: 0) > 0,
                         retryCount = 0
                     )
                     

@@ -66,13 +66,13 @@ model transcriptions {
   original_text        String
   processed_text       String?
   audio_file_path      String?
+  stt_model            String?
+  llm_model            String?
   created_at           String
   post_processing_type String?
   status               String
   error_message        String?
-  played_count         Int
-  retry_count          Int
+  seen                 Int     @default(0)
+  retry_count          Int     @default(0)
   summary              String?
-  stt_model            String?
-  llm_model            String?
 }

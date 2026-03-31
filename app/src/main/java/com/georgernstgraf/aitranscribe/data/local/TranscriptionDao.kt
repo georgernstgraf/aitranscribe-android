@@ -27,8 +27,8 @@ interface TranscriptionDao {
         WHERE created_at < :cutoffDate 
         AND (
             :viewFilter = 'ALL' 
-            OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0)
-            OR (:viewFilter = 'VIEWED' AND played_count > 0)
+            OR (:viewFilter = 'UNVIEWED_ONLY' AND seen = 0)
+            OR (:viewFilter = 'VIEWED' AND seen = 1)
         )
     """)
     suspend fun deleteOld(cutoffDate: String, viewFilter: String): Int
@@ -50,7 +50,7 @@ interface TranscriptionDao {
             AND (:searchQuery IS NULL OR 
                  original_text LIKE '%' || :searchQuery || '%' OR 
                  processed_text LIKE '%' || :searchQuery || '%')
-            AND (:viewFilter = 'ALL' OR played_count = 0)
+            AND (:viewFilter = 'ALL' OR seen = 0)
         ORDER BY created_at DESC
     """)
     fun searchTranscriptions(
@@ -77,7 +77,7 @@ interface TranscriptionDao {
 
     @Query("""
         SELECT * FROM transcriptions 
-        WHERE played_count = 0
+        WHERE seen = 0
         ORDER BY created_at DESC
         LIMIT :limit
     """)
@@ -85,7 +85,7 @@ interface TranscriptionDao {
 
     @Query("""
         SELECT * FROM transcriptions 
-        WHERE played_count > 0
+        WHERE seen = 1
         ORDER BY created_at DESC
         LIMIT :limit
     """)
@@ -93,14 +93,14 @@ interface TranscriptionDao {
 
     @Query("""
         UPDATE transcriptions 
-        SET played_count = played_count + 1 
+        SET seen = 1
         WHERE id = :id
     """)
     suspend fun incrementPlayedCount(id: Long): Int
 
     @Query("""
         UPDATE transcriptions 
-        SET played_count = 0 
+        SET seen = 0
         WHERE id = :id
     """)
     suspend fun resetPlayedCount(id: Long): Int
@@ -127,8 +127,8 @@ interface TranscriptionDao {
         WHERE created_at < :cutoffDate 
         AND (
             :viewFilter = 'ALL' 
-            OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0)
-            OR (:viewFilter = 'VIEWED' AND played_count > 0)
+            OR (:viewFilter = 'UNVIEWED_ONLY' AND seen = 0)
+            OR (:viewFilter = 'VIEWED' AND seen = 1)
         )
     """)
     suspend fun getOldCount(cutoffDate: String, viewFilter: String): Int
@@ -156,8 +156,8 @@ interface TranscriptionDao {
         WHERE created_at < (SELECT created_at FROM transcriptions WHERE id = :currentId)
         AND (
             :viewFilter = 'ALL' 
-            OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0)
-            OR (:viewFilter = 'VIEWED' AND played_count > 0)
+            OR (:viewFilter = 'UNVIEWED_ONLY' AND seen = 0)
+            OR (:viewFilter = 'VIEWED' AND seen = 1)
         )
         ORDER BY created_at DESC
         LIMIT 1
@@ -169,8 +169,8 @@ interface TranscriptionDao {
         WHERE created_at > (SELECT created_at FROM transcriptions WHERE id = :currentId)
         AND (
             :viewFilter = 'ALL' 
-            OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0)
-            OR (:viewFilter = 'VIEWED' AND played_count > 0)
+            OR (:viewFilter = 'UNVIEWED_ONLY' AND seen = 0)
+            OR (:viewFilter = 'VIEWED' AND seen = 1)
         )
         ORDER BY created_at ASC
         LIMIT 1
@@ -181,8 +181,8 @@ interface TranscriptionDao {
         SELECT id FROM transcriptions
         WHERE (
             :viewFilter = 'ALL'
-            OR (:viewFilter = 'UNVIEWED_ONLY' AND played_count = 0)
-            OR (:viewFilter = 'VIEWED' AND played_count > 0)
+            OR (:viewFilter = 'UNVIEWED_ONLY' AND seen = 0)
+            OR (:viewFilter = 'VIEWED' AND seen = 1)
         )
         ORDER BY created_at DESC
     """)

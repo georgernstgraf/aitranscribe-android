@@ -90,7 +90,7 @@ class ShareTranscriptionUseCaseTest {
         postProcessingType = null,
         status = "COMPLETED",
         errorMessage = null,
-        playedCount = 0,
+        seen = false,
         retryCount = 0
     )
 }

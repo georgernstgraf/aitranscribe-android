@@ -31,13 +31,13 @@ class MarkAsViewedUseCaseTest {
                 postProcessingType = null,
                 status = "COMPLETED",
                 errorMessage = null,
-                playedCount = 0,
+                seen = false,
                 retryCount = 0
             )
         )
 
         useCase(id)
 
-        assertEquals(1, repository.getById(id)?.playedCount)
+        assertEquals(true, repository.getById(id)?.seen)
     }
 }

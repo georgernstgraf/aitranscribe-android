@@ -31,13 +31,13 @@ class ResetViewStatusUseCaseTest {
                 postProcessingType = null,
                 status = "COMPLETED",
                 errorMessage = null,
-                playedCount = 5,
+                seen = true,
                 retryCount = 0
             )
         )
 
         useCase(id)
 
-        assertEquals(0, repository.getById(id)?.playedCount)
+        assertEquals(false, repository.getById(id)?.seen)
     }
 }

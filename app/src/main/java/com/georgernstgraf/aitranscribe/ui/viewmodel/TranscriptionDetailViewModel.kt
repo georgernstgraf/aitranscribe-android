@@ -130,7 +130,7 @@ class TranscriptionDetailViewModel @Inject constructor(
                                 isViewed = transcription.isViewed
                             )
                         }
-                        if (!suppressAutoMark && entity.playedCount == 0 && viewFilter != ViewFilter.UNVIEWED_ONLY) {
+                        if (!suppressAutoMark && !entity.seen && viewFilter != ViewFilter.UNVIEWED_ONLY) {
                             markAsViewed(transcription.id)
                         }
                     }
@@ -182,7 +182,7 @@ class TranscriptionDetailViewModel @Inject constructor(
                     postProcessingType = transcription.postProcessingType?.name,
                     status = transcription.status.name,
                     errorMessage = transcription.errorMessage,
-                    playedCount = transcription.playedCount,
+                    seen = transcription.seen,
                     retryCount = transcription.retryCount,
                     summary = transcription.summary
                 )

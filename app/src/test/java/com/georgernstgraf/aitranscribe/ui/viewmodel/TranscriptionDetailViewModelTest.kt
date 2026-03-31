@@ -68,7 +68,7 @@ class TranscriptionDetailViewModelTest {
         id: Long = 0,
         originalText: String = "Test transcription",
         processedText: String? = null,
-        playedCount: Int = 0
+        seen: Boolean = false
     ): Long {
         return repository.insert(
             TranscriptionEntity(
@@ -80,7 +80,7 @@ class TranscriptionDetailViewModelTest {
                 postProcessingType = null,
                 status = "COMPLETED",
                 errorMessage = null,
-                playedCount = playedCount,
+                seen = seen,
                 retryCount = 0
             )
         )
@@ -123,28 +123,28 @@ class TranscriptionDetailViewModelTest {
 
     @Test
     fun `auto-marks transcription as viewed on load`() = runBlocking {
-        val id = insertTestEntity(playedCount = 0)
+        val id = insertTestEntity(seen = false)
         createViewModel(id, viewFilter = "ALL")
         testDispatcher.scheduler.runCurrent()
 
         val entity = repository.getById(id)
-        assertTrue(entity!!.playedCount > 0)
+        assertTrue(entity!!.seen)
     }
 
     @Test
     fun `does not auto-mark transcription as viewed when UNVIEWED_ONLY filter is active`() = runBlocking {
-        val id = insertTestEntity(playedCount = 0)
+        val id = insertTestEntity(seen = false)
         createViewModel(id, viewFilter = "UNVIEWED_ONLY")
         testDispatcher.scheduler.runCurrent()
 
         val entity = repository.getById(id)
         // Should remain 0 because auto-mark is suppressed for UNVIEWED_ONLY filter
-        assertEquals(0, entity!!.playedCount)
+        assertEquals(false, entity!!.seen)
     }
 
     @Test
     fun `toggleViewStatus viewed to unread and back to viewed`() = runBlocking {
-        val id = insertTestEntity(playedCount = 1)
+        val id = insertTestEntity(seen = true)
         createViewModel(id)
         testDispatcher.scheduler.runCurrent()
 

@@ -116,7 +116,7 @@ class TranscriptionWorkerTest {
             postProcessingType = PostProcessingType.RAW.name,
             status = TranscriptionStatus.PENDING.name,
             errorMessage = null,
-            playedCount = 0,
+            seen = false,
             retryCount = 0,
             summary = null
         )
@@ -148,7 +148,7 @@ class TranscriptionWorkerTest {
             postProcessingType = PostProcessingType.CLEANUP.name,
             status = TranscriptionStatus.PENDING.name,
             errorMessage = null,
-            playedCount = 0,
+            seen = false,
             retryCount = 0,
             summary = null
         )
@@ -186,7 +186,7 @@ class TranscriptionWorkerTest {
             postProcessingType = PostProcessingType.CLEANUP.name,
             status = TranscriptionStatus.PENDING.name,
             errorMessage = null,
-            playedCount = 0,
+            seen = false,
             retryCount = 0,
             summary = null
         )
