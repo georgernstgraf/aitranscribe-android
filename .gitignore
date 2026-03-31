@@ -3,6 +3,10 @@
 *.ap_
 *.aab
 
+# prisma
+prisma/device_schema.prisma
+prisma/device_db.sqlite
+
 # openclaw mess
 .openclaw/
 

@@ -1,16 +1,12 @@
 APP_ID ?= com.georgernstgraf.aitranscribe.debug
 DB_NAME ?= aitranscribe.db
-LOCAL_DB ?= prisma/device_db.sqlite
+LOCAL_DB ?= device_db.sqlite
 
-.PHONY: prepare
+device/schema.prisma: device_db.sqlite
+	cp template/schema.prisma device/
+	(cd device && deno -A prisma db pull)
 
-prepare:
-	(cd prisma && cp -f schema_head.prisma device_schema.prisma)
-
-prisma/device_schema.prisma: prisma/device_db.sqlite
-	(cd prisma && deno -A prisma db pull  --schema device_schema.prisma)
-
-prisma/device_db.sqlite:
+device_db.sqlite::
 	@adb shell am force-stop "$(APP_ID)"
 	@rm -f "$(LOCAL_DB)" "$(LOCAL_DB)-wal" "$(LOCAL_DB)-shm"
 	@mkdir -p "$(dir $(LOCAL_DB))"
