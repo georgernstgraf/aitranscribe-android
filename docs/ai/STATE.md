@@ -1,6 +1,6 @@
 # Project State
 
-Current status as of 2026-03-30.
+Current status as of 2026-03-31.
 
 ## Current Focus
 Dynamic provider models and offline queueing reliability (#41).
@@ -10,6 +10,9 @@ Dynamic provider models and offline queueing reliability (#41).
 - [x] Rebuilt Settings UI with separate Provider list and Active Search model dropdowns
 - [x] Implemented `ModelSyncWorker` to fetch provider models in the background
 - [x] Refactored `TranscriptionWorker` to keep audio file active until LLM post-processing succeeds
+- [x] Backfilled database, sync worker, and viewmodel tests
+- [x] Fixed LLM model routing to properly dispatch Groq STT and Groq LLM requests to the correct endpoints
+- [x] Fixed saving separate preferences for LLM and STT models to prevent UI state overwrites
 
 ## Pending
 - None.
@@ -18,4 +21,4 @@ Dynamic provider models and offline queueing reliability (#41).
 - None.
 
 ## Next Session Suggestion
-Test the background sync behavior after 12 hours, and ensure queueing reliably picks up old files when connectivity/keys are restored.
+Address client-side audio conversion (.m4a to .mp3) to support ZAI ASR functionality (Issue #43).

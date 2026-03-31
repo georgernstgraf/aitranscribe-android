@@ -114,3 +114,8 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: `TranscriptionWorker` retains the recorded `.m4a` file in the device cache (by not nulling `audioFilePath`) until *both* STT and LLM post-processing steps succeed.
 - **Reason**: Enables true "offline queueing" where users can record endless notes while offline or before entering API keys. The app will catch up on processing once configured.
 - **Tradeoff**: Requires cautious cleanup sweeps to avoid filling the user's storage with orphaned audio files.
+
+## 2026-03-31: Dynamic Provider LLM Routing
+- **Choice**: Configured `GroqApiService` to handle `chat/completions` directly and updated `PostProcessTextUseCase` to route requests dynamically based on the selected provider.
+- **Reason**: The previous implementation forced all LLM requests through `OpenRouterApiService` if they weren't explicitly ZAI, which caused HTTP 401 errors when attempting to use a Groq API key on an OpenRouter endpoint.
+- **Tradeoff**: Required duplicating the OpenAI-compatible DTO structures across Retrofit API interfaces, but maintains clean separation of base URLs.
