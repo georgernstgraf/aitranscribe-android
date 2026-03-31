@@ -58,6 +58,15 @@ class MainViewModel @Inject constructor(
         registerRecordingResultReceiver()
         loadProcessingMode()
         observeNetworkForRetry()
+        triggerRetryOnAppStartIfOnline()
+    }
+
+    private fun triggerRetryOnAppStartIfOnline() {
+        viewModelScope.launch {
+            if (networkMonitor.isConnected()) {
+                retryQueuedTranscriptions()
+            }
+        }
     }
 
     override fun onCleared() {
@@ -324,6 +333,8 @@ class MainViewModel @Inject constructor(
     private suspend fun retryQueuedTranscriptions() {
         val queuedItems = repository.getByStatuses(
             listOf(
+                TranscriptionStatus.PENDING.name,
+                TranscriptionStatus.PROCESSING.name,
                 TranscriptionStatus.NO_NETWORK.name,
                 TranscriptionStatus.STT_ERROR_RETRYABLE.name
             )

@@ -9,7 +9,6 @@ import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
 import com.georgernstgraf.aitranscribe.util.ToastManager
 import io.mockk.coEvery
-import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -147,8 +146,8 @@ class MainViewModelTest {
         val queuedItem = TranscriptionEntity(id = 1, originalText = "", processedText = null, audioFilePath = "/a.m4a", sttModel = "old-model", llmModel = "llm", createdAt = LocalDateTime.now().toString(), postProcessingType = "RAW", status = TranscriptionStatus.NO_NETWORK.name, errorMessage = null)
         repository.insert(queuedItem)
 
-        every { networkMonitor.isConnected() } returns true
-        networkStateFlow.value = true
+        every { networkMonitor.isConnected() } returns false
+        networkStateFlow.value = false
         viewModel = createViewModel()
         testDispatcher.scheduler.runCurrent()
 
@@ -156,5 +155,36 @@ class MainViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         assertEquals("old-model", repository.getById(1)?.sttModel)
+    }
+
+    @Test
+    fun `app start while online retries pending transcriptions`() = runBlocking {
+        repository.insert(
+            TranscriptionEntity(
+                originalText = "",
+                processedText = null,
+                audioFilePath = "/c.m4a",
+                sttModel = "old-model",
+                llmModel = "llm",
+                createdAt = LocalDateTime.now().toString(),
+                postProcessingType = "RAW",
+                status = TranscriptionStatus.PENDING.name,
+                errorMessage = null
+            )
+        )
+        coEvery { securePreferences.getSttModel() } returns "whisper-large-v3-turbo"
+
+        val workManager = mockk<androidx.work.WorkManager>(relaxed = true)
+        mockkStatic(androidx.work.WorkManager::class)
+        every { androidx.work.WorkManager.getInstance(any()) } returns workManager
+
+        every { networkMonitor.isConnected() } returns true
+        networkStateFlow.value = true
+
+        viewModel = createViewModel()
+        testDispatcher.scheduler.runCurrent()
+
+        assertEquals("whisper-large-v3-turbo", repository.getById(1)?.sttModel)
+        assertEquals(TranscriptionStatus.PENDING.name, repository.getById(1)?.status)
     }
 }
