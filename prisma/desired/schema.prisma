@@ -10,25 +10,42 @@ model android_metadata {
     @@ignore
 }
 
-model provider_model {
-    id           Int          @id @default(autoincrement())
-    name         String
-    capabilities capability[]
-    provider     provider     @relation(fields: [providerId], references: [id])
-    providerId   String
-}
-
 model provider {
     id             String           @id
-    name           String
+    name           String           @unique
     last_synced_at Int
     models         provider_model[]
 }
 
+model provider_model {
+    id                Int                @id @default(autoincrement())
+    providerId        String
+    externalId        String
+    name              String
+    provider          provider           @relation(fields: [providerId], references: [id], onDelete: Cascade)
+    modelCapabilities model_capability[]
+
+    @@unique([providerId, externalId])
+    @@index([providerId])
+    @@index([name])
+}
+
 model capability {
-    id     String           @id
-    name   String
-    models provider_model[]
+    id                String             @id
+    name              String             @unique
+    modelCapabilities model_capability[]
+}
+
+model model_capability {
+    modelId          Int
+    capabilityId    String
+    source          String?
+    capability      capability     @relation(fields: [capabilityId], references: [id], onDelete: Cascade)
+    model           provider_model @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+    @@id([modelId, capabilityId])
+    @@index([capabilityId])
+    @@index([modelId])
 }
 
 model room_master_table {
@@ -38,12 +55,15 @@ model room_master_table {
 
 model transcriptions {
     id              Int      @id @default(autoincrement())
-    audio_file_path String
-    original_text   String?
+    audio_file_path String?
+    original_text   String
     processed_text  String?
     summary         String?
-    created_at      DateTime
-    status          String /// is an ENUM in code
+    created_at      DateTime @default(now())
+    status          String /// ENUM-like status, stored as TEXT
     error_message   String?
-    seen            Boolean
+    seen            Boolean  @default(false)
+
+    @@index([created_at])
+    @@index([status])
 }
