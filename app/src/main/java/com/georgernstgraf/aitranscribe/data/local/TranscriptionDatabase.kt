@@ -15,7 +15,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         CapabilityEntity::class,
         ModelCapabilityEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class TranscriptionDatabase : RoomDatabase() {
@@ -36,7 +36,7 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                     TranscriptionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .addCallback(ProviderPrepopulateCallback())
                     .fallbackToDestructiveMigration()
                     .build()
@@ -49,9 +49,9 @@ abstract class TranscriptionDatabase : RoomDatabase() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
                 // Pre-populate providers on creation
-                db.execSQL("INSERT INTO providers (id, display_name, last_synced_at) VALUES ('groq', 'Groq', 0)")
-                db.execSQL("INSERT INTO providers (id, display_name, last_synced_at) VALUES ('openrouter', 'OpenRouter', 0)")
-                db.execSQL("INSERT INTO providers (id, display_name, last_synced_at) VALUES ('zai', 'ZAI', 0)")
+                db.execSQL("INSERT INTO providers (id, name, last_synced_at, api_token) VALUES ('groq', 'Groq', 0, NULL)")
+                db.execSQL("INSERT INTO providers (id, name, last_synced_at, api_token) VALUES ('openrouter', 'OpenRouter', 0, NULL)")
+                db.execSQL("INSERT INTO providers (id, name, last_synced_at, api_token) VALUES ('zai', 'ZAI', 0, NULL)")
             }
         }
 
@@ -291,6 +291,32 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_models_model_name` ON `models` (`model_name`)")
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_capabilities_name` ON `capabilities` (`name`)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_model_capabilities_capability_id` ON `model_capabilities` (`capability_id`)")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("PRAGMA foreign_keys=OFF")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `providers_new` (
+                        `id` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `last_synced_at` INTEGER NOT NULL,
+                        `api_token` TEXT,
+                        PRIMARY KEY(`id`)
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO `providers_new` (`id`, `name`, `last_synced_at`, `api_token`)
+                    SELECT `id`, `display_name`, `last_synced_at`, NULL FROM `providers`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE IF EXISTS `providers`")
+                db.execSQL("ALTER TABLE `providers_new` RENAME TO `providers`")
+                db.execSQL("PRAGMA foreign_keys=ON")
             }
         }
     }

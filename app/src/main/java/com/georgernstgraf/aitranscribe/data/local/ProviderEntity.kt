@@ -9,10 +9,13 @@ data class ProviderEntity(
     @PrimaryKey
     @ColumnInfo(name = "id")
     val id: String,
-    
-    @ColumnInfo(name = "display_name")
-    val displayName: String,
-    
+
+    @ColumnInfo(name = "name")
+    val name: String,
+
     @ColumnInfo(name = "last_synced_at")
-    val lastSyncedAt: Long = 0L
+    val lastSyncedAt: Long = 0L,
+
+    @ColumnInfo(name = "api_token")
+    val apiToken: String? = null
 )

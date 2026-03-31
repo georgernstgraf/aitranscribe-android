@@ -101,3 +101,6 @@ Desired schema edits alone do not affect Room entities, migrations, or `prisma/d
 
 ## Room migration FK mismatch when referencing temporary table names
 In migrations that rebuild tables (e.g. `models_new` -> `models`), creating dependent tables with foreign keys pointing to temporary names causes startup crash (`Migration didn't properly handle ...`). Create/link dependent tables after final rename, or seed into temporary non-FK table and copy into final FK table.
+
+## Cleanup/post-processing errors are often provider-side, not app crashes
+`TranscriptionWorker` logs like HTTP `429` (insufficient balance) or HTTP `400` unknown model during cleanup/LLM post-processing are handled as non-fatal warnings (`Worker result SUCCESS` with warning status path). Diagnose provider token/model/billing before suspecting crash bugs.

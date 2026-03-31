@@ -55,7 +55,13 @@ class ModelSyncWorker @AssistedInject constructor(
     }
 
     private suspend fun syncProvider(providerId: String, timestamp: Long) {
-        val token = securePreferences.getActiveAuthToken(providerId)
+        var token = providerModelDao.getProviderApiToken(providerId)
+        if (token.isNullOrBlank()) {
+            token = securePreferences.getActiveAuthToken(providerId)
+            if (!token.isNullOrBlank()) {
+                providerModelDao.updateProviderApiToken(providerId, token)
+            }
+        }
         val bearerToken = token?.let { if (it.startsWith("Bearer ")) it else "Bearer $it" }
 
         try {

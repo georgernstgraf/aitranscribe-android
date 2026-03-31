@@ -52,7 +52,7 @@ class ProviderModelDaoTest {
         
         val single = dao.getProviderById("provider1")
         assertNotNull(single)
-        assertEquals("Provider 1", single?.displayName)
+        assertEquals("Provider 1", single?.name)
     }
 
     @Test

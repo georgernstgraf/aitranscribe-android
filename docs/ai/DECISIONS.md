@@ -144,3 +144,8 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Migrated Room schema from denormalized `models.capabilities` JSON text to normalized `capabilities` + `model_capabilities` tables, with `models.id` as surrogate PK and `external_id` retained for provider-facing model IDs.
 - **Reason**: Align runtime DB with desired relational model and enable durable many-to-many capability mapping.
 - **Changed**: Added DB `version = 6` migration (`MIGRATION_5_6`), updated DAO replacement flow, updated sync pipeline to write capability rows and joins, and switched UI model selection to use `externalId`.
+
+## 2026-03-31: Provider auth moved to DB-first storage with compatibility fallback (#55)
+- **Choice**: Store provider auth token in `providers.api_token` (Room) as canonical runtime location, while retaining SecurePreferences fallback/backfill for compatibility.
+- **Reason**: Align runtime implementation with desired schema (`provider.api_token`) without breaking existing installs that only have preference-based tokens.
+- **Changed**: Added DB `version = 7` migration (`MIGRATION_6_7`) converting `display_name` to `name` and adding `api_token`; updated worker/settings auth reads to DB-first and writes to sync DB + SecurePreferences.

@@ -102,14 +102,14 @@ class SettingsViewModel @Inject constructor(
             if (state.sttModel.contains(' ')) errors.add("STT model name must not contain spaces")
             if (state.llmModel.isBlank()) errors.add("LLM model cannot be empty")
 
-            val activeSttToken = securePreferences.getActiveAuthToken(state.sttProvider)
+            val activeSttToken = getEffectiveProviderToken(state.sttProvider)
             if (activeSttToken.isNullOrBlank() && state.sttProvider != "openrouter") {
                 // OpenRouter allows fetching some things without auth, but STT might require it.
                 // Assuming Groq and ZAI require auth for STT:
                 errors.add("${state.sttProvider.replaceFirstChar { it.uppercase() }} authentication is required for STT")
             }
 
-            val activeLlmToken = securePreferences.getActiveAuthToken(state.llmProvider)
+            val activeLlmToken = getEffectiveProviderToken(state.llmProvider)
             if (activeLlmToken.isNullOrBlank()) {
                 errors.add("${state.llmProvider.replaceFirstChar { it.uppercase() }} authentication is required for LLM Post-Processing")
             }
@@ -164,13 +164,14 @@ class SettingsViewModel @Inject constructor(
     fun saveProviderAuth(providerId: String, token: String) {
         viewModelScope.launch {
             securePreferences.setProviderAuthToken(providerId, token)
+            providerModelDao.updateProviderApiToken(providerId, token)
             // Refresh state to update auth status
             loadSettings()
         }
     }
 
     suspend fun getProviderToken(providerId: String): String? {
-        return securePreferences.getActiveAuthToken(providerId)
+        return getEffectiveProviderToken(providerId)
     }
 
     private fun loadSettings() {
@@ -182,7 +183,7 @@ class SettingsViewModel @Inject constructor(
                 // Track only providers with valid auth tokens
                 val allProviderIds = ProviderConfig.allProviderIds
                 val authStatus = allProviderIds.associateWith { provider ->
-                    !securePreferences.getActiveAuthToken(provider).isNullOrBlank()
+                    !getEffectiveProviderToken(provider).isNullOrBlank()
                 }
                 val activeProviders = allProviderIds.filter { provider -> authStatus[provider] == true }
                 val availableProviders = allProviderIds.filter { provider -> authStatus[provider] != true }
@@ -213,6 +214,17 @@ class SettingsViewModel @Inject constructor(
                 _uiState.update { SettingsUiState() }
             }
         }
+    }
+
+    private suspend fun getEffectiveProviderToken(providerId: String): String? {
+        val dbToken = providerModelDao.getProviderApiToken(providerId)
+        if (!dbToken.isNullOrBlank()) return dbToken
+
+        val legacyToken = securePreferences.getActiveAuthToken(providerId)
+        if (!legacyToken.isNullOrBlank()) {
+            providerModelDao.updateProviderApiToken(providerId, legacyToken)
+        }
+        return legacyToken
     }
 
     private fun updateDropdownModels() {

@@ -26,6 +26,12 @@ interface ProviderModelDao {
     @Query("UPDATE providers SET last_synced_at = :timestamp WHERE id = :providerId")
     suspend fun updateProviderSyncTimestamp(providerId: String, timestamp: Long)
 
+    @Query("UPDATE providers SET api_token = :token WHERE id = :providerId")
+    suspend fun updateProviderApiToken(providerId: String, token: String?)
+
+    @Query("SELECT api_token FROM providers WHERE id = :providerId LIMIT 1")
+    suspend fun getProviderApiToken(providerId: String): String?
+
     // Models
     @Query("SELECT * FROM models WHERE provider_id = :providerId ORDER BY model_name ASC")
     fun getModelsForProviderFlow(providerId: String): Flow<List<ModelEntity>>
