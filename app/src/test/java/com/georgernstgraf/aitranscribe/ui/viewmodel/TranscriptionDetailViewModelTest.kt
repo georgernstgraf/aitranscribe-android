@@ -53,7 +53,6 @@ class TranscriptionDetailViewModelTest {
         every { context.getSystemService(Context.CLIPBOARD_SERVICE) } returns clipboardManager
         coEvery { appSettingsStore.getLlmProvider() } returns "openrouter"
         coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "test-key"
-        coEvery { appSettingsStore.getLlmModel() } returns "anthropic/claude-3-haiku"
         coEvery { appSettingsStore.getProviderLlmModel(any(), any()) } answers { secondArg() }
     }
 

@@ -124,8 +124,6 @@ class SettingsViewModel @Inject constructor(
             appSettingsStore.setProviderSttModel(state.sttProvider, state.sttModel)
             
             // Save global active providers
-            appSettingsStore.setSttModel(state.sttModel)
-            appSettingsStore.setLlmModel(state.llmModel)
             appSettingsStore.setSttProvider(state.sttProvider)
             appSettingsStore.setLlmProvider(state.llmProvider)
 

@@ -14,6 +14,7 @@ import androidx.work.WorkManager
 import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
+import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
@@ -186,8 +187,8 @@ class MainViewModel @Inject constructor(
 
                 val sttProvider = appSettingsStore.getSttProvider()
                 val llmProvider = appSettingsStore.getLlmProvider()
-                val sttModel = appSettingsStore.getProviderSttModel(sttProvider, appSettingsStore.getSttModel())
-                val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, appSettingsStore.getLlmModel())
+                val sttModel = appSettingsStore.getProviderSttModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider))
+                val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, ProviderConfig.getDefaultLlmModel(llmProvider))
                 
                 Log.d("MainViewModel", "startTranscription: sttModel=$sttModel, llmModel=$llmModel")
                 
@@ -343,7 +344,8 @@ class MainViewModel @Inject constructor(
         )
         if (queuedItems.isEmpty()) return
 
-        val sttModel = appSettingsStore.getSttModel()
+        val sttProvider = appSettingsStore.getSttProvider()
+        val sttModel = appSettingsStore.getProviderSttModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider))
         for (transcription in queuedItems) {
             repository.updateSttModel(transcription.id, sttModel)
             repository.updateStatusAndError(transcription.id, TranscriptionStatus.PENDING.name, null)

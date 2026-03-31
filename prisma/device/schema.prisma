@@ -10,6 +10,12 @@ model android_metadata {
   @@ignore
 }
 
+model app_preferences {
+  key        String @id
+  value      String
+  updated_at String
+}
+
 model capabilities {
   id                 String               @id
   name               String               @unique(map: "index_capabilities_name")

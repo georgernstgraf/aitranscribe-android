@@ -74,8 +74,7 @@ class TranscriptionWorkerTest {
         coEvery { appSettingsStore.getSttProvider() } returns "groq"
         coEvery { appSettingsStore.getLlmProvider() } returns "openrouter"
         coEvery { appSettingsStore.getProviderLlmModel(any(), any()) } answers { secondArg() }
-        coEvery { appSettingsStore.getLlmModel() } returns "anthropic/claude-3-haiku"
-        coEvery { appSettingsStore.getSttModel() } returns "whisper-large-v3-turbo"
+        coEvery { appSettingsStore.getProviderSttModel(any(), any()) } answers { secondArg() }
 
         // Default Groq success
         val fakeResponse = GroqTranscriptionResponse(text = "Hello world")

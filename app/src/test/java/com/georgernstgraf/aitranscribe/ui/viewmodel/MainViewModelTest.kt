@@ -52,10 +52,8 @@ class MainViewModelTest {
         networkMonitor = mockk(relaxed = true)
         context = mockk(relaxed = true)
 
-        coEvery { appSettingsStore.getSttModel() } returns "whisper-large-v3"
-        coEvery { appSettingsStore.getLlmModel() } returns "claude-3-haiku"
-        coEvery { appSettingsStore.getProviderSttModel(any(), any()) } answers { secondArg() }
-        coEvery { appSettingsStore.getProviderLlmModel(any(), any()) } answers { secondArg() }
+        coEvery { appSettingsStore.getProviderSttModel(any(), any()) } returns "whisper-large-v3"
+        coEvery { appSettingsStore.getProviderLlmModel(any(), any()) } returns "claude-3-haiku"
         coEvery { appSettingsStore.getSttProvider() } returns "groq"
         coEvery { appSettingsStore.getLlmProvider() } returns "openrouter"
         coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "test-key"
@@ -117,7 +115,7 @@ class MainViewModelTest {
     fun `network reconnect retries queued transcriptions with updated model`() = runBlocking {
         repository.insert(TranscriptionEntity(originalText = "", processedText = null, audioFilePath = "/a.m4a", sttModel = "old-model", llmModel = "llm", createdAt = LocalDateTime.now().toString(), postProcessingType = "RAW", status = TranscriptionStatus.NO_NETWORK.name, errorMessage = null))
         repository.insert(TranscriptionEntity(originalText = "", processedText = null, audioFilePath = "/b.m4a", sttModel = "old-model", llmModel = "llm", createdAt = LocalDateTime.now().toString(), postProcessingType = "RAW", status = TranscriptionStatus.STT_ERROR_RETRYABLE.name, errorMessage = null))
-        coEvery { appSettingsStore.getSttModel() } returns "whisper-large-v3-turbo"
+        coEvery { appSettingsStore.getProviderSttModel(any(), any()) } returns "whisper-large-v3-turbo"
 
         val workManager = mockk<androidx.work.WorkManager>(relaxed = true)
         mockkStatic(androidx.work.WorkManager::class)
@@ -175,7 +173,7 @@ class MainViewModelTest {
                 errorMessage = null
             )
         )
-        coEvery { appSettingsStore.getSttModel() } returns "whisper-large-v3-turbo"
+        coEvery { appSettingsStore.getProviderSttModel(any(), any()) } returns "whisper-large-v3-turbo"
 
         val workManager = mockk<androidx.work.WorkManager>(relaxed = true)
         mockkStatic(androidx.work.WorkManager::class)

@@ -9,6 +9,7 @@ import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.toDomain
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
@@ -76,7 +77,7 @@ class TranscriptionDetailViewModel @Inject constructor(
             val transcription = _uiState.value.transcription ?: return@launch
             val llmProvider = appSettingsStore.getLlmProvider()
             val apiKey = appSettingsStore.getActiveAuthToken(llmProvider)
-            val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, appSettingsStore.getLlmModel())
+            val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, ProviderConfig.getDefaultLlmModel(llmProvider))
 
             if (apiKey.isNullOrBlank()) {
                 viewModelScope.launch {

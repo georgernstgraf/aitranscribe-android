@@ -12,6 +12,7 @@ import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
+import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
@@ -60,11 +61,13 @@ class TranscriptionWorker @AssistedInject constructor(
 
         repository.updateStatusAndError(transcriptionId, TranscriptionStatus.PROCESSING.name, null)
 
-        val sttModel = transcription.sttModel ?: appSettingsStore.getSttModel()
+        val sttProvider = appSettingsStore.getSttProvider()
+        val sttModel = transcription.sttModel
+            ?: appSettingsStore.getProviderSttModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider))
         val llmProvider = appSettingsStore.getLlmProvider()
         val llmModel = appSettingsStore.getProviderLlmModel(
             llmProvider,
-            transcription.llmModel ?: appSettingsStore.getLlmModel()
+            transcription.llmModel ?: ProviderConfig.getDefaultLlmModel(llmProvider)
         )
         val processingMode = transcription.postProcessingType ?: PostProcessingType.RAW.name
 
@@ -138,7 +141,6 @@ class TranscriptionWorker @AssistedInject constructor(
                                 llmProvider = llmProvider
                             )
                             appSettingsStore.setProviderLlmModel("zai", fallbackModel)
-                            appSettingsStore.setLlmModel(fallbackModel)
                             repository.clearAudioPath(transcriptionId)
                             cleanupAudioFile(audioPath)
                             cleanupOrphanedAudioFiles()
