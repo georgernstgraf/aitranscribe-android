@@ -58,7 +58,7 @@ interface TranscriptionRepository {
 
     suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?)
 
-    suspend fun markSttSuccess(id: Long, text: String, status: String): Int
+    suspend fun markSttSuccess(id: Long, text: String, language: String?, status: String): Int
 
     suspend fun getAllAudioPaths(): List<String>
 

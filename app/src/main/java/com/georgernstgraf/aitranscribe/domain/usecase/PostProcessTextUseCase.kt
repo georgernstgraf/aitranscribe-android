@@ -107,10 +107,11 @@ class PostProcessTextUseCase @Inject constructor(
 
         val transcription = repository.getById(transcriptionId) ?: return@withContext
         val text = transcription.text.orEmpty()
+        val language = transcription.language
         if (text.isBlank()) return@withContext
 
         try {
-            val systemContent = promptManager.get("prompt.summary")
+            val systemContent = buildSummaryPrompt(language)
             val userContent = buildSummaryUserContent(text)
             recordPromptPreview(
                 context = debugContext,
@@ -304,6 +305,59 @@ class PostProcessTextUseCase @Inject constructor(
 
     private fun buildTranscriptionUserContent(text: String): String {
         return promptManager.get("prompt.user.transcription").replace("{{text}}", text)
+    }
+
+    private fun buildSummaryPrompt(language: String?): String {
+        val basePrompt = promptManager.get("prompt.summary")
+        return if (language != null) {
+            val languageName = getLanguageDisplayName(language)
+            basePrompt.replace("{{language}}", languageName)
+        } else {
+            basePrompt.replace("{{language}}", "the original language of the text")
+        }
+    }
+
+    private fun getLanguageDisplayName(languageCode: String): String {
+        return when (languageCode.lowercase()) {
+            "de", "german" -> "German"
+            "en", "english" -> "English"
+            "fr", "french" -> "French"
+            "es", "spanish" -> "Spanish"
+            "it", "italian" -> "Italian"
+            "pt", "portuguese" -> "Portuguese"
+            "nl", "dutch" -> "Dutch"
+            "pl", "polish" -> "Polish"
+            "ru", "russian" -> "Russian"
+            "ja", "japanese" -> "Japanese"
+            "zh", "chinese" -> "Chinese"
+            "ko", "korean" -> "Korean"
+            "ar", "arabic" -> "Arabic"
+            "hi", "hindi" -> "Hindi"
+            "tr", "turkish" -> "Turkish"
+            "sv", "swedish" -> "Swedish"
+            "da", "danish" -> "Danish"
+            "no", "norwegian" -> "Norwegian"
+            "fi", "finnish" -> "Finnish"
+            "cs", "czech" -> "Czech"
+            "hu", "hungarian" -> "Hungarian"
+            "ro", "romanian" -> "Romanian"
+            "el", "greek" -> "Greek"
+            "he", "hebrew" -> "Hebrew"
+            "th", "thai" -> "Thai"
+            "vi", "vietnamese" -> "Vietnamese"
+            "id", "indonesian" -> "Indonesian"
+            "ms", "malay" -> "Malay"
+            "uk", "ukrainian" -> "Ukrainian"
+            "bg", "bulgarian" -> "Bulgarian"
+            "hr", "croatian" -> "Croatian"
+            "sr", "serbian" -> "Serbian"
+            "sk", "slovak" -> "Slovak"
+            "sl", "slovenian" -> "Slovenian"
+            "lt", "lithuanian" -> "Lithuanian"
+            "lv", "latvian" -> "Latvian"
+            "et", "estonian" -> "Estonian"
+            else -> languageCode.uppercase()
+        }
     }
 
     private suspend fun recordPromptPreview(context: String, systemPrompt: String, userPrompt: String) {

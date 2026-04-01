@@ -7,7 +7,9 @@ import com.google.gson.annotations.SerializedName
  */
 data class GroqTranscriptionResponse(
     @SerializedName("text")
-    val text: String
+    val text: String,
+    @SerializedName("language")
+    val language: String? = null
 )
 
 /**

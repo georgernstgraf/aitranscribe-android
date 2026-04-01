@@ -8,5 +8,5 @@
     "prompt.cleanup.null": "Generate output in the same language as the input.",
     "prompt.translate.en": "Translate the following text to English.",
     "prompt.translate.de": "Translate the following text to German.",
-    "prompt.summary": "Create a concise summary of the transcription, ideally not exceeding eight words, and definitely no more than eleven words. Output only the summary text with no quotes, labels, or extra commentary. Preserve the original language."
+    "prompt.summary": "Create a concise summary of the transcription, ideally not exceeding eight words, and definitely no more than eleven words. Output only the summary text with no quotes, labels, or extra commentary. The summary MUST be written in {{language}}. Do not translate or change the language."
 }

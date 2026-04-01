@@ -38,6 +38,15 @@ No active focus. All open issues addressed.
   - Cleanup now available via transcription details screen.
   - All tests pass, APK deployed to device.
 
+- [x] Issue #61 — Fixed summary language issues during recording:
+  - Added `language` field to `GroqTranscriptionResponse` to capture Whisper API detected language.
+  - Modified `transcribeAudio()` to return `TranscriptionResult` with text and language.
+  - Updated `markSttSuccess()` to store language in database instead of NULL.
+  - Modified `generateSummary()` to include detected language in LLM prompt.
+  - Added `buildSummaryPrompt()` with language-specific instructions.
+  - Updated summary prompt to explicitly require output in detected language.
+  - All tests pass, APK deployed to device.
+
 ## Pending
 - None.
 

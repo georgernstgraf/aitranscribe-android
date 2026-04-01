@@ -129,8 +129,8 @@ class TranscriptionRepositoryImpl @Inject constructor(
         transcriptionDao.updateStatusAndError(id, status, errorMessage)
     }
 
-    override suspend fun markSttSuccess(id: Long, text: String, status: String): Int {
-        return transcriptionDao.markSttSuccess(id, text, status)
+    override suspend fun markSttSuccess(id: Long, text: String, language: String?, status: String): Int {
+        return transcriptionDao.markSttSuccess(id, text, language, status)
     }
 
     override suspend fun getAllAudioPaths(): List<String> {

@@ -176,13 +176,13 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         return transcriptions.value.filter { it.text == null && it.audioFilePath != null }
     }
 
-    override suspend fun markSttSuccess(id: Long, text: String, status: String): Int {
+    override suspend fun markSttSuccess(id: Long, text: String, language: String?, status: String): Int {
         transcriptions.value = transcriptions.value.map {
             if (it.id == id) {
                 it.copy(
                     text = text,
                     audioFilePath = null,
-                    language = null,
+                    language = language,
                     status = status,
                     errorMessage = null
                 )

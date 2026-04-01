@@ -63,7 +63,7 @@ class TranscriptionWorker @AssistedInject constructor(
         val llmProvider = appSettingsStore.getLlmProvider()
         val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, ProviderConfig.getDefaultLlmModel(llmProvider))
 
-        val transcriptionText = try {
+        val transcriptionResult = try {
             transcribeAudio(audioPath, sttModel)
         } catch (e: AudioFileMissingException) {
             Log.w("TranscriptionWorker", "Audio file missing for transcriptionId=$transcriptionId", e)
@@ -86,7 +86,8 @@ class TranscriptionWorker @AssistedInject constructor(
 
         repository.markSttSuccess(
             id = transcriptionId,
-            text = transcriptionText,
+            text = transcriptionResult.text,
+            language = transcriptionResult.language,
             status = TranscriptionStatus.COMPLETED.name
         )
         cleanupAudioFile(audioPath)
@@ -212,7 +213,7 @@ class TranscriptionWorker @AssistedInject constructor(
         return ordered.firstOrNull { it != currentModel }
     }
 
-    private suspend fun transcribeAudio(audioPath: String, sttModel: String): String {
+    private suspend fun transcribeAudio(audioPath: String, sttModel: String): TranscriptionResult {
         val audioFile = File(audioPath)
         if (!audioFile.exists()) throw AudioFileMissingException("Audio file not found: $audioPath")
 
@@ -253,8 +254,14 @@ class TranscriptionWorker @AssistedInject constructor(
             throw Exception(message)
         }
 
-        return response.body()?.text ?: throw Exception("Empty transcription response from $sttProvider (Code: ${response.code()})")
+        val body = response.body() ?: throw Exception("Empty transcription response from $sttProvider (Code: ${response.code()})")
+        return TranscriptionResult(text = body.text, language = body.language)
     }
+
+    data class TranscriptionResult(
+        val text: String,
+        val language: String?
+    )
 
     private fun isPermanentErrorCode(code: Int): Boolean {
         return code in setOf(400, 401, 402, 403, 404, 409, 422, 429)

@@ -157,13 +157,13 @@ interface TranscriptionDao {
         UPDATE transcriptions
         SET text = :text,
             audio_file_path = NULL,
-            language = NULL,
+            language = :language,
             status = :status,
             error_message = NULL
         WHERE id = :id
         """
     )
-    suspend fun markSttSuccess(id: Long, text: String, status: String): Int
+    suspend fun markSttSuccess(id: Long, text: String, language: String?, status: String): Int
 
     @Query("""
         SELECT id FROM transcriptions 
