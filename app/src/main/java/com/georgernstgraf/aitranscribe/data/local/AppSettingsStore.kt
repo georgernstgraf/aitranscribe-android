@@ -97,14 +97,6 @@ class AppSettingsStore @Inject constructor(
         providerModelDao.clearAllProviderApiTokens()
     }
 
-    suspend fun setLastSummaryPromptPreview(preview: String) {
-        setPreference(KEY_LAST_SUMMARY_PROMPT_PREVIEW, preview)
-    }
-
-    suspend fun getLastSummaryPromptPreview(): String? {
-        return getPreference(KEY_LAST_SUMMARY_PROMPT_PREVIEW)
-    }
-
     private suspend fun setPreference(key: String, value: String) {
         appPreferencesDao.insert(
             AppPreferenceEntity(
@@ -126,7 +118,6 @@ class AppSettingsStore @Inject constructor(
         private const val KEY_LLM_PROVIDER = "llm_provider"
         private const val KEY_PROCESSING_MODE = "processing_mode"
         private const val KEY_PREFERRED_SHARE_APP = "preferred_share_app"
-        private const val KEY_LAST_SUMMARY_PROMPT_PREVIEW = "last_summary_prompt_preview"
 
         private const val DEFAULT_STT_PROVIDER = "groq"
         private const val DEFAULT_LLM_PROVIDER = "openrouter"

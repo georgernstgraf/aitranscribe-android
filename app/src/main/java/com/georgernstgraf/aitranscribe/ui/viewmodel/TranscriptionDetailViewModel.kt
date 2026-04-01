@@ -58,7 +58,6 @@ class TranscriptionDetailViewModel @Inject constructor(
         savedStateHandle.get<String>(KEY_VIEW_FILTER)?.let { viewFilter = ViewFilter.valueOf(it) }
         loadFilteredIds()
         observeActiveTranscription()
-        loadSummaryPromptPreview()
     }
 
     fun onCleanupToggled(enabled: Boolean) {
@@ -103,15 +102,7 @@ class TranscriptionDetailViewModel @Inject constructor(
                 }
             } finally {
                 _uiState.update { it.copy(isTranslating = false) }
-                loadSummaryPromptPreview()
             }
-        }
-    }
-
-    private fun loadSummaryPromptPreview() {
-        viewModelScope.launch {
-            val preview = appSettingsStore.getLastSummaryPromptPreview()
-            _uiState.update { it.copy(lastSummaryPromptPreview = preview) }
         }
     }
 
@@ -260,6 +251,5 @@ data class TranscriptionDetailUiState(
     val isViewed: Boolean = false,
     val isDeleted: Boolean = false,
     val isCleanupEnabled: Boolean = true,
-    val isTranslating: Boolean = false,
-    val lastSummaryPromptPreview: String? = null
+    val isTranslating: Boolean = false
 )

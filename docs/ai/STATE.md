@@ -13,6 +13,8 @@ Issue #46 cleanup/summary language and prompt routing stabilization.
 - [x] Removed duplicate summary generation in recording cleanup path.
 - [x] Added sanitized prompt preview logging (`{{TEXT}}`) and switched detail card to summary prompt preview.
 - [x] Kept summary generation prompt path on `prompt.summary` + `prompt.user.transcription` only.
+- [x] Removed prompt preview cards from detail UI and kept prompt previews in logcat only.
+- [x] Added warning toast for non-fatal post-processing failures (`COMPLETED_WITH_WARNING`) in main flow.
 - [x] Revalidated unit tests and debug build/install on physical device.
 
 ## Pending

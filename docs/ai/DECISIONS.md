@@ -224,3 +224,13 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Persist/show only summary prompt preview in detail screen while logging all prompt previews with `{{TEXT}}` placeholder.
 - **Reason**: Needed inspectable prompt debugging without exposing full transcription text in debug preview state.
 - **Changed**: Added summary-preview preference key and UI card switched from generic prompt preview to summary prompt preview.
+
+## 2026-04-01: Removed in-app prompt preview cards; keep logcat-only prompt previews (#46)
+- **Choice**: Prompt previews are now logcat-only (`PromptDebug`) and no longer rendered in detail screen UI.
+- **Reason**: Prompt preview popups/cards were intrusive during normal use.
+- **Changed**: Removed summary preview state from `TranscriptionDetailViewModel` and preview card from `TranscriptionDetailScreen`; removed preview persistence keys from `AppSettingsStore`.
+
+## 2026-04-01: Non-fatal post-processing failures now surface toast feedback (#46)
+- **Choice**: Show warning toast when work succeeds but transcription status is `COMPLETED_WITH_WARNING`.
+- **Reason**: Timeout/provider post-processing failures were too silent in main flow.
+- **Changed**: Added `WorkInfo.State.SUCCEEDED` warning branch in `MainViewModel.observeWorkResult()`.

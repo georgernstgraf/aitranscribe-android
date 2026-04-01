@@ -359,6 +359,15 @@ class MainViewModel @Inject constructor(
             WorkManager.getInstance(context).getWorkInfoByIdFlow(workId).collect { workInfo ->
                 if (workInfo != null && workInfo.state.isFinished) {
                     when (workInfo.state) {
+                        WorkInfo.State.SUCCEEDED -> {
+                            val transcription = repository.getById(transcriptionId)
+                            if (transcription?.status == TranscriptionStatus.COMPLETED_WITH_WARNING.name) {
+                                toastManager.showToast(
+                                    transcription.errorMessage ?: "Post-processing failed. Transcription is saved.",
+                                    isWarning = true
+                                )
+                            }
+                        }
                         WorkInfo.State.FAILED -> {
                             Log.e("MainViewModel", "Transcription work failed for transcriptionId=$transcriptionId")
                             val transcription = repository.getById(transcriptionId)

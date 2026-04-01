@@ -1,7 +1,6 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
 import com.georgernstgraf.aitranscribe.domain.util.PromptManager
-import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
@@ -33,7 +32,6 @@ class PostProcessTextUseCaseTest {
     private lateinit var zaiCodingApiService: ZaiCodingApiService
     private lateinit var groqApiService: GroqApiService
     private lateinit var promptManager: PromptManager
-    private lateinit var appSettingsStore: AppSettingsStore
     private lateinit var useCase: PostProcessTextUseCase
 
     @Before
@@ -44,16 +42,13 @@ class PostProcessTextUseCaseTest {
         zaiCodingApiService = mockk()
         groqApiService = mockk()
         promptManager = mockk()
-        appSettingsStore = mockk()
-        coEvery { appSettingsStore.setLastSummaryPromptPreview(any()) } returns Unit
         useCase = PostProcessTextUseCase(
             apiService,
             zaiApiService,
             zaiCodingApiService,
             groqApiService,
             repository,
-            promptManager,
-            appSettingsStore
+            promptManager
         )
 
         every { promptManager.get(any()) } answers {

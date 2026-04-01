@@ -81,6 +81,7 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Recordings must be stored under `filesDir/recordings` (not `cacheDir`) for restart persistence.
 - Prompt composition rule: for cleanup-enabled actions, compose `prompt.cleanup` first, then newline, then `prompt.cleanup.<en|de|null>`; for detail cleanup-off actions, use `prompt.translate.<en|de>` directly.
 - Use prompt templates for all LLM message text (`prompt.system.base`, `prompt.system.request`, `prompt.user.transcription`, `prompt.summary`); avoid hard-coded prompt strings in Kotlin.
+- Prompt previews are for diagnostics in logcat (`PromptDebug`) and should not be shown as persistent UI cards unless explicitly requested.
 
 ## Companion Project
 - `../aitranscribe` (Python/TUI) is the **lead and authoritative project** for pipeline logic, prompts, and feature design

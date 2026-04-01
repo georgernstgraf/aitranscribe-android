@@ -1,7 +1,6 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
 import android.util.Log
-import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
@@ -25,8 +24,7 @@ class PostProcessTextUseCase @Inject constructor(
     private val zaiCodingApiService: ZaiCodingApiService,
     private val groqApiService: GroqApiService,
     private val repository: TranscriptionRepository,
-    private val promptManager: PromptManager,
-    private val appSettingsStore: AppSettingsStore
+    private val promptManager: PromptManager
 ) {
 
     suspend operator fun invoke(
@@ -319,9 +317,6 @@ user:
 $userPrompt
 """.trimIndent()
         Log.i(PROMPT_DEBUG_TAG, preview)
-        if (context.contains("summary", ignoreCase = true)) {
-            appSettingsStore.setLastSummaryPromptPreview(preview)
-        }
     }
 
     companion object {
