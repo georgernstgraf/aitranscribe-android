@@ -76,12 +76,6 @@ fun ProviderStatusItem(
                 style = MaterialTheme.typography.bodyLarge
             )
             if (isAuthed) {
-                Text(
-                    text = "Connected",
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(end = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium
-                )
                 IconButton(onClick = onDisconnect) {
                     Icon(
                         Icons.Default.Delete,
