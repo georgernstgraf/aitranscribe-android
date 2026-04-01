@@ -63,12 +63,12 @@ model room_master_table {
 
 model transcriptions {
   id              Int     @id @default(autoincrement())
-  original_text   String
-  processed_text  String?
+  text            String?
   audio_file_path String?
   created_at      String
   status          String
   error_message   String?
   seen            Int     @default(0)
   summary         String?
+  language        String?
 }
