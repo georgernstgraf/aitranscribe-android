@@ -183,13 +183,41 @@ class SettingsViewModel @Inject constructor(
     fun saveProviderAuth(providerId: String, token: String) {
         viewModelScope.launch {
             appSettingsStore.setProviderAuthToken(providerId, token)
-            // Refresh state to update auth status
+            loadSettings()
+        }
+    }
+
+    fun disconnectProvider(providerId: String) {
+        viewModelScope.launch {
+            appSettingsStore.setProviderAuthToken(providerId, null)
             loadSettings()
         }
     }
 
     suspend fun getProviderToken(providerId: String): String? {
         return getEffectiveProviderToken(providerId)
+    }
+
+    suspend fun validateAndSaveProviderAuth(providerId: String, key: String): ProviderAuthResult {
+        if (key.isBlank()) {
+            return ProviderAuthResult.Error("API key cannot be empty")
+        }
+        if (!validateApiKeysUseCase.isValidKeyFormat(providerId, key)) {
+            val formatHint = when (providerId) {
+                "groq" -> "Groq keys start with 'gsk_'"
+                "openrouter" -> "OpenRouter keys start with 'sk-or-' or 'sk-'"
+                "zai" -> "ZAI keys are in hex.base64 format"
+                else -> "Invalid key format"
+            }
+            return ProviderAuthResult.Error("Invalid key format. $formatHint")
+        }
+        val onlineValid = validateApiKeysUseCase.validateProviderKey(providerId, key)
+        if (!onlineValid) {
+            return ProviderAuthResult.Error("Key verification failed — check your key and network connection")
+        }
+        appSettingsStore.setProviderAuthToken(providerId, key)
+        loadSettings()
+        return ProviderAuthResult.Success
     }
 
     private fun loadSettings() {
@@ -292,3 +320,8 @@ data class SettingsUiState(
     val isValidating: Boolean = false,
     val errorMessage: String? = null
 )
+
+sealed class ProviderAuthResult {
+    data object Success : ProviderAuthResult()
+    data class Error(val message: String) : ProviderAuthResult()
+}

@@ -5,11 +5,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.georgernstgraf.aitranscribe.ui.viewmodel.ProviderAuthResult
 import com.georgernstgraf.aitranscribe.ui.viewmodel.SettingsViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,9 +21,11 @@ fun ProviderAuthScreen(
     navController: NavController,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val scope = rememberCoroutineScope()
     var authToken by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
+    var isValidating by remember { mutableStateOf(false) }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(providerId) {
         val existingToken = viewModel.getProviderToken(providerId)
@@ -43,7 +48,7 @@ fun ProviderAuthScreen(
         }
     ) { padding ->
         if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         } else {
@@ -57,19 +62,47 @@ fun ProviderAuthScreen(
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = authToken,
-                    onValueChange = { authToken = it },
+                    onValueChange = {
+                        authToken = it
+                        validationError = null
+                    },
                     label = { Text("Token / API Key") },
+                    isError = validationError != null,
+                    supportingText = validationError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
-                    onClick = { 
-                        viewModel.saveProviderAuth(providerId, authToken)
-                        navController.popBackStack()
+                    onClick = {
+                        validationError = null
+                        isValidating = true
+                        scope.launch {
+                            when (val result = viewModel.validateAndSaveProviderAuth(providerId, authToken)) {
+                                is ProviderAuthResult.Success -> {
+                                    isValidating = false
+                                    navController.popBackStack()
+                                }
+                                is ProviderAuthResult.Error -> {
+                                    isValidating = false
+                                    validationError = result.message
+                                }
+                            }
+                        }
                     },
+                    enabled = !isValidating,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Save Credentials")
+                    if (isValidating) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Verifying...")
+                    } else {
+                        Text("Save Credentials")
+                    }
                 }
             }
         }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -56,6 +57,7 @@ fun ProviderStatusItem(
     providerId: String,
     isAuthed: Boolean,
     onManage: () -> Unit,
+    onDisconnect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -72,14 +74,30 @@ fun ProviderStatusItem(
                 modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge
             )
-            Text(
-                text = if (isAuthed) "Connected" else "Not Connected",
-                color = if (isAuthed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(end = 16.dp),
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Button(onClick = onManage) {
-                Text("Manage")
+            if (isAuthed) {
+                Text(
+                    text = "Connected",
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(end = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                IconButton(onClick = onDisconnect) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Disconnect",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            } else {
+                Text(
+                    text = "Not Connected",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(end = 16.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Button(onClick = onManage) {
+                    Text("Authenticate")
+                }
             }
         }
     }
@@ -247,18 +265,21 @@ fun SettingsScreen(
                 ProviderStatusItem(
                     providerId = providerId,
                     isAuthed = isAuthed,
-                    onManage = { navController.navigate("auth/$providerId") }
+                    onManage = { navController.navigate("auth/$providerId") },
+                    onDisconnect = { viewModel.disconnectProvider(providerId) }
                 )
                 Spacer(modifier = Modifier.height(4.dp))
             }
             
-            Button(
-                onClick = { navController.navigate("connect_provider") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp)
-            ) {
-                Text("Connect Provider")
+            if (state.activeProviders.size < ProviderConfig.allProviderIds.size) {
+                Button(
+                    onClick = { navController.navigate("connect_provider") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp)
+                ) {
+                    Text("Connect Provider")
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
