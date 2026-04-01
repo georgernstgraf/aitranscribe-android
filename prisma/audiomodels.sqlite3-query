@@ -1,0 +1,19 @@
+-- database: /home/georg/gitm/aitranscribe-android/prisma/device_db.sqlite
+-- Use the ▷ button in the top right corner to run the entire file.
+SELECT
+    *
+FROM
+    capabilities
+WHERE
+    id LIKE '%audio%'
+    OR name LIKE '%audio%';
+
+SELECT DISTINCT
+    m.*
+FROM
+    models AS m
+    JOIN model_capabilities AS mc ON m.id = mc.model_id
+    JOIN capabilities AS c ON mc.capability_id = c.id
+WHERE
+    c.id LIKE '%audio%'
+    OR c.name LIKE '%audio%';

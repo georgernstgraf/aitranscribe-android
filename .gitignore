@@ -130,3 +130,5 @@ IDENTITY.md
 SOUL.md
 TOOLS.md
 USER.md
+prisma/device_db.sqlite-shm
+prisma/device_db.sqlite-wal
