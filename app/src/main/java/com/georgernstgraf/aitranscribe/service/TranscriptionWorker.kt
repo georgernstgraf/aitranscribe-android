@@ -17,7 +17,6 @@ import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
-import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -36,7 +35,6 @@ class TranscriptionWorker @AssistedInject constructor(
     @Assisted private val params: WorkerParameters,
     private val repository: TranscriptionRepository,
     private val groqApiService: GroqApiService,
-    private val openRouterApiService: OpenRouterApiService,
     private val zaiApiService: ZaiApiService,
     private val networkMonitor: NetworkMonitor,
     private val appSettingsStore: AppSettingsStore,
@@ -224,12 +222,6 @@ class TranscriptionWorker @AssistedInject constructor(
 
         val response = when (sttProvider) {
             "groq" -> groqApiService.transcribeAudio(
-                authorization = authorization,
-                file = createAudioPart(audioFile),
-                model = createModelPart(sttModel),
-                responseFormat = createFormatPart()
-            )
-            "openrouter" -> openRouterApiService.transcribeAudio(
                 authorization = authorization,
                 file = createAudioPart(audioFile),
                 model = createModelPart(sttModel),

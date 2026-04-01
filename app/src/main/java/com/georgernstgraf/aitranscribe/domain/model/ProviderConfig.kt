@@ -18,17 +18,6 @@ object ProviderConfig {
             )
         ),
         Provider(
-            id = "openrouter",
-            displayName = "OpenRouter",
-            models = listOf(
-                "openai/whisper-large-v3",
-                "google/gemini-2.5-flash",
-                "google/gemini-2.0-flash-001",
-                "google/gemini-1.5-pro",
-                "google/gemini-1.5-flash"
-            )
-        ),
-        Provider(
             id = "zai",
             displayName = "ZAI",
             models = listOf(

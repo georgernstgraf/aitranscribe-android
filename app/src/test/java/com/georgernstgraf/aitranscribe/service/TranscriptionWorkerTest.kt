@@ -8,7 +8,6 @@ import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
-import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import com.georgernstgraf.aitranscribe.data.remote.dto.GroqTranscriptionResponse
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
@@ -38,7 +37,6 @@ class TranscriptionWorkerTest {
     private lateinit var params: WorkerParameters
     private lateinit var fakeRepository: FakeTranscriptionRepository
     private lateinit var groqApiService: GroqApiService
-    private lateinit var openRouterApiService: OpenRouterApiService
     private lateinit var zaiApiService: ZaiApiService
     private lateinit var networkMonitor: NetworkMonitor
     private lateinit var appSettingsStore: AppSettingsStore
@@ -56,7 +54,6 @@ class TranscriptionWorkerTest {
         params = mockk(relaxed = true)
         fakeRepository = FakeTranscriptionRepository()
         groqApiService = mockk(relaxed = true)
-        openRouterApiService = mockk(relaxed = true)
         zaiApiService = mockk(relaxed = true)
         networkMonitor = mockk(relaxed = true)
         appSettingsStore = mockk(relaxed = true)
@@ -82,7 +79,6 @@ class TranscriptionWorkerTest {
             params,
             fakeRepository,
             groqApiService,
-            openRouterApiService,
             zaiApiService,
             networkMonitor,
             appSettingsStore,

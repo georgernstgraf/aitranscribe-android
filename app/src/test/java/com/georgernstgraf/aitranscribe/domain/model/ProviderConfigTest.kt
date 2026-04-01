@@ -14,8 +14,6 @@ class ProviderConfigTest {
         val models = ProviderConfig.sttModels
         assertTrue(models.contains("whisper-large-v3-turbo"))
         assertTrue(models.contains("whisper-large-v3"))
-        assertTrue(models.contains("openai/whisper-large-v3"))
-        assertTrue(models.contains("google/gemini-2.0-flash-001"))
         assertTrue(models.contains("glm-asr-2512"))
     }
 
@@ -80,6 +78,8 @@ class ProviderConfigTest {
         assertTrue(ProviderConfig.isValidSttModel("groq", "whisper-large-v3-turbo"))
         assertTrue(ProviderConfig.isValidSttModel("groq", "whisper-large-v3"))
         assertFalse(ProviderConfig.isValidSttModel("groq", "glm-asr-2512"))
+        assertTrue(ProviderConfig.isValidSttModel("zai", "glm-asr-2512"))
+        assertFalse(ProviderConfig.isValidSttModel("zai", "whisper-large-v3"))
     }
 
     @Test
