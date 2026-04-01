@@ -220,7 +220,7 @@ class SettingsViewModel @Inject constructor(
         return ProviderAuthResult.Success
     }
 
-    private fun loadSettings() {
+    fun loadSettings() {
         viewModelScope.launch {
             try {
                 val sttProvider = appSettingsStore.getSttProvider()

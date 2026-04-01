@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.ui.components.DeleteOldDialog
 import com.georgernstgraf.aitranscribe.ui.viewmodel.SettingsViewModel
@@ -149,6 +150,12 @@ fun SettingsScreen(
         if (showDeleteDialog) {
             viewModel.getOldCount(state.daysToDelete)
         }
+    }
+
+    // Refresh provider list when returning from other screens
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    LaunchedEffect(currentBackStackEntry?.id) {
+        viewModel.loadSettings()
     }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
