@@ -6,12 +6,12 @@ import android.content.Intent
 import android.media.MediaRecorder
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.Mockito
@@ -31,7 +31,7 @@ class RecordingServiceTest {
     private lateinit var recordingService: RecordingService
     private lateinit var testContext: android.content.Context
 
-    @Before
+    @BeforeEach
     fun setup() {
         MockitoAnnotations.openMocks(this)
         testContext = ApplicationProvider.getApplicationContext<android.app.Application>()

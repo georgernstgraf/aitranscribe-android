@@ -45,6 +45,13 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Add logging at key pipeline stages: recording start/stop, file creation, API request/response, DB writes
 
 ## Testing
+- **JUnit 5** (Jupiter) is the test framework — `org.junit.jupiter.api.*`
+- Use `@BeforeEach` / `@AfterEach` (not `@Before` / `@After`)
+- Use `org.junit.jupiter.api.Assertions.*` (not `org.junit.Assert.*`)
+- Use `assertThrows<Exception> { }` instead of `@Test(expected = ...)`
+- Use `assertEquals(null, actual)` for null assertions in coroutine test bodies (avoid `assertNull(msg, actual)`)
+- `MainDispatcherRule` implements JUnit 5 `BeforeEachCallback` / `AfterEachCallback` (not JUnit 4 `TestWatcher`)
+- Android instrumentation tests retain `@RunWith(AndroidJUnit4::class)` for Android component support
 - Use `StandardTestDispatcher` with `setMain` for ViewModel tests that have infinite Flow collectors
 - Never use `advanceUntilIdle()` with ViewModels that collect Flows in `init` — it hangs forever
 - Use `runBlocking` + `.value` (not `first()`) to read StateFlow in ViewModel tests

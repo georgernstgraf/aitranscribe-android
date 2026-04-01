@@ -6,10 +6,10 @@ import com.georgernstgraf.aitranscribe.domain.usecase.SearchTranscriptionsUseCas
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchViewModelTest {
@@ -18,7 +18,7 @@ class SearchViewModelTest {
     private lateinit var useCase: SearchTranscriptionsUseCase
     private lateinit var viewModel: SearchViewModel
 
-    @Before
+    @BeforeEach
     fun setup() {
         repository = FakeTranscriptionRepository()
         useCase = SearchTranscriptionsUseCase(repository)

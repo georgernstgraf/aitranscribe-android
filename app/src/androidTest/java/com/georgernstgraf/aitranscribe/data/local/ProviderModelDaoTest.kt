@@ -3,19 +3,14 @@ package com.georgernstgraf.aitranscribe.data.local
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-@RunWith(AndroidJUnit4::class)
 class ProviderModelDaoTest {
 
     @get:Rule
@@ -24,7 +19,7 @@ class ProviderModelDaoTest {
     private lateinit var database: TranscriptionDatabase
     private lateinit var dao: ProviderModelDao
 
-    @Before
+    @BeforeEach
     fun setup() {
         database = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
@@ -33,7 +28,7 @@ class ProviderModelDaoTest {
         dao = database.providerModelDao()
     }
 
-    @After
+    @AfterEach
     fun teardown() {
         database.close()
     }

@@ -234,3 +234,19 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Show warning toast when work succeeds but transcription status is `COMPLETED_WITH_WARNING`.
 - **Reason**: Timeout/provider post-processing failures were too silent in main flow.
 - **Changed**: Added `WorkInfo.State.SUCCEEDED` warning branch in `MainViewModel.observeWorkResult()`.
+
+## 2026-04-01: Issue #48 closed — Android infrastructure already implemented (#48)
+- **Choice**: Closed Issue #48 as completed after assessment revealed 5/6 sub-items were already done.
+- **Reason**: NetworkCallback (API 26+), Kotlin Flow (`callbackFlow`), `ACCESS_NETWORK_STATE` permission, minSdk 26, and Java 17 were all already in place.
+- **Changed**: Opened Issue #58 for the one genuinely open item: JUnit 4 → JUnit 5 migration.
+
+## 2026-04-01: JUnit 4 → JUnit 5 migration completed (#58)
+- **Choice**: Migrated entire test suite from `junit:junit:4.13.2` to JUnit 5 (`org.junit.jupiter:junit-jupiter:5.10.1`).
+- **Reason**: Modern testing framework with `@BeforeEach`/`@AfterEach`, `assertThrows`, better extension model.
+- **Changed**: 
+  - `build.gradle.kts`: added `junit-jupiter:5.10.1`, `junit-platform-launcher`, removed `junit:junit:4.13.2`, added `useJUnitPlatform()`.
+  - `MainDispatcherRule`: migrated from `org.junit.rules.TestWatcher` to `BeforeEachCallback`/`AfterEachCallback`.
+  - All 27 test files migrated (`org.junit.Assert.*` → `org.junit.jupiter.api.Assertions`, `@Before` → `@BeforeEach`, `@After` → `@AfterEach`).
+  - `@Test(expected=...)` replaced with `assertThrows { }` in JUnit 5.
+  - Android instrumentation tests retain `@RunWith(AndroidJUnit4::class)` for Android component support.
+- **Test result**: 111/112 tests pass; `ValidateApiKeysIntegrationTest` fails without live API keys (expected).

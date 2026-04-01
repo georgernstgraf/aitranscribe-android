@@ -17,10 +17,11 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import retrofit2.Response
 import java.time.LocalDateTime
 
@@ -34,7 +35,7 @@ class PostProcessTextUseCaseTest {
     private lateinit var promptManager: PromptManager
     private lateinit var useCase: PostProcessTextUseCase
 
-    @Before
+    @BeforeEach
     fun setup() {
         repository = FakeTranscriptionRepository()
         apiService = mockk()
@@ -171,8 +172,10 @@ class PostProcessTextUseCaseTest {
         assertEquals("Summary text", updated?.summary)
     }
 
-    @Test(expected = PostProcessTextUseCase.PostProcessingException::class)
+    @Test
     fun `invoke throws exception when API key is empty`() = runTest {
-        useCase(1L, PostProcessingType.CLEANUP, "test-model", "")
+        assertThrows<PostProcessTextUseCase.PostProcessingException> {
+            useCase(1L, PostProcessingType.CLEANUP, "test-model", "")
+        }
     }
 }

@@ -1,18 +1,18 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ValidateApiKeysUseCaseTest {
 
     private lateinit var useCase: ValidateApiKeysUseCase
 
-    @Before
+    @BeforeEach
     fun setup() {
         useCase = ValidateApiKeysUseCase(okhttp3.OkHttpClient())
     }
@@ -111,8 +111,8 @@ class ValidateApiKeysUseCaseTest {
 
     private fun assertNotEqualsFormatError(error: ApiKeyError?) {
         assertTrue(
-            "Expected non-format error but got: $error",
-            error != ApiKeyError.INVALID_FORMAT
+            error != ApiKeyError.INVALID_FORMAT,
+            "Expected non-format error but got: $error"
         )
     }
 }

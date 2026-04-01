@@ -1,6 +1,6 @@
 package com.georgernstgraf.aitranscribe.testing
 
-import org.junit.Assert.fail
+import org.junit.jupiter.api.Assertions.fail
 import java.io.File
 import java.util.Properties
 
@@ -71,7 +71,7 @@ object TestEnv {
 
     fun requireApiIntegration() {
         if (!isApiIntegrationEnabled()) {
-            fail(
+            fail<String>(
                 "Set RUN_API_INTEGRATION_TESTS=true in .env to run this test.\n" +
                 "Copy .env.example to .env and fill in real API keys."
             )
@@ -81,13 +81,13 @@ object TestEnv {
     private fun requireNonPlaceholder(key: String): String {
         val value = env.getProperty(key)
         if (value.isNullOrBlank()) {
-            fail(
+            fail<String>(
                 "Missing required key '$key' in .env file.\n" +
                 "Copy .env.example to .env and fill in real values."
             )
         }
         if (PLACEHOLDER_INDICATORS.any { value.contains(it, ignoreCase = true) }) {
-            fail(
+            fail<String>(
                 "Key '$key' in .env still has a placeholder value: '$value'.\n" +
                 "Replace it with a real value before running tests."
             )

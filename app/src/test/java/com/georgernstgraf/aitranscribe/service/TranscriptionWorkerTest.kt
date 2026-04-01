@@ -23,11 +23,11 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody.Companion.toResponseBody
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import retrofit2.Response
 import java.io.File
 import java.time.LocalDateTime
@@ -47,11 +47,10 @@ class TranscriptionWorkerTest {
     private lateinit var providerModelDao: ProviderModelDao
     private lateinit var postProcessTextUseCase: PostProcessTextUseCase
 
-    @Before
+    @BeforeEach
     fun setup() {
         context = mockk(relaxed = true)
         
-        // Mock app cache dir for orphaned file cleanup
         val fakeCacheDir = File(System.getProperty("java.io.tmpdir"), "test-cache")
         fakeCacheDir.mkdirs()
         every { context.cacheDir } returns fakeCacheDir
@@ -66,10 +65,8 @@ class TranscriptionWorkerTest {
         providerModelDao = mockk(relaxed = true)
         postProcessTextUseCase = mockk(relaxed = true)
 
-        // Default network up
         every { networkMonitor.isConnected() } returns true
 
-        // Default API Key
         coEvery { appSettingsStore.getGroqApiKey() } returns "fake-groq-key"
         coEvery { appSettingsStore.getActiveAuthToken(any()) } returns "fake-llm-token"
         coEvery { appSettingsStore.getSttProvider() } returns "groq"
@@ -77,7 +74,6 @@ class TranscriptionWorkerTest {
         coEvery { appSettingsStore.getProviderLlmModel(any(), any()) } answers { secondArg() }
         coEvery { appSettingsStore.getProviderSttModel(any(), any()) } answers { secondArg() }
 
-        // Default Groq success
         val fakeResponse = GroqTranscriptionResponse(text = "Hello world")
         coEvery { 
             groqApiService.transcribeAudio(any(), any(), any(), any()) 
@@ -125,7 +121,6 @@ class TranscriptionWorkerTest {
 
         assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
 
-        // Verify audio file path is null
         val saved = fakeRepository.getById(1)
         assertNotNull(saved)
         assertNull(saved!!.audioFilePath)
@@ -163,7 +158,6 @@ class TranscriptionWorkerTest {
 
         every { params.inputData } returns Data.Builder().putLong("transcription_id", queued.id).build()
 
-        // Force LLM to fail
         coEvery { 
             postProcessTextUseCase(
                 transcriptionId = any(),
@@ -179,7 +173,6 @@ class TranscriptionWorkerTest {
 
         assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
 
-        // Verify audio file path is already cleared after STT success
         val saved = fakeRepository.getById(1)
         assertNotNull(saved)
         assertNull(saved!!.audioFilePath)
@@ -204,13 +197,10 @@ class TranscriptionWorkerTest {
 
         every { params.inputData } returns Data.Builder().putLong("transcription_id", queued.id).build()
 
-        // LLM succeeds normally (mock is relaxed)
-
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
 
-        // Verify audio file path is cleared
         val saved = fakeRepository.getById(1)
         assertNotNull(saved)
         assertNull(saved!!.audioFilePath)

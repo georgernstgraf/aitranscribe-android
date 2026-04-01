@@ -2,9 +2,9 @@ package com.georgernstgraf.aitranscribe
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
@@ -14,12 +14,12 @@ class HiltSmokeTest {
     fun applicationIsHiltInjected() {
         val app = ApplicationProvider.getApplicationContext<android.app.Application>()
         assertTrue(
+            app is AITranscribeApp,
             "App must be AITranscribeApp with valid Hilt _GeneratedInjector. " +
-                "If this fails: run ./gradlew clean assembleDebug",
-            app is AITranscribeApp
+                "If this fails: run ./gradlew clean assembleDebug"
         )
         val hiltApp = app as AITranscribeApp
-        assertNotNull("HiltWorkerFactory must be injected", hiltApp.workerFactory)
+        assertNotNull(hiltApp.workerFactory, "HiltWorkerFactory must be injected")
     }
 
     @Test
@@ -28,8 +28,8 @@ class HiltSmokeTest {
             "com.georgernstgraf.aitranscribe.AITranscribeApp_GeneratedInjector"
         )
         assertNotNull(
-            "Hilt _GeneratedInjector must exist. If missing: run ./gradlew clean assembleDebug",
-            clazz
+            clazz,
+            "Hilt _GeneratedInjector must exist. If missing: run ./gradlew clean assembleDebug"
         )
     }
 }

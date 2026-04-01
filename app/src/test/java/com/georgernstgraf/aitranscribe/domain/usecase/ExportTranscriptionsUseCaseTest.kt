@@ -5,9 +5,9 @@ import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 class ExportTranscriptionsUseCaseTest {
@@ -16,7 +16,7 @@ class ExportTranscriptionsUseCaseTest {
     private lateinit var outputDir: String
     private lateinit var useCase: ExportTranscriptionsUseCase
 
-    @Before
+    @BeforeEach
     fun setup() {
         repository = FakeTranscriptionRepository()
         outputDir = System.getProperty("java.io.tmpdir") ?: "/tmp"

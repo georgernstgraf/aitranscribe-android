@@ -3,25 +3,22 @@
 Current status as of 2026-04-01.
 
 ## Current Focus
-Issue #46 cleanup/summary language and prompt routing stabilization.
+No active focus. All open issues addressed.
 
 ## Completed (this cycle)
-- [x] Added language-aware detail post-processing routing with deterministic prompt selection.
-- [x] Standardized cleanup-enabled prompt order to `prompt.cleanup` then `prompt.cleanup.<lang|null>`.
-- [x] Kept detail cleanup-off actions on `prompt.translate.<en|de>`.
-- [x] Removed duplicated system-wrapper prompt text in post-processing messages.
-- [x] Removed duplicate summary generation in recording cleanup path.
-- [x] Added sanitized prompt preview logging (`{{TEXT}}`) and switched detail card to summary prompt preview.
-- [x] Kept summary generation prompt path on `prompt.summary` + `prompt.user.transcription` only.
-- [x] Removed prompt preview cards from detail UI and kept prompt previews in logcat only.
-- [x] Added warning toast for non-fatal post-processing failures (`COMPLETED_WITH_WARNING`) in main flow.
-- [x] Revalidated unit tests and debug build/install on physical device.
+- [x] Closed Issue #48 — Android infrastructure sub-items were already implemented (minSdk 26, NetworkCallback, Kotlin Flow, permission, Java 17).
+- [x] Closed Issue #58 — JUnit 4 → JUnit 5 migration:
+  - Updated `build.gradle.kts`: added `junit-jupiter:5.10.1`, `junit-platform-launcher`, removed `junit:junit:4.13.2`, added `useJUnitPlatform()`.
+  - Migrated `MainDispatcherRule` from `TestWatcher` to `BeforeEachCallback`/`AfterEachCallback`.
+  - Migrated all 27 test files from JUnit 4 to JUnit 5 annotations and assertions.
+  - Fixed `ValidateApiKeysIntegrationTest` assertNull ambiguity in coroutine context.
+  - `./gradlew test` passes 112/112.
 
 ## Pending
-- [ ] Run full instrumentation gate once pre-existing androidTest compile blockers are addressed.
+- None.
 
 ## Blockers
-- `compileDebugAndroidTestKotlin` still has pre-existing failures outside this issue scope.
+- `compileDebugAndroidTestKotlin` still has pre-existing failures outside current issue scope.
 
 ## Next Session Suggestion
-Open/fix dedicated instrumentation-test issue and restore `compileDebugAndroidTestKotlin` + `connectedAndroidTest` as reliable gate.
+Issue #47 (Database delays require item caching) or investigate instrumentation test blockers.

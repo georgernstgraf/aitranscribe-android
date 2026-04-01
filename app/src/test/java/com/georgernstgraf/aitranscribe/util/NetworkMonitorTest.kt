@@ -10,10 +10,10 @@ import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class NetworkMonitorTest {
 
@@ -21,7 +21,7 @@ class NetworkMonitorTest {
     private lateinit var connectivityManager: ConnectivityManager
     private lateinit var networkMonitor: NetworkMonitor
 
-    @Before
+    @BeforeEach
     fun setup() {
         context = mockk(relaxed = true)
         connectivityManager = mockk(relaxed = true)

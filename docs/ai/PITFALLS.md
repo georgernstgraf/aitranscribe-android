@@ -119,3 +119,9 @@ If `TranscriptionWorker` calls `generateSummary(...)` after a detail-style post-
 
 ## Prompt wrappers can be duplicated between builder and request assembly
 Applying system wrapper text during prompt construction and again during message assembly duplicates instruction text and destabilizes output. Build raw request prompt first; apply `prompt.system.base`/`prompt.system.request` exactly once at send time.
+
+## JUnit 5 assertNull(message, actual) is ambiguous in Kotlin coroutine lambdas
+`assertNull("STT model error: ${result.sttModelError}", result.sttModelError)` can misinterpret the eager message string as the actual value inside Kotlin coroutine state machine bytecode. Use `assertEquals(null, result.sttModelError)` for unambiguous null assertions in coroutine test bodies.
+
+## Gradle test results XML can show stale line numbers
+After editing a test file, the compiled bytecode may cache old source-to-bytecode line mappings. Use `./gradlew --rerun-tasks` or `rm -rf app/build` to force clean recompilation when test line numbers in errors don't match source.

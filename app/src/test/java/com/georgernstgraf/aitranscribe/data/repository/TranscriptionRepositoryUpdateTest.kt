@@ -3,17 +3,17 @@ package com.georgernstgraf.aitranscribe.data.repository
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 class TranscriptionRepositoryUpdateTest {
 
     private lateinit var repository: FakeTranscriptionRepository
 
-    @Before
+    @BeforeEach
     fun setup() {
         repository = FakeTranscriptionRepository()
     }

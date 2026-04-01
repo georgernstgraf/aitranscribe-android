@@ -6,10 +6,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Rule
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 /**
@@ -135,8 +135,6 @@ class TranscriptionItemTest {
             )
         }
 
-        // In a real test, we'd verify the indicator color
-        // For now, we just verify the component renders
         composeTestRule
             .onNodeWithText(transcription.text ?: "")
             .assertIsDisplayed()
@@ -155,8 +153,6 @@ class TranscriptionItemTest {
             )
         }
 
-        // In a real test, we'd verify the indicator color
-        // For now, we just verify the component renders
         composeTestRule
             .onNodeWithText(transcription.text ?: "")
             .assertIsDisplayed()

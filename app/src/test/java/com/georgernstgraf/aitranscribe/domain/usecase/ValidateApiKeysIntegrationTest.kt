@@ -3,19 +3,19 @@ package com.georgernstgraf.aitranscribe.domain.usecase
 import com.georgernstgraf.aitranscribe.testing.TestEnv
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ValidateApiKeysIntegrationTest {
 
     private lateinit var useCase: ValidateApiKeysUseCase
 
-    @Before
+    @BeforeEach
     fun setup() {
         TestEnv.requireApiIntegration()
         useCase = ValidateApiKeysUseCase(OkHttpClient())
@@ -28,7 +28,7 @@ class ValidateApiKeysIntegrationTest {
 
         val result = useCase(groqKey, openRouterKey)
 
-        assertTrue("API key validation failed. Check .env values.", result.isValid)
+        assertTrue(result.isValid, "API key validation failed. Check .env values.")
         assertTrue(result.isGroqKeyValid)
         assertTrue(result.isOpenRouterKeyValid)
         assertNull(result.groqKeyError)
@@ -66,9 +66,9 @@ class ValidateApiKeysIntegrationTest {
 
         val result = useCase.validateModels(groqKey, openRouterKey, sttModel, llmModel)
 
-        assertNull("STT model error: ${result.sttModelError}", result.sttModelError)
-        assertNull("LLM model error: ${result.llmModelError}", result.llmModelError)
-        assertTrue("Model validation failed. Check GROQ_STT_MODEL and OPENROUTER_LLM_MODEL in .env.", result.isValid)
+        assertEquals(null, result.sttModelError)
+        assertEquals(null, result.llmModelError)
+        assertTrue(result.isValid, "Model validation failed. Check GROQ_STT_MODEL and OPENROUTER_LLM_MODEL in .env.")
     }
 
     @Test

@@ -4,10 +4,10 @@ import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 class DeleteTranscriptionUseCaseTest {
@@ -15,7 +15,7 @@ class DeleteTranscriptionUseCaseTest {
     private lateinit var repository: FakeTranscriptionRepository
     private lateinit var useCase: DeleteTranscriptionUseCase
 
-    @Before
+    @BeforeEach
     fun setup() {
         repository = FakeTranscriptionRepository()
         useCase = DeleteTranscriptionUseCase(repository)

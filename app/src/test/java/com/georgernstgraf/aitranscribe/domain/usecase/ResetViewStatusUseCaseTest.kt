@@ -3,9 +3,9 @@ package com.georgernstgraf.aitranscribe.domain.usecase
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 class ResetViewStatusUseCaseTest {
@@ -13,7 +13,7 @@ class ResetViewStatusUseCaseTest {
     private lateinit var repository: FakeTranscriptionRepository
     private lateinit var useCase: ResetViewStatusUseCase
 
-    @Before
+    @BeforeEach
     fun setup() {
         repository = FakeTranscriptionRepository()
         useCase = ResetViewStatusUseCase(repository)

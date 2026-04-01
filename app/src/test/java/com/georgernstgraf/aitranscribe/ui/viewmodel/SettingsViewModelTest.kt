@@ -20,12 +20,12 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import okhttp3.OkHttpClient
-import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Assert.assertFalse
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
 
@@ -41,7 +41,7 @@ class SettingsViewModelTest {
     private lateinit var viewModel: SettingsViewModel
     private val testDispatcher = StandardTestDispatcher()
 
-    @Before
+    @BeforeEach
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         repository = FakeTranscriptionRepository()
@@ -75,12 +75,10 @@ class SettingsViewModelTest {
 
     @Test
     fun `activeProviders excludes providers without active token`() = runBlocking {
-        // Setup: Groq has token, OpenRouter has old flat key, ZAI has nothing
         coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "token_groq"
         coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "token_or"
         coEvery { appSettingsStore.getActiveAuthToken("zai") } returns null
         
-        // Need to recreate ViewModel to trigger init { loadSettings() } with new mocks
         viewModel = SettingsViewModel(deleteUseCase, repository, appSettingsStore, validateApiKeysUseCase, providerModelDao, context)
         testDispatcher.scheduler.runCurrent()
         
@@ -113,8 +111,7 @@ class SettingsViewModelTest {
         assertEquals(orModels, state.llmAvailableModels)
     }
 
-
-    @After
+    @AfterEach
     fun tearDown() {
         viewModel.viewModelScope.cancel()
         Dispatchers.resetMain()

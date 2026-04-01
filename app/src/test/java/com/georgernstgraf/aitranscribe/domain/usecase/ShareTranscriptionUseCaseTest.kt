@@ -5,10 +5,10 @@ import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDateTime
 
@@ -17,7 +17,7 @@ class ShareTranscriptionUseCaseTest {
     private lateinit var repository: FakeTranscriptionRepository
     private lateinit var useCase: ShareTranscriptionUseCase
 
-    @Before
+    @BeforeEach
     fun setup() {
         repository = FakeTranscriptionRepository()
         val context = mockk<android.content.Context>(relaxed = true)

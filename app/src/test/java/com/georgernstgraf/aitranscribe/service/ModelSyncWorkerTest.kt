@@ -16,9 +16,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import retrofit2.Response
 
 class ModelSyncWorkerTest {
@@ -32,7 +32,7 @@ class ModelSyncWorkerTest {
     private lateinit var context: Context
     private lateinit var workerParams: WorkerParameters
 
-    @Before
+    @BeforeEach
     fun setup() {
         context = mockk(relaxed = true)
         workerParams = mockk(relaxed = true)

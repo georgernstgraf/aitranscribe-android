@@ -6,10 +6,11 @@ import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import retrofit2.Response
 import java.io.File
 
@@ -20,7 +21,7 @@ class TranscribeAudioUseCaseTest {
     private lateinit var useCase: TranscribeAudioUseCase
     private lateinit var tempAudioFile: File
 
-    @Before
+    @BeforeEach
     fun setup() {
         repository = FakeTranscriptionRepository()
         apiService = mockk()
@@ -46,18 +47,24 @@ class TranscribeAudioUseCaseTest {
         assertEquals(1, repository.getCount())
     }
 
-    @Test(expected = TranscribeAudioUseCase.TranscriptionException::class)
-    fun `invoke throws exception when audio path is empty`() = runTest {
-        useCase("", "whisper-large-v3", "test-key")
+    @Test
+    fun `invoke throws exception when audio path is empty`() {
+        assertThrows(TranscribeAudioUseCase.TranscriptionException::class.java) {
+            runTest { useCase("", "whisper-large-v3", "test-key") }
+        }
     }
 
-    @Test(expected = TranscribeAudioUseCase.TranscriptionException::class)
-    fun `invoke throws exception when API key is empty`() = runTest {
-        useCase(tempAudioFile.absolutePath, "whisper-large-v3", "")
+    @Test
+    fun `invoke throws exception when API key is empty`() {
+        assertThrows(TranscribeAudioUseCase.TranscriptionException::class.java) {
+            runTest { useCase(tempAudioFile.absolutePath, "whisper-large-v3", "") }
+        }
     }
 
-    @Test(expected = TranscribeAudioUseCase.TranscriptionException::class)
-    fun `invoke throws exception when file does not exist`() = runTest {
-        useCase("/non/existent/file.mp3", "whisper-large-v3", "test-key")
+    @Test
+    fun `invoke throws exception when file does not exist`() {
+        assertThrows(TranscribeAudioUseCase.TranscriptionException::class.java) {
+            runTest { useCase("/non/existent/file.mp3", "whisper-large-v3", "test-key") }
+        }
     }
 }

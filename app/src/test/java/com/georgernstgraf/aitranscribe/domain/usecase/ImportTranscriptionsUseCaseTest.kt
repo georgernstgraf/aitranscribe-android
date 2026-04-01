@@ -3,9 +3,10 @@ package com.georgernstgraf.aitranscribe.domain.usecase
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.LocalDateTime
 
@@ -15,7 +16,7 @@ class ImportTranscriptionsUseCaseTest {
     private lateinit var useCase: ImportTranscriptionsUseCase
     private lateinit var tempDir: File
 
-    @Before
+    @BeforeEach
     fun setup() {
         repository = FakeTranscriptionRepository()
         useCase = ImportTranscriptionsUseCase(repository)
@@ -49,8 +50,10 @@ class ImportTranscriptionsUseCaseTest {
         jsonFile.delete()
     }
 
-    @Test(expected = ImportTranscriptionsUseCase.ImportException::class)
-    fun `invoke throws exception for non-existent file`() = runTest {
-        useCase("/non/existent/file.json")
+    @Test
+    fun `invoke throws exception for non-existent file`() {
+        assertThrows(ImportTranscriptionsUseCase.ImportException::class.java) {
+            runTest { useCase("/non/existent/file.json") }
+        }
     }
 }

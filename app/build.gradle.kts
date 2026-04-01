@@ -99,6 +99,7 @@ android {
     }
 
     tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
         val envFile = rootProject.file(".env")
         if (envFile.exists()) {
             envFile.readLines()
@@ -188,7 +189,8 @@ dependencies {
     // ============== TEST DEPENDENCIES ==============
     
     // Unit Testing
-    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("app.cash.turbine:turbine:1.0.0")
     testImplementation("io.mockk:mockk:1.13.9")
