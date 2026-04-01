@@ -9,7 +9,8 @@ WHERE
     OR name LIKE '%audio%';
 
 SELECT DISTINCT
-    m.*
+    m.*,
+    c.*
 FROM
     models AS m
     JOIN model_capabilities AS mc ON m.id = mc.model_id
