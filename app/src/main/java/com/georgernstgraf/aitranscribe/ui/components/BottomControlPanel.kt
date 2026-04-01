@@ -7,18 +7,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,14 +25,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.ui.theme.Red
 
 @Composable
 fun BottomControlPanel(
-    processingMode: PostProcessingType,
-    onModeChanged: (PostProcessingType) -> Unit,
     isRecording: Boolean,
     recordingDuration: Int,
     onStartRecording: () -> Unit,
@@ -44,17 +38,19 @@ fun BottomControlPanel(
     onFilterChanged: (ViewFilter) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(Color(0xFF121C26))
             .border(1.dp, Color(0xFF243241), RoundedCornerShape(12.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        // Filter pills take up available space
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.weight(1f),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             ViewFilter.entries.forEach { filter ->
@@ -68,79 +64,12 @@ fun BottomControlPanel(
             }
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Text(
-                    text = "Raw",
-                    color = Color(0xFFF2F5F7),
-                    fontSize = 14.sp,
-                    fontWeight = if (processingMode == PostProcessingType.RAW) FontWeight.Bold else FontWeight.Normal
-                )
-                Switch(
-                    checked = processingMode == PostProcessingType.CLEANUP,
-                    onCheckedChange = { checked ->
-                        onModeChanged(if (checked) PostProcessingType.CLEANUP else PostProcessingType.RAW)
-                    }
-                )
-                Text(
-                    text = "Cleanup",
-                    color = Color(0xFFF2F5F7),
-                    fontSize = 14.sp,
-                    fontWeight = if (processingMode == PostProcessingType.CLEANUP) FontWeight.Bold else FontWeight.Normal
-                )
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            RecordButton(
-                isRecording = isRecording,
-                recordingDuration = recordingDuration,
-                onStartRecording = onStartRecording,
-                onStopRecording = onStopRecording
-            )
-        }
-    }
-}
-
-@Composable
-private fun RadioButton(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(20.dp)
-                .clip(CircleShape)
-                .border(2.5.dp, Color(0xFFF2F5F7), CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            if (selected) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF69C3F0))
-                )
-            }
-        }
-        Text(
-            text = label,
-            color = Color(0xFFF2F5F7),
-            fontSize = 14.sp
+        // Record button
+        RecordButton(
+            isRecording = isRecording,
+            recordingDuration = recordingDuration,
+            onStartRecording = onStartRecording,
+            onStopRecording = onStopRecording
         )
     }
 }
@@ -158,7 +87,7 @@ private fun RecordButton(
 
     Box(
         modifier = modifier
-            .size(80.dp)
+            .size(56.dp)
             .clip(CircleShape)
             .background(bgColor)
             .clickable {
@@ -174,12 +103,12 @@ private fun RecordButton(
                     imageVector = icon,
                     contentDescription = "Stop Recording",
                     tint = Color.White,
-                    modifier = Modifier.size(28.dp)
+                    modifier = Modifier.size(24.dp)
                 )
                 Text(
                     text = formatDuration(recordingDuration),
                     color = Color.White,
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -188,7 +117,7 @@ private fun RecordButton(
                 imageVector = icon,
                 contentDescription = "Start Recording",
                 tint = Color.White,
-                modifier = Modifier.size(32.dp)
+                modifier = Modifier.size(28.dp)
             )
         }
     }

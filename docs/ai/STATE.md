@@ -15,6 +15,29 @@ No active focus. All open issues addressed.
   - Removed 3 dead dependencies: `threetenbp`, `datastore-preferences`, `security-crypto`.
   - `./gradlew test` passes all tests.
 
+- [x] Issue #60 — Settings screen UI/UX improvements:
+  - Moved "Active Providers" section to bottom (above Delete button).
+  - Replaced "Save Settings" button with floppy disk icon in TopAppBar.
+  - Added online API key validation in `saveSettings()` (format + HTTP check).
+  - Centralized key validation in `ValidateApiKeysUseCase` with provider-agnostic methods.
+  - Added ZAI key format and online validation support.
+  - Hide "Connect Provider" button when all providers connected.
+  - Added trash icon to disconnect providers.
+  - Renamed "Manage" button to "Authenticate".
+  - Added format + online validation to ProviderAuthScreen.
+  - Fixed stale provider list refresh when returning from auth screen.
+  - Removed redundant "Connected" text from active provider cards.
+  - All tests pass, APK deployed to device.
+
+- [x] Issue #63 — Main screen redesign and transcription process streamlining:
+  - Removed Raw/Cleanup toggle from main screen.
+  - Reorganized BottomControlPanel to single row layout (filter pills + record button).
+  - Removed `processingMode` state and related methods from MainViewModel.
+  - Removed processing mode storage from AppSettingsStore.
+  - Changed TranscriptionWorker to always use RAW mode (no cleanup by default).
+  - Cleanup now available via transcription details screen.
+  - All tests pass, APK deployed to device.
+
 ## Pending
 - None.
 

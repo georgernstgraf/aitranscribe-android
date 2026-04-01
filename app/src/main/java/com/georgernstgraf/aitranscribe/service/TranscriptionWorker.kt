@@ -62,7 +62,6 @@ class TranscriptionWorker @AssistedInject constructor(
         val sttModel = appSettingsStore.getProviderSttModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider))
         val llmProvider = appSettingsStore.getLlmProvider()
         val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, ProviderConfig.getDefaultLlmModel(llmProvider))
-        val processingMode = appSettingsStore.getProcessingMode()
 
         val transcriptionText = try {
             transcribeAudio(audioPath, sttModel)
@@ -94,13 +93,7 @@ class TranscriptionWorker @AssistedInject constructor(
 
         val llmApiKey = appSettingsStore.getActiveAuthToken(llmProvider)
 
-        val postProcessingType = when (processingMode) {
-            PostProcessingType.CLEANUP.name,
-            PostProcessingType.TRANSLATE_TO_EN.name,
-            PostProcessingType.TRANSLATE_TO_DE.name,
-            "ENGLISH" -> PostProcessingType.CLEANUP
-            else -> PostProcessingType.RAW
-        }
+        val postProcessingType = PostProcessingType.RAW
 
         if (!llmApiKey.isNullOrBlank()) {
             try {

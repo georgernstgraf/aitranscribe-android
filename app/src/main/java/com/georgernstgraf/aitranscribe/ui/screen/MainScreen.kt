@@ -146,8 +146,6 @@ fun MainScreen(
             }
 
             BottomControlPanel(
-                processingMode = state.processingMode,
-                onModeChanged = { viewModel.setProcessingMode(it) },
                 isRecording = state.isRecording,
                 recordingDuration = state.recordingDuration,
                 onStartRecording = { viewModel.startRecording() },

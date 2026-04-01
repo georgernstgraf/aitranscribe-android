@@ -12,9 +12,7 @@ import com.georgernstgraf.aitranscribe.data.remote.OpenRouterApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import com.georgernstgraf.aitranscribe.data.remote.dto.GroqTranscriptionResponse
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
-import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
-import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
 import io.mockk.coEvery
@@ -101,7 +99,6 @@ class TranscriptionWorkerTest {
 
     @Test
     fun `worker processes raw transcription and clears audio path`() = runBlocking {
-        coEvery { appSettingsStore.getProcessingMode() } returns PostProcessingType.RAW.name
         val audioFile = createAudioFile()
         val queued = TranscriptionEntity(
             id = 1,
@@ -136,80 +133,6 @@ class TranscriptionWorkerTest {
             )
         }
         coVerify(exactly = 1) {
-            postProcessTextUseCase.generateSummary(queued.id, any(), any(), any(), any())
-        }
-    }
-
-    @Test
-    fun `worker still clears audio path if llm fails after stt success`() = runBlocking {
-        coEvery { appSettingsStore.getProcessingMode() } returns PostProcessingType.CLEANUP.name
-        val audioFile = createAudioFile()
-        val queued = TranscriptionEntity(
-            id = 1,
-            text = null,
-            audioFilePath = audioFile.absolutePath,
-            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            status = TranscriptionStatus.PENDING.name,
-            errorMessage = null,
-            seen = false,
-            summary = null
-        )
-        fakeRepository.insert(queued)
-
-        every { params.inputData } returns Data.Builder().putLong("transcription_id", queued.id).build()
-
-        coEvery { 
-            postProcessTextUseCase(
-                transcriptionId = any(),
-                isCleanupEnabled = any(),
-                translationTarget = any(),
-                llmModel = any(),
-                apiKey = any(),
-                llmProvider = any()
-            ) 
-        } throws Exception("LLM Error")
-
-        val result = worker.doWork()
-
-        assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
-
-        val saved = fakeRepository.getById(1)
-        assertNotNull(saved)
-        assertNull(saved!!.audioFilePath)
-        assertEquals(TranscriptionStatus.COMPLETED_WITH_WARNING.name, saved.status)
-    }
-
-    @Test
-    fun `worker clears audio path if llm succeeds`() = runBlocking {
-        coEvery { appSettingsStore.getProcessingMode() } returns PostProcessingType.CLEANUP.name
-        val audioFile = createAudioFile()
-        val queued = TranscriptionEntity(
-            id = 1,
-            text = null,
-            audioFilePath = audioFile.absolutePath,
-            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            status = TranscriptionStatus.PENDING.name,
-            errorMessage = null,
-            seen = false,
-            summary = null
-        )
-        fakeRepository.insert(queued)
-
-        every { params.inputData } returns Data.Builder().putLong("transcription_id", queued.id).build()
-
-        val result = worker.doWork()
-
-        assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
-
-        val saved = fakeRepository.getById(1)
-        assertNotNull(saved)
-        assertNull(saved!!.audioFilePath)
-        assertEquals(TranscriptionStatus.COMPLETED.name, saved.status)
-
-        coVerify(exactly = 1) {
-            postProcessTextUseCase(queued.id, true, TranslationTarget.NONE, any(), any(), any())
-        }
-        coVerify(exactly = 0) {
             postProcessTextUseCase.generateSummary(queued.id, any(), any(), any(), any())
         }
     }

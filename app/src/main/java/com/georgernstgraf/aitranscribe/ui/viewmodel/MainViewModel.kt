@@ -17,7 +17,6 @@ import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
-import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.service.RecordingService
 import com.georgernstgraf.aitranscribe.service.TranscriptionWorker
@@ -57,7 +56,6 @@ class MainViewModel @Inject constructor(
         Log.d("MainViewModel", "MainViewModel created")
         loadRecentTranscriptions()
         registerRecordingResultReceiver()
-        loadProcessingMode()
         observeNetworkForRetry()
         triggerRetryOnAppStartIfOnline()
     }
@@ -269,27 +267,6 @@ class MainViewModel @Inject constructor(
         loadRecentTranscriptions()
     }
 
-    fun setProcessingMode(mode: PostProcessingType) {
-        _uiState.update { it.copy(processingMode = mode) }
-        viewModelScope.launch {
-            appSettingsStore.setProcessingMode(mode.name)
-        }
-    }
-
-    private fun loadProcessingMode() {
-        viewModelScope.launch {
-            val modeName = appSettingsStore.getProcessingMode()
-            val mode = when (modeName) {
-                PostProcessingType.CLEANUP.name,
-                PostProcessingType.TRANSLATE_TO_EN.name,
-                PostProcessingType.TRANSLATE_TO_DE.name,
-                "ENGLISH" -> PostProcessingType.CLEANUP
-                else -> PostProcessingType.RAW
-            }
-            _uiState.update { it.copy(processingMode = mode) }
-        }
-    }
-
     private fun loadRecentTranscriptions() {
         transcriptionsJob?.cancel()
         transcriptionsJob = viewModelScope.launch {
@@ -400,6 +377,5 @@ data class MainUiState(
     val recordingError: String? = null,
     val recentTranscriptions: List<Transcription> = emptyList(),
     val viewFilter: ViewFilter = ViewFilter.ALL,
-    val processingMode: PostProcessingType = PostProcessingType.RAW,
     val isSttConfigured: Boolean = true
 )

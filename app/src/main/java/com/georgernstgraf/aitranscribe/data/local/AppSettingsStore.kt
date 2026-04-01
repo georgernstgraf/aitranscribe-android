@@ -74,14 +74,6 @@ class AppSettingsStore @Inject constructor(
         return getPreference(KEY_STT_PROVIDER) ?: DEFAULT_STT_PROVIDER
     }
 
-    suspend fun setProcessingMode(mode: String) {
-        setPreference(KEY_PROCESSING_MODE, mode)
-    }
-
-    suspend fun getProcessingMode(): String {
-        return getPreference(KEY_PROCESSING_MODE) ?: DEFAULT_PROCESSING_MODE
-    }
-
     suspend fun setPreferredShareApp(packageName: String?) {
         if (packageName.isNullOrBlank()) {
             appPreferencesDao.deleteByKey(KEY_PREFERRED_SHARE_APP)
@@ -116,11 +108,9 @@ class AppSettingsStore @Inject constructor(
         private const val KEY_PROVIDER_LLM_MODEL_PREFIX = "provider_llm_model_"
         private const val KEY_STT_PROVIDER = "stt_provider"
         private const val KEY_LLM_PROVIDER = "llm_provider"
-        private const val KEY_PROCESSING_MODE = "processing_mode"
         private const val KEY_PREFERRED_SHARE_APP = "preferred_share_app"
 
         private const val DEFAULT_STT_PROVIDER = "groq"
         private const val DEFAULT_LLM_PROVIDER = "openrouter"
-        private const val DEFAULT_PROCESSING_MODE = "RAW"
     }
 }
