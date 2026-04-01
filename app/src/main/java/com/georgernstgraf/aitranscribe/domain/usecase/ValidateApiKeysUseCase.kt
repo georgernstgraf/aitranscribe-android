@@ -8,14 +8,39 @@ import okhttp3.Request
 import org.json.JSONObject
 import javax.inject.Inject
 
-/**
- * Use case for validating API keys.
- * Checks if both GROQ and OpenRouter API keys are set and valid.
- */
 @ViewModelScoped
 class ValidateApiKeysUseCase @Inject constructor(
     private val okHttpClient: OkHttpClient
 ) {
+
+    fun isValidKeyFormat(providerId: String, key: String): Boolean {
+        if (key.length < 20) return false
+        return when (providerId) {
+            "groq" -> key.startsWith("gsk_")
+            "openrouter" -> key.startsWith("sk-or-") || key.startsWith("sk-")
+            "zai" -> key.contains(".")
+            else -> key.length >= 20
+        }
+    }
+
+    suspend fun validateProviderKey(providerId: String, apiKey: String): Boolean =
+        when (providerId) {
+            "groq" -> validateGroqKey(apiKey)
+            "openrouter" -> validateOpenRouterKey(apiKey)
+            "zai" -> validateZaiKey(apiKey)
+            else -> true
+        }
+
+    suspend fun validateProviderModels(
+        providerId: String,
+        apiKey: String,
+        model: String
+    ): String? = when (providerId) {
+        "groq" -> validateGroqModel(apiKey, model)
+        "openrouter" -> validateOpenRouterModel(apiKey, model)
+        "zai" -> validateZaiModel(apiKey, model)
+        else -> null
+    }
 
     suspend operator fun invoke(
         groqKey: String?,
@@ -49,7 +74,7 @@ class ValidateApiKeysUseCase @Inject constructor(
                     isValid = false
                 )
             }
-            !isValidGroqKeyFormat(groqKey) -> {
+            !isValidKeyFormat("groq", groqKey) -> {
                 return@withContext ApiKeyValidationResult(
                     isGroqKeyValid = false,
                     isOpenRouterKeyValid = true,
@@ -58,7 +83,7 @@ class ValidateApiKeysUseCase @Inject constructor(
                     isValid = false
                 )
             }
-            !isValidOpenRouterKeyFormat(openRouterKey) -> {
+            !isValidKeyFormat("openrouter", openRouterKey) -> {
                 return@withContext ApiKeyValidationResult(
                     isGroqKeyValid = true,
                     isOpenRouterKeyValid = false,
@@ -130,14 +155,29 @@ class ValidateApiKeysUseCase @Inject constructor(
         }.getOrElse { false }
     }
 
+    private suspend fun validateZaiKey(apiKey: String): Boolean = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url("https://api.z.ai/api/paas/v4/models")
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Accept", "application/json")
+            .get()
+            .build()
+
+        runCatching {
+            okHttpClient.newCall(request).execute().use { response ->
+                response.isSuccessful
+            }
+        }.getOrElse { false }
+    }
+
     suspend fun validateModels(
         groqKey: String,
         openRouterKey: String,
         sttModel: String,
         llmModel: String
     ): ModelValidationResult = withContext(Dispatchers.IO) {
-        val sttError = validateSttModel(groqKey, sttModel)
-        val llmError = validateLlmModel(openRouterKey, llmModel)
+        val sttError = validateGroqModel(groqKey, sttModel)
+        val llmError = validateOpenRouterModel(openRouterKey, llmModel)
         ModelValidationResult(
             sttModelError = sttError,
             llmModelError = llmError,
@@ -145,7 +185,7 @@ class ValidateApiKeysUseCase @Inject constructor(
         )
     }
 
-    private fun validateSttModel(apiKey: String, model: String): String? {
+    private fun validateGroqModel(apiKey: String, model: String): String? {
         val request = Request.Builder()
             .url("https://api.groq.com/openai/v1/models")
             .addHeader("Authorization", "Bearer $apiKey")
@@ -164,7 +204,7 @@ class ValidateApiKeysUseCase @Inject constructor(
         }.getOrElse { "Could not verify STT model: ${it.message}" }
     }
 
-    private fun validateLlmModel(apiKey: String, model: String): String? {
+    private fun validateOpenRouterModel(apiKey: String, model: String): String? {
         val request = Request.Builder()
             .url("https://openrouter.ai/api/v1/models")
             .addHeader("Authorization", "Bearer $apiKey")
@@ -184,12 +224,23 @@ class ValidateApiKeysUseCase @Inject constructor(
         }.getOrElse { "Could not verify LLM model: ${it.message}" }
     }
 
-    private fun isValidGroqKeyFormat(key: String): Boolean {
-        return key.length >= 20 && key.startsWith("gsk_")
-    }
+    private fun validateZaiModel(apiKey: String, model: String): String? {
+        val request = Request.Builder()
+            .url("https://api.z.ai/api/paas/v4/models")
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Accept", "application/json")
+            .get()
+            .build()
 
-    private fun isValidOpenRouterKeyFormat(key: String): Boolean {
-        return key.length >= 20 && (key.startsWith("sk-or-") || key.startsWith("sk-"))
+        return runCatching {
+            okHttpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return "Could not verify ZAI model (API error)"
+                val body = response.body?.string() ?: return "Could not verify ZAI model (empty response)"
+                val models = JSONObject(body).getJSONArray("data")
+                val ids = (0 until models.length()).map { models.getJSONObject(it).getString("id") }
+                if (model in ids) null else "Unknown ZAI model: $model"
+            }
+        }.getOrElse { "Could not verify ZAI model: ${it.message}" }
     }
 }
 

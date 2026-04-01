@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -145,6 +146,22 @@ fun SettingsScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
+                actions = {
+                    IconButton(
+                        onClick = { viewModel.saveSettings() },
+                        enabled = !state.isValidating
+                    ) {
+                        if (state.isValidating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.padding(end = 8.dp),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(Icons.Default.Save, contentDescription = "Save Settings")
+                        }
+                    }
+                },
                 scrollBehavior = scrollBehavior
             )
         }
@@ -157,35 +174,6 @@ fun SettingsScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Active Providers",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 10.dp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            state.activeProviders.forEach { providerId ->
-                val isAuthed = state.providerAuthStatus[providerId] ?: false
-                ProviderStatusItem(
-                    providerId = providerId,
-                    isAuthed = isAuthed,
-                    onManage = { navController.navigate("auth/$providerId") }
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-            
-            Button(
-                onClick = { navController.navigate("connect_provider") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp)
-            ) {
-                Text("Connect Provider")
-            }
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
             Text(
                 text = "Speech-to-Text",
                 style = MaterialTheme.typography.titleMedium,
@@ -246,24 +234,34 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            Text(
+                text = "Active Providers",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(horizontal = 10.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            state.activeProviders.forEach { providerId ->
+                val isAuthed = state.providerAuthStatus[providerId] ?: false
+                ProviderStatusItem(
+                    providerId = providerId,
+                    isAuthed = isAuthed,
+                    onManage = { navController.navigate("auth/$providerId") }
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+            
             Button(
-                onClick = { viewModel.saveSettings() },
+                onClick = { navController.navigate("connect_provider") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 10.dp)
             ) {
-                if (state.isValidating) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.padding(end = 8.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-                Text("Save Settings")
+                Text("Connect Provider")
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = { showDeleteDialog = true },

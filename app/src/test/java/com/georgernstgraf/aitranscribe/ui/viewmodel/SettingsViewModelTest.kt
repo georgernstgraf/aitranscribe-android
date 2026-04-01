@@ -10,16 +10,15 @@ import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import okhttp3.OkHttpClient
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -49,7 +48,7 @@ class SettingsViewModelTest {
         appSettingsStore = mockk(relaxed = true)
         providerModelDao = mockk(relaxed = true)
         context = mockk(relaxed = true)
-        validateApiKeysUseCase = ValidateApiKeysUseCase(OkHttpClient())
+        validateApiKeysUseCase = mockk(relaxed = true)
 
         coEvery { providerModelDao.getModelsForProvider(any()) } returns emptyList()
 
@@ -61,6 +60,8 @@ class SettingsViewModelTest {
         coEvery { appSettingsStore.getProviderLlmModel("zai", any()) } returns "glm-4.7"
         coEvery { appSettingsStore.getLlmProvider() } returns "openrouter"
         coEvery { appSettingsStore.getSttProvider() } returns "groq"
+        coEvery { validateApiKeysUseCase.isValidKeyFormat(any(), any()) } returns true
+        coEvery { validateApiKeysUseCase.validateProviderKey(any(), any()) } returns true
         viewModel = SettingsViewModel(deleteUseCase, repository, appSettingsStore, validateApiKeysUseCase, providerModelDao, context)
     }
 
@@ -78,34 +79,34 @@ class SettingsViewModelTest {
         coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "token_groq"
         coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "token_or"
         coEvery { appSettingsStore.getActiveAuthToken("zai") } returns null
-        
+
         viewModel = SettingsViewModel(deleteUseCase, repository, appSettingsStore, validateApiKeysUseCase, providerModelDao, context)
         testDispatcher.scheduler.runCurrent()
-        
+
         val state = viewModel.uiState.value
-        
+
         assertEquals(true, state.providerAuthStatus["groq"])
         assertEquals(true, state.providerAuthStatus["openrouter"])
         assertEquals(false, state.providerAuthStatus["zai"])
-        
+
         assertTrue(state.activeProviders.contains("groq"))
         assertTrue(state.activeProviders.contains("openrouter"))
         assertFalse(state.activeProviders.contains("zai"))
-        
+
         assertFalse(state.availableProviders.contains("groq"))
         assertTrue(state.availableProviders.contains("zai"))
     }
-    
+
     @Test
     fun `changing provider updates available models from dao`() = runBlocking {
         val orModels = listOf(ModelEntity(externalId = "model1", providerId = "openrouter", modelName = "Model 1"))
         coEvery { providerModelDao.getModelsForProvider("openrouter") } returns orModels
-        
+
         testDispatcher.scheduler.runCurrent()
-        
+
         viewModel.onLlmProviderChanged("openrouter")
         testDispatcher.scheduler.runCurrent()
-        
+
         val state = viewModel.uiState.value
         assertEquals("openrouter", state.llmProvider)
         assertEquals(orModels, state.llmAvailableModels)
@@ -177,8 +178,8 @@ class SettingsViewModelTest {
                 errorMessage = "Model invalid"
             )
         )
-        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "groq-key"
-        coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "or-key"
+        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "gsk_validkey1234567890123"
+        coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "sk-or-validkey12345678901"
 
         viewModel.onSttModelChanged("whisper-large-v3-turbo")
         viewModel.onLlmModelChanged("inception/mercury")
@@ -186,5 +187,49 @@ class SettingsViewModelTest {
         testDispatcher.scheduler.runCurrent()
 
         assertEquals(TranscriptionStatus.STT_ERROR_PERMANENT.name, repository.getById(1)?.status)
+    }
+
+    @Test
+    fun `saveSettings fails on invalid key format`() = runBlocking {
+        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "bad-key"
+        coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "sk-or-validkey12345678901"
+        coEvery { validateApiKeysUseCase.isValidKeyFormat("groq", "bad-key") } returns false
+
+        viewModel.saveSettings()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isSaved)
+        assertTrue(state.errorMessage?.contains("invalid format") == true)
+    }
+
+    @Test
+    fun `saveSettings fails on online verification failure`() = runBlocking {
+        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "gsk_validkey1234567890123"
+        coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "sk-or-validkey12345678901"
+        coEvery { validateApiKeysUseCase.validateProviderKey("groq", any()) } returns false
+
+        viewModel.saveSettings()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.isSaved)
+        assertTrue(state.errorMessage?.contains("verification failed") == true)
+    }
+
+    @Test
+    fun `saveSettings succeeds with valid keys`() = runBlocking {
+        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "gsk_validkey1234567890123"
+        coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "sk-or-validkey12345678901"
+
+        viewModel.saveSettings()
+        testDispatcher.scheduler.runCurrent()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.isSaved)
+        assertEquals(null, state.errorMessage)
+
+        coVerify { appSettingsStore.setProviderSttModel("groq", any()) }
+        coVerify { appSettingsStore.setProviderLlmModel("openrouter", any()) }
     }
 }

@@ -103,8 +103,6 @@ class SettingsViewModel @Inject constructor(
 
             val activeSttToken = getEffectiveProviderToken(state.sttProvider)
             if (activeSttToken.isNullOrBlank() && state.sttProvider != "openrouter") {
-                // OpenRouter allows fetching some things without auth, but STT might require it.
-                // Assuming Groq and ZAI require auth for STT:
                 errors.add("${state.sttProvider.replaceFirstChar { it.uppercase() }} authentication is required for STT")
             }
 
@@ -118,11 +116,35 @@ class SettingsViewModel @Inject constructor(
                 return@launch
             }
 
-            // Save provider-specific models
+            val onlineErrors = mutableListOf<String>()
+
+            val sttToken = activeSttToken!!
+            if (!validateApiKeysUseCase.isValidKeyFormat(state.sttProvider, sttToken)) {
+                onlineErrors.add("${state.sttProvider.replaceFirstChar { it.uppercase() }} API key has invalid format")
+            } else {
+                val sttReachable = validateApiKeysUseCase.validateProviderKey(state.sttProvider, sttToken)
+                if (!sttReachable) {
+                    onlineErrors.add("${state.sttProvider.replaceFirstChar { it.uppercase() }} API key verification failed")
+                }
+            }
+
+            val llmToken = activeLlmToken!!
+            if (!validateApiKeysUseCase.isValidKeyFormat(state.llmProvider, llmToken)) {
+                onlineErrors.add("${state.llmProvider.replaceFirstChar { it.uppercase() }} API key has invalid format")
+            } else {
+                val llmReachable = validateApiKeysUseCase.validateProviderKey(state.llmProvider, llmToken)
+                if (!llmReachable) {
+                    onlineErrors.add("${state.llmProvider.replaceFirstChar { it.uppercase() }} API key verification failed")
+                }
+            }
+
+            if (onlineErrors.isNotEmpty()) {
+                _uiState.update { it.copy(isValidating = false, errorMessage = onlineErrors.joinToString("\n")) }
+                return@launch
+            }
+
             appSettingsStore.setProviderLlmModel(state.llmProvider, state.llmModel)
             appSettingsStore.setProviderSttModel(state.sttProvider, state.sttModel)
-            
-            // Save global active providers
             appSettingsStore.setSttProvider(state.sttProvider)
             appSettingsStore.setLlmProvider(state.llmProvider)
 
