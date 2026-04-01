@@ -131,3 +131,27 @@ After editing a test file, the compiled bytecode may cache old source-to-bytecod
 
 ## window.insetsController does not expose isAppearanceLightStatusBars
 The platform `WindowInsetsController` (API 30+) uses `setSystemBarsAppearance()` / `getSystemBarsAppearance()`, not a direct `isAppearanceLightStatusBars` property. That property exists only on `WindowInsetsControllerCompat` (via `WindowCompat.getInsetsController()`). Do not replace `WindowCompat` with `window.insetsController` for this use case.
+
+## OpenRouter does not have a dedicated audio/transcriptions endpoint
+OpenRouter has **no STT endpoint** like GROQ's `/audio/transcriptions`. The existing `OpenRouterApiService.transcribeAudio()` method was calling a non-existent endpoint. OpenRouter supports audio only through multimodal chat completions with base64-encoded audio, which requires a completely different integration approach.
+
+## Whisper API language detection should be captured and stored
+Don't leave `language` as NULL after STT transcription. The Whisper API returns a `language` field (e.g., "de", "en") that should be captured in `GroqTranscriptionResponse`, passed to `markSttSuccess()`, and stored in the database. This enables language-aware prompts for summary generation instead of letting the LLM guess.
+
+## Summary prompts must explicitly specify output language
+Without explicit language instruction (e.g., "Write summary in German"), LLMs will guess the language from text content. German text with English loan words often gets misclassified as English. Always include `{{language}}` placeholder in summary prompts and populate it from the stored Whisper language.
+
+## ZAI key format: length >= 20 && contains(".")
+ZAI API keys look like `a116a2e0344312a8aa5f33bfbee3c9f7.V5OqBIoBBqm9yWj0` (hex.base64 format). Validate with `key.length >= 20 && key.contains(".")`. Unlike GROQ (`gsk_`) or OpenRouter (`sk-or-`), ZAI keys have no prefix.
+
+## Provider auth validation requires both format and online checks
+Don't just check key format (regex/prefix). Always validate API keys with an actual API call to verify they work and have sufficient credits. Format validation catches typos; online validation catches expired/revoked keys.
+
+## Settings screen must refresh on return from auth screen
+After authenticating a provider in ProviderAuthScreen and navigating back, the SettingsScreen provider list will be stale. Use `currentBackStackEntryAsState()` + `LaunchedEffect` to detect navigation changes and trigger `loadSettings()` refresh.
+
+## Prompt logging must use {{TEXT}} placeholder for privacy
+When logging prompts for debugging, never log the full transcription text. Use a `{{TEXT}}` placeholder in the logged user prompt. The system prompt (instructions) can be logged fully, but user content should be redacted or truncated.
+
+## MediaRecorder requires API version check at minSdk 30
+`MediaRecorder(Context)` constructor was added in API 31. At minSdk 30, you must check `Build.VERSION.SDK_INT >= Build.VERSION_CODES.S` and use `MediaRecorder(context)` on API 31+ or `MediaRecorder()` (no-arg, deprecated) on API 30.

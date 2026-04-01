@@ -47,6 +47,14 @@ No active focus. All open issues addressed.
   - Updated summary prompt to explicitly require output in detected language.
   - All tests pass, APK deployed to device.
 
+- [x] Issue #62 — Removed broken OpenRouter STT code:
+  - Removed OpenRouter from STT providers list (no dedicated STT endpoint exists).
+  - Removed broken `transcribeAudio()` method from OpenRouterApiService.
+  - Removed OpenRouter case from TranscriptionWorker STT switch.
+  - Updated tests to reflect changes.
+  - Tagged issue with "not now" label for potential future reconsideration.
+  - OpenRouter remains as LLM provider (works correctly via chat completions).
+
 ## Pending
 - None.
 
@@ -54,4 +62,16 @@ No active focus. All open issues addressed.
 - `compileDebugAndroidTestKotlin` still has pre-existing failures outside current issue scope.
 
 ## Next Session Suggestion
-Issue #47 (Database delays require item caching) or Issue #61 (Summary language issues during recording with RAW enabled).
+Issue #47 (Database delays require item caching) — Performance issue causing lag when swiping through transcriptions. Medium complexity, high user impact.
+
+## Current Provider Support Status
+- **STT Providers**: GROQ (working), ZAI (working), OpenRouter (removed - no STT endpoint)
+- **LLM Providers**: OpenRouter (working), ZAI (working), GROQ (working)
+- **Audio Formats**: .m4a (GROQ), .mp3/.wav (ZAI)
+
+## Recent Architecture Decisions
+1. Always capture Whisper language detection for accurate summaries
+2. Remove non-functional code paths (OpenRouter STT) rather than leaving broken
+3. Use navigation-aware refresh for settings screens
+4. Prompt logging uses {{TEXT}} placeholder for privacy
+5. Language-aware prompts prevent LLM guessing

@@ -256,3 +256,46 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Reason**: No requirement to support older devices; `MediaRecorder(Context)` at API 31 was already the practical floor since the app's core recording feature uses it.
 - **Changed**: Removed `WRITE_EXTERNAL_STORAGE` permission (dead at minSdk 30), removed `if (Build.VERSION.SDK_INT >= O)` guards around NotificationChannel creation in `AITranscribeApp` and `RecordingService`, added API 31 guard for `MediaRecorder(Context)` (uses no-arg constructor on API 30), replaced `ContextCompat.checkSelfPermission` with direct `checkSelfPermission`, removed 3 dead dependencies (`threetenbp`, `datastore-preferences`, `security-crypto`).
 - **Kept**: `registerReceiver` Tiramisu branch (API 33), dynamic color check (API 31), `READ_EXTERNAL_STORAGE` with `maxSdkVersion=32`, `WindowCompat.getInsetsController` (platform `WindowInsetsController` lacks `isAppearanceLightStatusBars` property).
+
+## 2026-04-01: Settings screen save button moved to TopAppBar with online validation (#60)
+- **Choice**: Replaced "Save Settings" button with floppy disk icon in TopAppBar, added online API key validation.
+- **Reason**: Better UX - settings save is a primary action that belongs in the navigation bar; validation ensures keys work before saving.
+- **Changed**: Added `Icons.Default.Save` to TopAppBar actions with loading state, `saveSettings()` now validates keys online via `ValidateApiKeysUseCase.validateProviderKey()` before saving.
+- **Centralized validation**: Created provider-agnostic validation methods (`isValidKeyFormat`, `validateProviderKey`) supporting Groq, OpenRouter, and ZAI.
+
+## 2026-04-01: Provider management UI patterns (#60)
+- **Choice**: Active Providers section moved to bottom above Delete button; hide "Connect Provider" when all connected; trash icon for disconnect; "Authenticate" label for auth action.
+- **Reason**: Clearer visual hierarchy - active providers are status display, not primary action; disconnect needs confirmation affordance.
+- **Changed**: `ProviderStatusItem` shows trash icon for connected providers, "Authenticate" button for disconnected; conditional rendering of "Connect Provider" button.
+
+## 2026-04-01: Provider authentication with format + online validation (#60)
+- **Choice**: ProviderAuthScreen validates API keys before saving (format check + online verification).
+- **Reason**: Prevents saving invalid keys that would fail later; gives immediate feedback with provider-specific hints.
+- **Changed**: `validateAndSaveProviderAuth()` returns `ProviderAuthResult` sealed class; format validation shows hints ("Groq keys start with 'gsk_'", etc.); online verification calls provider API before saving.
+
+## 2026-04-01: Settings screen refreshes provider list on navigation return (#60)
+- **Choice**: Use `currentBackStackEntryAsState()` + `LaunchedEffect` to trigger `loadSettings()` when returning to SettingsScreen.
+- **Reason**: Provider list was stale after authenticating a new provider in ProviderAuthScreen.
+- **Changed**: Made `loadSettings()` public in SettingsViewModel; added navigation-aware refresh trigger in SettingsScreen.
+
+## 2026-04-01: Main screen Raw/Cleanup toggle removed, always RAW mode (#63)
+- **Choice**: Removed Raw/Cleanup toggle from BottomControlPanel; recording always produces RAW output.
+- **Reason**: Simpler UX; cleanup available via detail screen when needed; matches product workflow.
+- **Changed**: Removed `processingMode` from MainUiState and MainViewModel; removed `setProcessingMode()` and `loadProcessingMode()`; changed TranscriptionWorker to always use `PostProcessingType.RAW`; removed processing mode storage from AppSettingsStore.
+
+## 2026-04-01: BottomControlPanel single row layout (#63)
+- **Choice**: Filter pills (Unread/All/Read) and record button on same row, removed processing mode switch.
+- **Reason**: Cleaner layout with fewer UI elements; record button is primary action.
+- **Changed**: Reorganized composable to single Row with filter pills taking weight space and record button fixed size.
+
+## 2026-04-01: Whisper API language detection captured for summary generation (#61)
+- **Choice**: Capture `language` field from Whisper API response, store in database, include in summary prompt.
+- **Reason**: Fixes intermittent wrong-language summaries when LLM guessed language from text content.
+- **Changed**: Added `language` field to `GroqTranscriptionResponse`; `transcribeAudio()` returns `TranscriptionResult(text, language)`; `markSttSuccess()` stores language; `generateSummary()` builds language-aware prompt; added `getLanguageDisplayName()` for 30+ language codes.
+- **Prompt update**: Summary prompt now includes "The summary MUST be written in {{language}}. Do not translate or change the language."
+
+## 2026-04-01: OpenRouter STT support removed (#62)
+- **Choice**: Removed OpenRouter from STT providers; GROQ and ZAI remain as working STT options.
+- **Reason**: OpenRouter has no dedicated STT endpoint; would require complex base64 chat API integration with higher costs and lower accuracy.
+- **Changed**: Removed OpenRouter from `sttProviders` in ProviderConfig; removed `transcribeAudio()` from OpenRouterApiService; removed OpenRouter case from TranscriptionWorker; updated tests; tagged issue #62 with "not now" label.
+- **OpenRouter remains**: As LLM provider for post-processing (works correctly via chat completions).

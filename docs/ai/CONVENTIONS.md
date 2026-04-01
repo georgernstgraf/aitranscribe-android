@@ -89,6 +89,19 @@ app/src/main/java/com/georgernstgraf/aitranscribe/
 - Prompt composition rule: for cleanup-enabled actions, compose `prompt.cleanup` first, then newline, then `prompt.cleanup.<en|de|null>`; for detail cleanup-off actions, use `prompt.translate.<en|de>` directly.
 - Use prompt templates for all LLM message text (`prompt.system.base`, `prompt.system.request`, `prompt.user.transcription`, `prompt.summary`); avoid hard-coded prompt strings in Kotlin.
 - Prompt previews are for diagnostics in logcat (`PromptDebug`) and should not be shown as persistent UI cards unless explicitly requested.
+- **Language-aware prompts**: Always include `{{language}}` placeholder in prompts that need language specification; use `buildSummaryPrompt(language)` pattern to substitute with display name (e.g., "German") or fallback text.
+- **Prompt logging privacy**: Log prompts with `{{TEXT}}` placeholder instead of actual transcription content; system prompts can be logged fully, user content should be redacted.
+
+## Provider Management UI
+- **Active providers section**: Display at bottom of settings, above destructive actions (Delete); show connected status with trash icon for disconnect, "Authenticate" button for disconnected.
+- **Connect Provider button**: Conditionally hide when all available providers are connected (`activeProviders.size >= allProviderIds.size`).
+- **Provider authentication**: Use inline validation with format hints; show loading state during online verification; display inline errors below input field.
+- **Navigation-aware refresh**: Settings screens must refresh data when returning from sub-screens (use `currentBackStackEntryAsState()` + `LaunchedEffect`).
+
+## Language Detection and Storage
+- **Capture Whisper language**: Always extract `language` field from STT API response (GroqTranscriptionResponse); store in database via `markSttSuccess()`.
+- **Language code mapping**: Use `getLanguageDisplayName()` helper to convert Whisper language codes ("de", "en") to display names ("German", "English") for prompts.
+- **Language-aware generation**: Pass stored language to summary generation; build prompts that explicitly specify output language to prevent LLM guessing.
 
 ## Companion Project
 - `../aitranscribe` (Python/TUI) is the **lead and authoritative project** for pipeline logic, prompts, and feature design

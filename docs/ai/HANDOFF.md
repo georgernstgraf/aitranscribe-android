@@ -10,3 +10,11 @@ No pending tasks. Last cleared: 2026-04-01.
 - **Issue #63 finished** — Main screen redesign
 - **Issue #60 finished** — Settings improvements
 - **Issue #59 finished** — minSdk bump to 30
+- **Issue #62 cleaned up** — Removed broken OpenRouter STT code
+
+## Architecture Insights from Recent Work
+- OpenRouter does NOT have a dedicated STT endpoint - requires base64 chat API approach
+- Whisper language detection is reliable and should always be captured
+- Language-aware prompts prevent misclassification (German→English)
+- Navigation-aware refresh pattern using currentBackStackEntryAsState()
+- Prompt logging should use {{TEXT}} placeholder for privacy
