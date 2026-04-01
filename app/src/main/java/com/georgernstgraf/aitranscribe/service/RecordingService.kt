@@ -140,7 +140,12 @@ class RecordingService : Service() {
 
     private fun initializeMediaRecorder() {
         try {
-            mediaRecorder = MediaRecorder(this@RecordingService).apply {
+            mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(this@RecordingService)
+            } else {
+                MediaRecorder()
+            }
+            mediaRecorder?.apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
@@ -187,17 +192,15 @@ class RecordingService : Service() {
     }
 
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID_RECORDING,
-                getString(R.string.notification_channel_recording),
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Foreground notification for recording"
-                setShowBadge(false)
-            }
-            notificationManager.createNotificationChannel(channel)
+        val channel = NotificationChannel(
+            CHANNEL_ID_RECORDING,
+            getString(R.string.notification_channel_recording),
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Foreground notification for recording"
+            setShowBadge(false)
         }
+        notificationManager.createNotificationChannel(channel)
     }
 
     private fun createRecordingNotification(): Notification {

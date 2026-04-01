@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         applicationId = "com.georgernstgraf.aitranscribe"
-        minSdk = 26
+        minSdk = 30
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
@@ -168,20 +168,12 @@ dependencies {
     // Audio Processing - Uses native Android Media APIs (MediaExtractor, MediaMuxer)
     // Replaces FFmpegKit to avoid native dependencies for F-Droid compatibility
 
-    // Date/Time
-    implementation("org.threeten:threetenbp:1.6.9")
-
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.6")
 
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
-
-    // Security (Encrypted SharedPreferences)
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
-    
     // Navigation with Hilt
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation("com.google.errorprone:error_prone_annotations:2.27.1")

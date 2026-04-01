@@ -250,3 +250,9 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
   - `@Test(expected=...)` replaced with `assertThrows { }` in JUnit 5.
   - Android instrumentation tests retain `@RunWith(AndroidJUnit4::class)` for Android component support.
 - **Test result**: 111/112 tests pass; `ValidateApiKeysIntegrationTest` fails without live API keys (expected).
+
+## 2026-04-01: Minimum SDK raised to 30 (#59)
+- **Choice**: Set `minSdk = 30` (Android 11) and removed all API < 30 compatibility code.
+- **Reason**: No requirement to support older devices; `MediaRecorder(Context)` at API 31 was already the practical floor since the app's core recording feature uses it.
+- **Changed**: Removed `WRITE_EXTERNAL_STORAGE` permission (dead at minSdk 30), removed `if (Build.VERSION.SDK_INT >= O)` guards around NotificationChannel creation in `AITranscribeApp` and `RecordingService`, added API 31 guard for `MediaRecorder(Context)` (uses no-arg constructor on API 30), replaced `ContextCompat.checkSelfPermission` with direct `checkSelfPermission`, removed 3 dead dependencies (`threetenbp`, `datastore-preferences`, `security-crypto`).
+- **Kept**: `registerReceiver` Tiramisu branch (API 33), dynamic color check (API 31), `READ_EXTERNAL_STORAGE` with `maxSdkVersion=32`, `WindowCompat.getInsetsController` (platform `WindowInsetsController` lacks `isAppearanceLightStatusBars` property).

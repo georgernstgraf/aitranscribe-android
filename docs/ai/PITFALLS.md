@@ -125,3 +125,9 @@ Applying system wrapper text during prompt construction and again during message
 
 ## Gradle test results XML can show stale line numbers
 After editing a test file, the compiled bytecode may cache old source-to-bytecode line mappings. Use `./gradlew --rerun-tasks` or `rm -rf app/build` to force clean recompilation when test line numbers in errors don't match source.
+
+## MediaRecorder(Context) requires API 31, not 30
+`MediaRecorder(Context)` constructor was added in API 31 (Android 12). The no-arg `MediaRecorder()` constructor exists since API 1 but is deprecated at API 31+. At minSdk 30, an API guard is required: use `MediaRecorder(context)` on API 31+, `MediaRecorder()` on API 30.
+
+## window.insetsController does not expose isAppearanceLightStatusBars
+The platform `WindowInsetsController` (API 30+) uses `setSystemBarsAppearance()` / `getSystemBarsAppearance()`, not a direct `isAppearanceLightStatusBars` property. That property exists only on `WindowInsetsControllerCompat` (via `WindowCompat.getInsetsController()`). Do not replace `WindowCompat` with `window.insetsController` for this use case.

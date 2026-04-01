@@ -3,10 +3,9 @@
 No pending tasks. Last cleared: 2026-04-01.
 
 ## This Session
-- **Issue #48 closed** — 5/6 sub-items were already implemented (minSdk 26, NetworkCallback, Kotlin Flow, permission, Java 17).
-- **Issue #58 closed** — JUnit 4 → JUnit 5 migration completed:
-  - All 27 test files migrated; `./gradlew test` passes 112/112.
-  - `MainDispatcherRule` migrated to JUnit 5 `BeforeEachCallback`/`AfterEachCallback`.
-  - `build.gradle.kts` updated with JUnit 5 dependencies and `useJUnitPlatform()`.
-  - Fixed `ValidateApiKeysIntegrationTest` assertNull ambiguity in coroutine lambda.
-  - Knowledge files updated.
+- **Issue #59 closed** — Minimum SDK raised from 26 to 30:
+  - Removed dead `WRITE_EXTERNAL_STORAGE` permission, API 26 NotificationChannel guards, and 3 unused dependencies (`threetenbp`, `datastore-preferences`, `security-crypto`).
+  - Added API 31 guard for `MediaRecorder(Context)` in `RecordingService.kt`.
+  - Replaced `ContextCompat.checkSelfPermission` with direct `checkSelfPermission` in `MainActivity.kt`.
+  - Discovered pre-existing bug: `MediaRecorder(Context)` requires API 31, meaning the app was already effectively minSdk 31 for the recording feature before this change.
+  - `./gradlew test` passes all tests.

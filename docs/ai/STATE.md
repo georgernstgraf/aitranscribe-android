@@ -6,13 +6,14 @@ Current status as of 2026-04-01.
 No active focus. All open issues addressed.
 
 ## Completed (this cycle)
-- [x] Closed Issue #48 — Android infrastructure sub-items were already implemented (minSdk 26, NetworkCallback, Kotlin Flow, permission, Java 17).
-- [x] Closed Issue #58 — JUnit 4 → JUnit 5 migration:
-  - Updated `build.gradle.kts`: added `junit-jupiter:5.10.1`, `junit-platform-launcher`, removed `junit:junit:4.13.2`, added `useJUnitPlatform()`.
-  - Migrated `MainDispatcherRule` from `TestWatcher` to `BeforeEachCallback`/`AfterEachCallback`.
-  - Migrated all 27 test files from JUnit 4 to JUnit 5 annotations and assertions.
-  - Fixed `ValidateApiKeysIntegrationTest` assertNull ambiguity in coroutine context.
-  - `./gradlew test` passes 112/112.
+- [x] Issue #59 — Set minSdk to 30, remove old API code:
+  - `minSdk` changed from 26 to 30 in `build.gradle.kts`.
+  - Removed `WRITE_EXTERNAL_STORAGE` permission from `AndroidManifest.xml` (dead at minSdk 30).
+  - Removed `if (Build.VERSION.SDK_INT >= O)` guards in `AITranscribeApp.kt` and `RecordingService.kt`.
+  - Added API 31 guard for `MediaRecorder(Context)` in `RecordingService.kt`.
+  - Replaced `ContextCompat.checkSelfPermission` with direct `checkSelfPermission` in `MainActivity.kt`.
+  - Removed 3 dead dependencies: `threetenbp`, `datastore-preferences`, `security-crypto`.
+  - `./gradlew test` passes all tests.
 
 ## Pending
 - None.
@@ -21,4 +22,4 @@ No active focus. All open issues addressed.
 - `compileDebugAndroidTestKotlin` still has pre-existing failures outside current issue scope.
 
 ## Next Session Suggestion
-Issue #47 (Database delays require item caching) or investigate instrumentation test blockers.
+Issue #47 (Database delays require item caching) or Issue #61 (Summary language issues during recording with RAW enabled).
