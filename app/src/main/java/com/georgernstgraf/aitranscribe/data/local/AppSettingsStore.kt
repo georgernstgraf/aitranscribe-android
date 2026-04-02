@@ -89,6 +89,17 @@ class AppSettingsStore @Inject constructor(
         providerModelDao.clearAllProviderApiTokens()
     }
 
+    suspend fun getActiveLanguages(): List<String> {
+        return getPreference(KEY_ACTIVE_LANGUAGES)
+            ?.split(",")
+            ?.filter { it.isNotBlank() }
+            ?: emptyList()
+    }
+
+    suspend fun setActiveLanguages(languageIds: List<String>) {
+        setPreference(KEY_ACTIVE_LANGUAGES, languageIds.joinToString(","))
+    }
+
     private suspend fun setPreference(key: String, value: String) {
         appPreferencesDao.insert(
             AppPreferenceEntity(
@@ -109,6 +120,7 @@ class AppSettingsStore @Inject constructor(
         private const val KEY_STT_PROVIDER = "stt_provider"
         private const val KEY_LLM_PROVIDER = "llm_provider"
         private const val KEY_PREFERRED_SHARE_APP = "preferred_share_app"
+        private const val KEY_ACTIVE_LANGUAGES = "active_languages"
 
         private const val DEFAULT_STT_PROVIDER = "groq"
         private const val DEFAULT_LLM_PROVIDER = "openrouter"

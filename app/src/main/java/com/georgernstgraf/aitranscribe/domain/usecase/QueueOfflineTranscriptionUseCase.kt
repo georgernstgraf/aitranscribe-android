@@ -2,7 +2,6 @@ package com.georgernstgraf.aitranscribe.domain.usecase
 
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,13 +26,11 @@ class QueueOfflineTranscriptionUseCase @Inject constructor(
         }
 
         val queued = TranscriptionEntity(
-            text = null,
+            sttText = null,
+            cleanedText = null,
             audioFilePath = audioPath,
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            status = TranscriptionStatus.NO_NETWORK.name,
-            errorMessage = "No network available",
-            seen = false,
-            summary = null
+            errorMessage = "No network available"
         )
 
         repository.insert(queued)

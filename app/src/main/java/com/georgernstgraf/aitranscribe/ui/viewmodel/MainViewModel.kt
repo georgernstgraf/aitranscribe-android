@@ -15,7 +15,6 @@ import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.service.RecordingService
@@ -191,14 +190,10 @@ class MainViewModel @Inject constructor(
                 Log.d("MainViewModel", "startTranscription: sttModel=$sttModel, llmModel=$llmModel")
                 
                 val queuedTranscription = TranscriptionEntity(
-                    text = null,
+                    sttText = null,
+                    cleanedText = null,
                     audioFilePath = audioPath,
                     createdAt = LocalDateTime.now().toString(),
-                    status = if (networkMonitor.isConnected()) {
-                        TranscriptionStatus.PENDING.name
-                    } else {
-                        TranscriptionStatus.NO_NETWORK.name
-                    },
                     errorMessage = null,
                     seen = false,
                     summary = null
@@ -338,9 +333,9 @@ class MainViewModel @Inject constructor(
                     when (workInfo.state) {
                         WorkInfo.State.SUCCEEDED -> {
                             val transcription = repository.getById(transcriptionId)
-                            if (transcription?.status == TranscriptionStatus.COMPLETED_WITH_WARNING.name) {
+                            transcription?.errorMessage?.let { errorMessage ->
                                 toastManager.showToast(
-                                    transcription.errorMessage ?: "Post-processing failed. Transcription is saved.",
+                                    errorMessage,
                                     isWarning = true
                                 )
                             }
@@ -348,7 +343,7 @@ class MainViewModel @Inject constructor(
                         WorkInfo.State.FAILED -> {
                             Log.e("MainViewModel", "Transcription work failed for transcriptionId=$transcriptionId")
                             val transcription = repository.getById(transcriptionId)
-                            val hasPendingAudio = transcription?.let { it.text == null && it.audioFilePath != null } == true
+                            val hasPendingAudio = transcription?.let { it.sttText == null && it.audioFilePath != null } == true
                             val errorMessage = transcription?.errorMessage
                             when {
                                 !networkMonitor.isConnected() -> Unit

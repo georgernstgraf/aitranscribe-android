@@ -1,7 +1,6 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -29,7 +28,9 @@ class QueueOfflineTranscriptionUseCaseTest {
         assertEquals(1L, id)
         val saved = repository.getById(id)
         assertNotNull(saved)
-        assertEquals(TranscriptionStatus.NO_NETWORK.name, saved?.status)
+        assertEquals("/test.mp3", saved?.audioFilePath)
+        assertEquals(null, saved?.sttText)
+        assertEquals("No network available", saved?.errorMessage)
     }
 
     @Test

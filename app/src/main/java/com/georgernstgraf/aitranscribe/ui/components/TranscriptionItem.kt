@@ -94,7 +94,7 @@ fun TranscriptionItem(
 }
 
 private fun getPreviewText(transcription: Transcription): String {
-    val text = (transcription.text ?: "").trim()
+    val text = (transcription.displayText ?: "").trim()
     if (text.isEmpty()) {
         return when {
             transcription.audioFilePath != null -> "Audio saved - transcription pending"

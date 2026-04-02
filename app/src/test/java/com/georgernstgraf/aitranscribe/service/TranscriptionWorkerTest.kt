@@ -11,7 +11,7 @@ import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import com.georgernstgraf.aitranscribe.data.remote.dto.GroqTranscriptionResponse
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
+import com.georgernstgraf.aitranscribe.domain.repository.LanguageRepository
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
 import io.mockk.coEvery
@@ -42,6 +42,7 @@ class TranscriptionWorkerTest {
     private lateinit var appSettingsStore: AppSettingsStore
     private lateinit var providerModelDao: ProviderModelDao
     private lateinit var postProcessTextUseCase: PostProcessTextUseCase
+    private lateinit var languageRepository: LanguageRepository
 
     @BeforeEach
     fun setup() {
@@ -59,6 +60,7 @@ class TranscriptionWorkerTest {
         appSettingsStore = mockk(relaxed = true)
         providerModelDao = mockk(relaxed = true)
         postProcessTextUseCase = mockk(relaxed = true)
+        languageRepository = mockk(relaxed = true)
 
         every { networkMonitor.isConnected() } returns true
 
@@ -83,7 +85,8 @@ class TranscriptionWorkerTest {
             networkMonitor,
             appSettingsStore,
             providerModelDao,
-            postProcessTextUseCase
+            postProcessTextUseCase,
+            languageRepository
         )
     }
 
@@ -98,10 +101,10 @@ class TranscriptionWorkerTest {
         val audioFile = createAudioFile()
         val queued = TranscriptionEntity(
             id = 1,
-            text = null,
+            sttText = null,
+            cleanedText = null,
             audioFilePath = audioFile.absolutePath,
             createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            status = TranscriptionStatus.PENDING.name,
             errorMessage = null,
             seen = false,
             summary = null
@@ -122,7 +125,7 @@ class TranscriptionWorkerTest {
             postProcessTextUseCase(
                 transcriptionId = any(),
                 isCleanupEnabled = any(),
-                translationTarget = any(),
+                targetLanguage = any(),
                 llmModel = any(),
                 apiKey = any(),
                 llmProvider = any()

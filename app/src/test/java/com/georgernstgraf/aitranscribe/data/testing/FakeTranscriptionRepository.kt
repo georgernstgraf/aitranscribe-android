@@ -1,13 +1,13 @@
 package com.georgernstgraf.aitranscribe.data.testing
 
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
-import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDateTime
 
 /**
  * Fake implementation of TranscriptionRepository for testing.
@@ -78,20 +78,12 @@ class FakeTranscriptionRepository : TranscriptionRepository {
                     (startDate == null || it.createdAt >= startDate) &&
                     (endDate == null || it.createdAt <= endDate) &&
                     (searchQuery == null ||
-                        (it.text?.contains(searchQuery, ignoreCase = true) == true))
+                        (it.sttText?.contains(searchQuery, ignoreCase = true) == true) ||
+                        (it.cleanedText?.contains(searchQuery, ignoreCase = true) == true))
                 }
                 .filter {
                     viewFilter == ViewFilter.ALL || !it.seen
                 }
-                .map { it.toDomain() }
-        }
-    }
-
-    override fun getByStatus(status: String, limit: Int): Flow<List<Transcription>> {
-        return transcriptions.map { entities ->
-            entities
-                .filter { it.status == status }
-                .take(limit)
                 .map { it.toDomain() }
         }
     }
@@ -136,13 +128,6 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         return 1
     }
 
-    override suspend fun updateStatus(id: Long, status: String): Int {
-        transcriptions.value = transcriptions.value.map {
-            if (it.id == id) it.copy(status = status) else it
-        }
-        return 1
-    }
-
     override suspend fun recordError(id: Long, error: String): Int {
         transcriptions.value = transcriptions.value.map {
             if (it.id == id) it.copy(errorMessage = error) else it
@@ -162,28 +147,17 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         }
     }
 
-    override suspend fun getByStatuses(statuses: List<String>): List<TranscriptionEntity> {
-        return transcriptions.value.filter { it.status in statuses }
-    }
-
-    override suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?) {
-        transcriptions.value = transcriptions.value.map {
-            if (it.id == id) it.copy(status = status, errorMessage = errorMessage) else it
-        }
-    }
-
     override suspend fun getUnfinishedSttTranscriptions(): List<TranscriptionEntity> {
-        return transcriptions.value.filter { it.text == null && it.audioFilePath != null }
+        return transcriptions.value.filter { it.sttText == null && it.audioFilePath != null }
     }
 
-    override suspend fun markSttSuccess(id: Long, text: String, language: String?, status: String): Int {
+    override suspend fun markSttSuccess(id: Long, sttText: String, languageId: String?): Int {
         transcriptions.value = transcriptions.value.map {
             if (it.id == id) {
                 it.copy(
-                    text = text,
+                    sttText = sttText,
                     audioFilePath = null,
-                    language = language,
-                    status = status,
+                    languageId = languageId,
                     errorMessage = null
                 )
             } else {
@@ -199,15 +173,27 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         }
     }
 
+    override suspend fun updateCleanedText(id: Long, cleanedText: String) {
+        transcriptions.value = transcriptions.value.map {
+            if (it.id == id) it.copy(cleanedText = cleanedText) else it
+        }
+    }
+
+    override suspend fun updateLanguage(id: Long, languageId: String) {
+        transcriptions.value = transcriptions.value.map {
+            if (it.id == id) it.copy(languageId = languageId) else it
+        }
+    }
+
     override suspend fun clearAudioPath(id: Long) {
         transcriptions.value = transcriptions.value.map {
             if (it.id == id) it.copy(audioFilePath = null) else it
         }
     }
 
-    override suspend fun markAudioMissing(id: Long, status: String, errorMessage: String) {
+    override suspend fun markAudioMissing(id: Long, errorMessage: String) {
         transcriptions.value = transcriptions.value.map {
-            if (it.id == id) it.copy(audioFilePath = null, status = status, errorMessage = errorMessage) else it
+            if (it.id == id) it.copy(audioFilePath = null, errorMessage = errorMessage) else it
         }
     }
 
@@ -231,25 +217,24 @@ class FakeTranscriptionRepository : TranscriptionRepository {
         transcriptions.value = emptyList()
     }
 
-    private fun TranscriptionEntity.toDomain(): Transcription {
-        return Transcription(
-            id = id,
-            text = text,
-            audioFilePath = audioFilePath,
-            createdAt = java.time.LocalDateTime.parse(createdAt),
-            status = com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus.valueOf(status),
-            errorMessage = errorMessage,
-            playedCount = if (seen) 1 else 0,
-            seen = seen,
-            summary = summary,
-            language = language
-        )
-    }
-
     override fun getFilteredIds(viewFilter: ViewFilter): Flow<List<Long>> {
         val ids = transcriptions.value
             .filter { viewFilter == ViewFilter.ALL || !it.seen }
             .map { it.id }
         return kotlinx.coroutines.flow.flowOf(ids)
+    }
+
+    private fun TranscriptionEntity.toDomain(): Transcription {
+        return Transcription(
+            id = id,
+            sttText = sttText,
+            cleanedText = cleanedText,
+            audioFilePath = audioFilePath,
+            createdAt = LocalDateTime.parse(createdAt),
+            errorMessage = errorMessage,
+            seen = seen,
+            summary = summary,
+            language = languageId
+        )
     }
 }

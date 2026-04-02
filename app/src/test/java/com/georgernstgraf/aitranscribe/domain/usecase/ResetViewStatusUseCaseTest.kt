@@ -20,14 +20,14 @@ class ResetViewStatusUseCaseTest {
     }
 
     @Test
-    fun `invoke resets played count to zero`() = runTest {
+    fun `invoke resets seen to false`() = runTest {
         val id = repository.insert(
             TranscriptionEntity(
                 id = 0,
-                text = "Test",
+                sttText = "Test",
+                cleanedText = null,
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
-                status = "COMPLETED",
                 errorMessage = null,
                 seen = true
             )

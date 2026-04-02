@@ -47,7 +47,7 @@ interface TranscriptionDao {
         WHERE 
             (:startDate IS NULL OR created_at >= :startDate)
             AND (:endDate IS NULL OR created_at <= :endDate)
-            AND (:searchQuery IS NULL OR text LIKE '%' || :searchQuery || '%')
+            AND (:searchQuery IS NULL OR stt_text LIKE '%' || :searchQuery || '%' OR cleaned_text LIKE '%' || :searchQuery || '%')
             AND (:viewFilter = 'ALL' OR seen = 0)
         ORDER BY created_at DESC
     """)
@@ -57,14 +57,6 @@ interface TranscriptionDao {
         searchQuery: String?,
         viewFilter: String
     ): Flow<List<TranscriptionEntity>>
-
-    @Query("""
-        SELECT * FROM transcriptions 
-        WHERE status = :status
-        ORDER BY created_at DESC
-        LIMIT :limit
-    """)
-    fun getByStatus(status: String, limit: Int = 10): Flow<List<TranscriptionEntity>>
 
     @Query("""
         SELECT * FROM transcriptions 
@@ -105,13 +97,6 @@ interface TranscriptionDao {
 
     @Query("""
         UPDATE transcriptions 
-        SET status = :status 
-        WHERE id = :id
-    """)
-    suspend fun updateStatus(id: Long, status: String): Int
-
-    @Query("""
-        UPDATE transcriptions 
         SET error_message = :error
         WHERE id = :id
     """)
@@ -137,33 +122,34 @@ interface TranscriptionDao {
     @Query("UPDATE transcriptions SET audio_file_path = NULL WHERE id = :id")
     suspend fun clearAudioPath(id: Long)
 
-    @Query("UPDATE transcriptions SET audio_file_path = NULL, status = :status, error_message = :errorMessage WHERE id = :id")
-    suspend fun markAudioMissing(id: Long, status: String, errorMessage: String)
+    @Query("UPDATE transcriptions SET audio_file_path = NULL, error_message = :errorMessage WHERE id = :id")
+    suspend fun markAudioMissing(id: Long, errorMessage: String)
 
     @Query("SELECT audio_file_path FROM transcriptions WHERE audio_file_path IS NOT NULL")
     suspend fun getAllAudioPaths(): List<String>
 
-    @Query("SELECT * FROM transcriptions WHERE status IN (:statuses)")
-    suspend fun getByStatuses(statuses: List<String>): List<TranscriptionEntity>
-
-    @Query("SELECT * FROM transcriptions WHERE text IS NULL AND audio_file_path IS NOT NULL")
+    @Query("SELECT * FROM transcriptions WHERE stt_text IS NULL AND audio_file_path IS NOT NULL")
     suspend fun getUnfinishedSttTranscriptions(): List<TranscriptionEntity>
 
-    @Query("UPDATE transcriptions SET status = :status, error_message = :errorMessage WHERE id = :id")
-    suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?)
+    @Query("UPDATE transcriptions SET error_message = :errorMessage WHERE id = :id")
+    suspend fun updateError(id: Long, errorMessage: String?)
 
     @Query(
         """
         UPDATE transcriptions
-        SET text = :text,
+        SET stt_text = :sttText,
             audio_file_path = NULL,
-            language = :language,
-            status = :status,
-            error_message = NULL
+            languagesId = :languageId
         WHERE id = :id
         """
     )
-    suspend fun markSttSuccess(id: Long, text: String, language: String?, status: String): Int
+    suspend fun markSttSuccess(id: Long, sttText: String, languageId: String?): Int
+
+    @Query("UPDATE transcriptions SET cleaned_text = :cleanedText WHERE id = :id")
+    suspend fun updateCleanedText(id: Long, cleanedText: String)
+
+    @Query("UPDATE transcriptions SET languagesId = :languageId WHERE id = :id")
+    suspend fun updateLanguage(id: Long, languageId: String)
 
     @Query("""
         SELECT id FROM transcriptions 

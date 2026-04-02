@@ -7,17 +7,16 @@ import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
 import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
+import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
+import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.repository.LanguageRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
-import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
-import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
@@ -39,7 +38,8 @@ class TranscriptionWorker @AssistedInject constructor(
     private val networkMonitor: NetworkMonitor,
     private val appSettingsStore: AppSettingsStore,
     private val providerModelDao: ProviderModelDao,
-    private val postProcessTextUseCase: PostProcessTextUseCase
+    private val postProcessTextUseCase: PostProcessTextUseCase,
+    private val languageRepository: LanguageRepository
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -54,8 +54,6 @@ class TranscriptionWorker @AssistedInject constructor(
             return@withContext Result.failure()
         }
 
-        repository.updateStatusAndError(transcriptionId, transcription.status, null)
-
         val sttProvider = appSettingsStore.getSttProvider()
         val sttModel = appSettingsStore.getProviderSttModel(sttProvider, ProviderConfig.getDefaultSttModel(sttProvider))
         val llmProvider = appSettingsStore.getLlmProvider()
@@ -67,7 +65,6 @@ class TranscriptionWorker @AssistedInject constructor(
             Log.w("TranscriptionWorker", "Audio file missing for transcriptionId=$transcriptionId", e)
             repository.markAudioMissing(
                 id = transcriptionId,
-                status = TranscriptionStatus.COMPLETED_WITH_WARNING.name,
                 errorMessage = "Audio file missing before transcription. It may have been removed by system cleanup."
             )
             cleanupOrphanedAudioFiles()
@@ -82,11 +79,15 @@ class TranscriptionWorker @AssistedInject constructor(
             return@withContext Result.failure()
         }
 
+        // Auto-insert new language if detected from STT
+        transcriptionResult.language?.let { langCode ->
+            languageRepository.ensureLanguageExists(langCode)
+        }
+
         repository.markSttSuccess(
             id = transcriptionId,
-            text = transcriptionResult.text,
-            language = transcriptionResult.language,
-            status = TranscriptionStatus.COMPLETED.name
+            sttText = transcriptionResult.text,
+            languageId = transcriptionResult.language
         )
         cleanupAudioFile(audioPath)
 
@@ -103,7 +104,6 @@ class TranscriptionWorker @AssistedInject constructor(
                     llmApiKey = llmApiKey,
                     llmProvider = llmProvider
                 )
-
             } catch (e: Exception) {
                 if (llmProvider == "zai") {
                     val fallbackModel = resolveZaiFallbackModel(llmModel)
@@ -126,11 +126,8 @@ class TranscriptionWorker @AssistedInject constructor(
                     }
                 }
                 Log.e("TranscriptionWorker", "Post-processing failed (non-fatal)", e)
-                repository.updateStatus(transcriptionId, TranscriptionStatus.COMPLETED_WITH_WARNING.name)
                 repository.recordError(transcriptionId, "Post-processing skipped: ${e.message}")
             }
-        } else {
-            Unit
         }
 
         cleanupOrphanedAudioFiles()
@@ -157,47 +154,16 @@ class TranscriptionWorker @AssistedInject constructor(
             }
             PostProcessingType.CLEANUP -> {
                 postProcessTextUseCase(
-                    transcriptionId,
-                    isCleanupEnabled = true,
-                    translationTarget = TranslationTarget.NONE,
+                    transcriptionId = transcriptionId,
+                    postProcessingType = PostProcessingType.CLEANUP,
                     llmModel = llmModel,
                     apiKey = llmApiKey,
-                    llmProvider = llmProvider
+                    llmProvider = llmProvider,
+                    debugContext = "worker:cleanup"
                 )
             }
-            PostProcessingType.TRANSLATE_TO_EN -> {
-                postProcessTextUseCase(
-                    transcriptionId = transcriptionId,
-                    postProcessingType = PostProcessingType.TRANSLATE_TO_EN,
-                    llmModel = llmModel,
-                    apiKey = llmApiKey,
-                    llmProvider = llmProvider,
-                    debugContext = "worker:translate_en"
-                )
-                postProcessTextUseCase.generateSummary(
-                    transcriptionId = transcriptionId,
-                    llmModel = llmModel,
-                    apiKey = llmApiKey,
-                    llmProvider = llmProvider,
-                    debugContext = "worker:summary:translate_en"
-                )
-            }
-            PostProcessingType.TRANSLATE_TO_DE -> {
-                postProcessTextUseCase(
-                    transcriptionId = transcriptionId,
-                    postProcessingType = PostProcessingType.TRANSLATE_TO_DE,
-                    llmModel = llmModel,
-                    apiKey = llmApiKey,
-                    llmProvider = llmProvider,
-                    debugContext = "worker:translate_de"
-                )
-                postProcessTextUseCase.generateSummary(
-                    transcriptionId = transcriptionId,
-                    llmModel = llmModel,
-                    apiKey = llmApiKey,
-                    llmProvider = llmProvider,
-                    debugContext = "worker:summary:translate_de"
-                )
+            else -> {
+                // Translation post-processing not used in worker
             }
         }
     }
@@ -247,6 +213,7 @@ class TranscriptionWorker @AssistedInject constructor(
         }
 
         val body = response.body() ?: throw Exception("Empty transcription response from $sttProvider (Code: ${response.code()})")
+        Log.d("TranscriptionWorker", "STT response from $sttProvider: language=${body.language ?: "null"}, text length=${body.text.length}")
         return TranscriptionResult(text = body.text, language = body.language)
     }
 

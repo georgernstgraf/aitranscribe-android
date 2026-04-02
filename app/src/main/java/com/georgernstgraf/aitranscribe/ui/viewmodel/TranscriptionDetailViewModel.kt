@@ -1,19 +1,19 @@
 package com.georgernstgraf.aitranscribe.ui.viewmodel
 
-import android.content.Intent
 import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
-import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.local.toDomain
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
-import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
+import com.georgernstgraf.aitranscribe.domain.repository.LanguageRepository
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
+import com.georgernstgraf.aitranscribe.domain.usecase.SetTranscriptionLanguageUseCase
 import com.georgernstgraf.aitranscribe.util.ToastManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,6 +33,8 @@ class TranscriptionDetailViewModel @Inject constructor(
     private val repository: TranscriptionRepository,
     private val appSettingsStore: AppSettingsStore,
     private val postProcessTextUseCase: PostProcessTextUseCase,
+    private val setTranscriptionLanguageUseCase: SetTranscriptionLanguageUseCase,
+    private val languageRepository: LanguageRepository,
     private val toastManager: ToastManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -58,21 +60,29 @@ class TranscriptionDetailViewModel @Inject constructor(
         savedStateHandle.get<String>(KEY_VIEW_FILTER)?.let { viewFilter = ViewFilter.valueOf(it) }
         loadFilteredIds()
         observeActiveTranscription()
+        loadAvailableLanguages()
     }
 
-    fun onCleanupToggled(enabled: Boolean) {
-        _uiState.update { it.copy(isCleanupEnabled = enabled) }
+    private fun loadAvailableLanguages() {
+        viewModelScope.launch {
+            val activeLanguageIds = appSettingsStore.getActiveLanguages()
+            val languages = if (activeLanguageIds.isEmpty()) {
+                // Default to English if no languages configured
+                listOf(languageRepository.getLanguageById("en")!!)
+            } else {
+                activeLanguageIds.mapNotNull { languageRepository.getLanguageById(it) }
+            }
+            _uiState.update { it.copy(availableLanguages = languages) }
+        }
     }
 
-    fun translateToEnglish() {
-        translate(TranslationTarget.EN)
+    fun setSourceLanguage(languageId: String) {
+        viewModelScope.launch {
+            setTranscriptionLanguageUseCase(transcriptionId, languageId)
+        }
     }
 
-    fun translateToGerman() {
-        translate(TranslationTarget.DE)
-    }
-
-    private fun translate(target: TranslationTarget) {
+    fun cleanup() {
         viewModelScope.launch {
             val transcription = _uiState.value.transcription ?: return@launch
             val llmProvider = appSettingsStore.getLlmProvider()
@@ -80,30 +90,58 @@ class TranscriptionDetailViewModel @Inject constructor(
             val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, ProviderConfig.getDefaultLlmModel(llmProvider))
 
             if (apiKey.isNullOrBlank()) {
-                viewModelScope.launch {
-                    toastManager.showToast("LLM API key is required for translation", isError = true)
-                }
+                toastManager.showToast("LLM API key is required for cleanup", isError = true)
                 return@launch
             }
 
-            _uiState.update { it.copy(isTranslating = true) }
+            _uiState.update { it.copy(isProcessing = true) }
             try {
-                postProcessTextUseCase(
+                postProcessTextUseCase.cleanupTranscription(
                     transcriptionId = transcription.id,
-                    isCleanupEnabled = _uiState.value.isCleanupEnabled,
-                    translationTarget = target,
                     llmModel = llmModel,
                     apiKey = apiKey,
                     llmProvider = llmProvider
                 )
             } catch (e: Exception) {
-                viewModelScope.launch {
-                    toastManager.showToast(e.message ?: "Translation failed", isError = true)
-                }
+                toastManager.showToast(e.message ?: "Cleanup failed", isError = true)
             } finally {
-                _uiState.update { it.copy(isTranslating = false) }
+                _uiState.update { it.copy(isProcessing = false) }
             }
         }
+    }
+
+    fun translateTo(targetLanguage: String) {
+        viewModelScope.launch {
+            val transcription = _uiState.value.transcription ?: return@launch
+            val llmProvider = appSettingsStore.getLlmProvider()
+            val apiKey = appSettingsStore.getActiveAuthToken(llmProvider)
+            val llmModel = appSettingsStore.getProviderLlmModel(llmProvider, ProviderConfig.getDefaultLlmModel(llmProvider))
+
+            if (apiKey.isNullOrBlank()) {
+                toastManager.showToast("LLM API key is required for translation", isError = true)
+                return@launch
+            }
+
+            _uiState.update { it.copy(isProcessing = true) }
+            try {
+                postProcessTextUseCase(
+                    transcriptionId = transcription.id,
+                    isCleanupEnabled = true,
+                    targetLanguage = targetLanguage,
+                    llmModel = llmModel,
+                    apiKey = apiKey,
+                    llmProvider = llmProvider
+                )
+            } catch (e: Exception) {
+                toastManager.showToast(e.message ?: "Translation failed", isError = true)
+            } finally {
+                _uiState.update { it.copy(isProcessing = false) }
+            }
+        }
+    }
+
+    fun toggleRawCleaned() {
+        _uiState.update { it.copy(showRawText = !it.showRawText) }
     }
 
     private fun loadFilteredIds() {
@@ -163,26 +201,6 @@ class TranscriptionDetailViewModel @Inject constructor(
                 repository.markAsViewed(id)
                 _uiState.update { it.copy(isViewed = true) }
             }
-        }
-    }
-
-    fun updateText(id: Long, newText: String) {
-        viewModelScope.launch {
-            val transcription = _uiState.value.transcription ?: return@launch
-            if (transcription.id != id) return@launch // Ensure we're updating the correct one
-            repository.update(
-                TranscriptionEntity(
-                    id = transcription.id,
-                    text = newText,
-                    audioFilePath = transcription.audioFilePath,
-                    createdAt = transcription.createdAt.toString(),
-                    status = transcription.status.name,
-                    errorMessage = transcription.errorMessage,
-                    seen = transcription.seen,
-                    summary = transcription.summary,
-                    language = transcription.language
-                )
-            )
         }
     }
 
@@ -250,6 +268,7 @@ data class TranscriptionDetailUiState(
     val transcription: Transcription? = null,
     val isViewed: Boolean = false,
     val isDeleted: Boolean = false,
-    val isCleanupEnabled: Boolean = true,
-    val isTranslating: Boolean = false
+    val isProcessing: Boolean = false,
+    val showRawText: Boolean = false,
+    val availableLanguages: List<com.georgernstgraf.aitranscribe.domain.repository.Language> = emptyList()
 )

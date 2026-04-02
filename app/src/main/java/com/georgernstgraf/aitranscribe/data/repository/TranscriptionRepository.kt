@@ -30,8 +30,6 @@ interface TranscriptionRepository {
         viewFilter: ViewFilter
     ): Flow<List<Transcription>>
 
-    fun getByStatus(status: String, limit: Int): Flow<List<Transcription>>
-
     fun getAllTranscriptions(limit: Int): Flow<List<Transcription>>
 
     fun getUnviewed(limit: Int): Flow<List<Transcription>>
@@ -42,8 +40,6 @@ interface TranscriptionRepository {
 
     suspend fun resetViewStatus(id: Long): Int
 
-    suspend fun updateStatus(id: Long, status: String): Int
-
     suspend fun recordError(id: Long, error: String): Int
 
     suspend fun getCount(): Int
@@ -52,13 +48,13 @@ interface TranscriptionRepository {
 
     suspend fun updateSummary(id: Long, summary: String)
 
-    suspend fun getByStatuses(statuses: List<String>): List<TranscriptionEntity>
+    suspend fun updateCleanedText(id: Long, cleanedText: String)
+
+    suspend fun updateLanguage(id: Long, languageId: String)
 
     suspend fun getUnfinishedSttTranscriptions(): List<TranscriptionEntity>
 
-    suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?)
-
-    suspend fun markSttSuccess(id: Long, text: String, language: String?, status: String): Int
+    suspend fun markSttSuccess(id: Long, sttText: String, languageId: String?): Int
 
     suspend fun getAllAudioPaths(): List<String>
 
@@ -70,5 +66,5 @@ interface TranscriptionRepository {
 
     suspend fun clearAudioPath(id: Long)
 
-    suspend fun markAudioMissing(id: Long, status: String, errorMessage: String)
+    suspend fun markAudioMissing(id: Long, errorMessage: String)
 }

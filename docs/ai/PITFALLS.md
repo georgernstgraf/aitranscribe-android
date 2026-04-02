@@ -1,5 +1,8 @@
 # Pitfalls and Gotchas
 
+## Room entity must declare foreign keys to match database schema
+If migration creates a table with `FOREIGN KEY...` but the Entity class lacks `@Entity(foreignKeys = [...])`, Room throws `IllegalStateException: Migration didn't properly handle...` at runtime. The schema validation is strict. **Fix:** Add matching `ForeignKey` annotation AND `Index` on the column.
+
 ## Detail screen: never launch multiple Flow collectors for swipe paging
 Launching `repository.getByIdFlow(id).collect {}` in a new coroutine on every swipe without cancelling the previous one causes collectors to race, overwriting `_uiState` with stale data. Use `flatMapLatest` on a StateFlow of the active ID instead.
 

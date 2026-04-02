@@ -1,72 +1,83 @@
 datasource db {
-    provider = "sqlite"
-    url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 /// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model android_metadata {
-    locale String?
+  locale String?
 
-    @@ignore
+  @@ignore
 }
 
-model provider {
-    id             String           @id
-    name           String           @unique
-    last_synced_at Int              @default(0)
-    models         provider_model[]
-    api_token      String?
-
-    @@index([last_synced_at])
+model app_preferences {
+  key        String @id
+  value      String
+  updated_at String
 }
 
-model provider_model {
-    id                Int                @id @default(autoincrement())
-    providerId        String
-    externalId        String
-    name              String
-    provider          provider           @relation(fields: [providerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    modelCapabilities model_capability[]
-
-    @@unique([providerId, externalId])
-    @@index([externalId])
-    @@index([providerId])
-    @@index([providerId, name])
-    @@index([name])
+model capabilities {
+  id                 String               @id
+  name               String               @unique(map: "index_capabilities_name")
+  model_capabilities model_capabilities[]
 }
 
-model capability {
-    id                String             @id
-    name              String             @unique
-    modelCapabilities model_capability[]
+model languages {
+  id             String           @id
+  name           String
+  native_name    String?
+  is_active      Boolean          @default(true)
+  transcriptions transcriptions[]
 }
 
-model model_capability {
-    modelId      Int
-    capabilityId String
-    source       String?
-    capability   capability     @relation(fields: [capabilityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    model        provider_model @relation(fields: [modelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+model model_capabilities {
+  model_id      Int
+  capability_id String
+  source        String?
+  capabilities  capabilities @relation(fields: [capability_id], references: [id], onDelete: Cascade)
+  models        models       @relation(fields: [model_id], references: [id], onDelete: Cascade)
 
-    @@id([modelId, capabilityId])
-    @@index([capabilityId])
+  @@id([model_id, capability_id])
+  @@index([capability_id], map: "index_model_capabilities_capability_id")
+}
+
+model models {
+  id                 Int                  @id @default(autoincrement())
+  provider_id        String
+  external_id        String
+  model_name         String
+  model_capabilities model_capabilities[]
+  providers          providers            @relation(fields: [provider_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider_id, external_id], map: "index_models_provider_id_external_id")
+  @@index([model_name], map: "index_models_model_name")
+  @@index([provider_id, model_name], map: "index_models_provider_id_model_name")
+  @@index([external_id], map: "index_models_external_id")
+  @@index([provider_id], map: "index_models_provider_id")
+}
+
+model providers {
+  id             String   @id
+  name           String
+  last_synced_at Int
+  api_token      String?
+  models         models[]
 }
 
 model room_master_table {
-    id            Int     @id @default(autoincrement())
-    identity_hash String?
+  id            Int     @id @default(autoincrement())
+  identity_hash String?
 }
 
 model transcriptions {
-    id              Int      @id @default(autoincrement())
-    audio_file_path String?
-    text            String?
-    summary         String?
-    language        String?
-    created_at      DateTime @default(now())
-    error_message   String?
-    seen            Boolean  @default(false)
-
-    @@index([created_at])
-    @@index([seen, created_at])
+  id              Int        @id @default(autoincrement())
+  stt_text        String?
+  cleaned_text    String?
+  audio_file_path String?
+  created_at      String
+  error_message   String?
+  seen            Int        @default(0)
+  summary         String?
+  language        languages? @relation(fields: [languagesId], references: [id])
+  languagesId     String?
 }

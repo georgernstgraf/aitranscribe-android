@@ -3,7 +3,6 @@ package com.georgernstgraf.aitranscribe.domain.usecase
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -73,12 +72,11 @@ class TranscribeAudioUseCase @Inject constructor(
             val transcriptionText = response.body()!!.text
 
             val entity = TranscriptionEntity(
-                text = transcriptionText,
+                sttText = transcriptionText,
+                cleanedText = null,
                 audioFilePath = audioPath,
                 createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-                status = TranscriptionStatus.COMPLETED.name,
-                errorMessage = null,
-                seen = false
+                errorMessage = null
             )
 
             val id = repository.insert(entity)

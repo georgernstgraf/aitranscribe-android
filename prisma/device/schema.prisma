@@ -22,6 +22,14 @@ model capabilities {
   model_capabilities model_capabilities[]
 }
 
+model languages {
+  id             String           @id
+  name           String
+  native_name    String?
+  is_active      Int              @default(1)
+  transcriptions transcriptions[]
+}
+
 model model_capabilities {
   model_id      Int
   capability_id String
@@ -62,13 +70,16 @@ model room_master_table {
 }
 
 model transcriptions {
-  id              Int     @id @default(autoincrement())
-  text            String?
+  id              Int        @id @default(autoincrement())
+  stt_text        String?
+  cleaned_text    String?
   audio_file_path String?
   created_at      String
-  status          String
   error_message   String?
-  seen            Int     @default(0)
+  seen            Int        @default(0)
   summary         String?
-  language        String?
+  languagesId     String?
+  languages       languages? @relation(fields: [languagesId], references: [id])
+
+  @@index([languagesId], map: "index_transcriptions_languagesId")
 }

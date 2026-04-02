@@ -1,14 +1,12 @@
 package com.georgernstgraf.aitranscribe.domain.usecase
 
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
-import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
-import java.time.LocalDateTime
 
 class ImportTranscriptionsUseCaseTest {
 
@@ -31,15 +29,14 @@ class ImportTranscriptionsUseCaseTest {
             [
                 {
                     "id": 1,
-                    "text": "Hello world",
-                    "processedText": null,
+                    "sttText": "Hello world",
+                    "cleanedText": null,
                     "audioFilePath": "/test.mp3",
                     "createdAt": "2026-03-23T20:00:00",
-                    "postProcessingType": null,
-                    "status": "COMPLETED",
                     "errorMessage": null,
-                    "playedCount": 0,
-                    "retryCount": 0
+                    "seen": false,
+                    "summary": null,
+                    "languageId": null
                 }
             ]
         """.trimIndent())

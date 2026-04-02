@@ -31,7 +31,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -52,7 +51,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.ui.viewmodel.TranscriptionDetailViewModel
 
@@ -154,8 +152,8 @@ fun TranscriptionDetailScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 transcription?.let { trans ->
-                    var editText by remember(trans.id, trans.text) {
-                        mutableStateOf(trans.text ?: "")
+                    var editText by remember(trans.id, trans.displayText) {
+                        mutableStateOf(trans.displayText ?: "")
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -178,64 +176,18 @@ fun TranscriptionDetailScreen(
                                 )
                             }
 
-                            if (trans.status == TranscriptionStatus.COMPLETED_WITH_WARNING) {
-                                Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = Color(0x33FFA000)
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Column(modifier = Modifier.padding(12.dp)) {
-                                        Text(
-                                            text = "Post-processing incomplete",
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = Color(0xFFFFA000),
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        trans.errorMessage?.let { error ->
-                                            Text(
-                                                text = error,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = Color(0xFFCC8000)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Cleanup",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Switch(
-                                    checked = state.isCleanupEnabled,
-                                    onCheckedChange = { viewModel.onCleanupToggled(it) }
-                                )
-                            }
-
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                TextButton(
-                                    onClick = { viewModel.translateToEnglish() },
-                                    enabled = !state.isTranslating,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("EN")
-                                }
-                                TextButton(
-                                    onClick = { viewModel.translateToGerman() },
-                                    enabled = !state.isTranslating,
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("DE")
+                                state.availableLanguages.forEach { language ->
+                                    TextButton(
+                                        onClick = { viewModel.translateTo(language.id) },
+                                        enabled = !state.isProcessing,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(language.id.uppercase())
+                                    }
                                 }
                             }
 
@@ -248,9 +200,6 @@ fun TranscriptionDetailScreen(
                                         if (focusState.hasFocus) {
                                             isEditing = true
                                         } else if (isEditing) {
-                                            if (editText != (trans.text ?: "")) {
-                                                viewModel.updateText(trans.id, editText)
-                                            }
                                             isEditing = false
                                         }
                                     },

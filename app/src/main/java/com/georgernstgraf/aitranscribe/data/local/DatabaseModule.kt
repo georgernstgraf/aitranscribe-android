@@ -43,4 +43,12 @@ object DatabaseModule {
     ): AppPreferencesDao {
         return database.appPreferencesDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideLanguageDao(
+        database: TranscriptionDatabase
+    ): LanguageDao {
+        return database.languageDao()
+    }
 }

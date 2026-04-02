@@ -69,7 +69,7 @@ class ImportTranscriptionsUseCase @Inject constructor(
 
     private suspend fun importFromCsv(file: File): Int {
         val lines = file.readLines()
-        
+
         if (lines.isEmpty()) {
             return 0
         }
@@ -78,23 +78,19 @@ class ImportTranscriptionsUseCase @Inject constructor(
         lines.drop(1).forEach { line ->
             try {
                 val fields = parseCsvLine(line)
-                if (fields.size >= 5) {
-                    val isLegacyFormat = fields.size >= 6
+                if (fields.size >= 3) {
                     val textField = fields[1]
                     val audioPathField: String? = null
-                    val createdAtField = if (isLegacyFormat) fields[3] else fields[2]
-                    val statusField = if (isLegacyFormat) fields[4] else fields[3]
-                    val seenField = if (isLegacyFormat) fields.getOrNull(5) else fields.getOrNull(4)
+                    val createdAtField = fields[2]
                     val entity = TranscriptionEntity(
                         id = fields[0].toLongOrNull() ?: 0,
-                        text = unescapeCsv(textField),
+                        sttText = unescapeCsv(textField),
+                        cleanedText = null,
                         audioFilePath = audioPathField,
                         createdAt = createdAtField,
-                        status = statusField,
-                        errorMessage = null,
-                        seen = (seenField?.toIntOrNull() ?: 0) > 0
+                        errorMessage = null
                     )
-                    
+
                     repository.insert(entity)
                     importedCount++
                 }
@@ -102,7 +98,7 @@ class ImportTranscriptionsUseCase @Inject constructor(
                 // Skip failed imports
             }
         }
-        
+
         return importedCount
     }
 

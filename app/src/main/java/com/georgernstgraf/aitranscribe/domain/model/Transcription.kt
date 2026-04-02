@@ -4,12 +4,11 @@ import java.time.LocalDateTime
 
 data class Transcription(
     val id: Long = 0,
-    val text: String?,
+    val sttText: String?,        // Raw STT output
+    val cleanedText: String?,    // Post-processed text
     val audioFilePath: String?,
     val createdAt: LocalDateTime,
-    val status: TranscriptionStatus,
     val errorMessage: String?,
-    val playedCount: Int = 0,
     val seen: Boolean = false,
     val summary: String? = null,
     val language: String? = null
@@ -20,8 +19,14 @@ data class Transcription(
     val isUnviewed: Boolean
         get() = !seen
 
+    val isPending: Boolean
+        get() = sttText == null && audioFilePath != null
+
+    val displayText: String?
+        get() = cleanedText?.takeIf { it.isNotBlank() } ?: sttText
+
     fun getShareText(): String {
-        return text ?: ""
+        return displayText ?: ""
     }
 
     fun getShareTitle(): String {

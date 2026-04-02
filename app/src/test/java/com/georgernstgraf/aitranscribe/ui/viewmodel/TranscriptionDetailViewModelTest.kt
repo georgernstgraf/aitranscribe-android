@@ -7,7 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.repository.LanguageRepository
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
+import com.georgernstgraf.aitranscribe.domain.usecase.SetTranscriptionLanguageUseCase
 import com.georgernstgraf.aitranscribe.util.ToastManager
 import io.mockk.coEvery
 import io.mockk.every
@@ -37,6 +39,8 @@ class TranscriptionDetailViewModelTest {
     private lateinit var clipboardManager: ClipboardManager
     private lateinit var appSettingsStore: AppSettingsStore
     private lateinit var postProcessTextUseCase: PostProcessTextUseCase
+    private lateinit var setTranscriptionLanguageUseCase: SetTranscriptionLanguageUseCase
+    private lateinit var languageRepository: LanguageRepository
     private lateinit var toastManager: ToastManager
     private lateinit var viewModel: TranscriptionDetailViewModel
     private val testDispatcher = StandardTestDispatcher()
@@ -49,6 +53,8 @@ class TranscriptionDetailViewModelTest {
         context = mockk(relaxed = true)
         appSettingsStore = mockk(relaxed = true)
         postProcessTextUseCase = mockk(relaxed = true)
+        setTranscriptionLanguageUseCase = mockk(relaxed = true)
+        languageRepository = mockk(relaxed = true)
         toastManager = mockk(relaxed = true)
         every { context.getSystemService(Context.CLIPBOARD_SERVICE) } returns clipboardManager
         coEvery { appSettingsStore.getLlmProvider() } returns "openrouter"
@@ -72,10 +78,10 @@ class TranscriptionDetailViewModelTest {
         return repository.insert(
             TranscriptionEntity(
                 id = id,
-                text = text,
+                sttText = text,
+                cleanedText = text,
                 audioFilePath = null,
                 createdAt = LocalDateTime.now().toString(),
-                status = "COMPLETED",
                 errorMessage = null,
                 seen = seen,
             )
@@ -92,6 +98,8 @@ class TranscriptionDetailViewModelTest {
             repository,
             appSettingsStore,
             postProcessTextUseCase,
+            setTranscriptionLanguageUseCase,
+            languageRepository,
             toastManager,
             context
         )
@@ -105,7 +113,7 @@ class TranscriptionDetailViewModelTest {
 
         val state = viewModel.uiState.value
         assertNotNull(state.transcription)
-        assertEquals("Hello world", state.transcription?.text)
+        assertEquals("Hello world", state.transcription?.sttText)
     }
 
     @Test
@@ -185,16 +193,4 @@ class TranscriptionDetailViewModelTest {
         assertTrue(state.isDeleted)
     }
 
-    @Test
-    fun `updateText updates transcription in repository`() = runBlocking {
-        val id = insertTestEntity(text = "Old text")
-        createViewModel(id)
-        testDispatcher.scheduler.runCurrent()
-
-        viewModel.updateText(id, "New text")
-        testDispatcher.scheduler.runCurrent()
-
-        val entity = repository.getById(id)
-        assertEquals("New text", entity?.text)
-    }
 }

@@ -18,13 +18,13 @@ class TranscriptionRepositoryUpdateTest {
         repository = FakeTranscriptionRepository()
     }
 
-    private fun createEntity(text: String = "Hello world"): TranscriptionEntity {
+    private fun createEntity(sttText: String = "Hello world", cleanedText: String? = null): TranscriptionEntity {
         return TranscriptionEntity(
             id = 0,
-            text = text,
+            sttText = sttText,
+            cleanedText = cleanedText,
             audioFilePath = "/audio.m4a",
             createdAt = LocalDateTime.now().toString(),
-            status = "COMPLETED",
             errorMessage = null,
             seen = true,
             summary = "A summary"
@@ -32,28 +32,40 @@ class TranscriptionRepositoryUpdateTest {
     }
 
     @Test
-    fun `update persists modified text`() = runBlocking {
-        val id = repository.insert(createEntity("Original text"))
+    fun `update persists modified sttText`() = runBlocking {
+        val id = repository.insert(createEntity("Original stt text"))
 
         val entity = repository.getById(id)!!
-        repository.update(entity.copy(text = "Updated text"))
+        repository.update(entity.copy(sttText = "Updated stt text"))
 
         val reloaded = repository.getById(id)!!
-        assertEquals("Updated text", reloaded.text)
+        assertEquals("Updated stt text", reloaded.sttText)
         assertEquals("/audio.m4a", reloaded.audioFilePath)
         assertEquals(true, reloaded.seen)
         assertEquals("A summary", reloaded.summary)
     }
 
     @Test
-    fun `update preserves all other fields`() = runBlocking {
-        val id = repository.insert(createEntity("Original"))
+    fun `update persists modified cleanedText`() = runBlocking {
+        val id = repository.insert(createEntity("Original stt", "Original cleaned"))
 
         val entity = repository.getById(id)!!
-        repository.update(entity.copy(text = "Changed", summary = "New summary"))
+        repository.update(entity.copy(cleanedText = "Updated cleaned text"))
 
         val reloaded = repository.getById(id)!!
-        assertEquals("Changed", reloaded.text)
+        assertEquals("Updated cleaned text", reloaded.cleanedText)
+    }
+
+    @Test
+    fun `update preserves all other fields`() = runBlocking {
+        val id = repository.insert(createEntity("Original stt", "Original cleaned"))
+
+        val entity = repository.getById(id)!!
+        repository.update(entity.copy(sttText = "Changed stt", summary = "New summary"))
+
+        val reloaded = repository.getById(id)!!
+        assertEquals("Changed stt", reloaded.sttText)
+        assertEquals("Original cleaned", reloaded.cleanedText)
         assertEquals("New summary", reloaded.summary)
         assertEquals(entity.audioFilePath, reloaded.audioFilePath)
         assertEquals(entity.seen, reloaded.seen)

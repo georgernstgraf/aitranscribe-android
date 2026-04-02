@@ -26,10 +26,10 @@ class SearchTranscriptionsUseCaseTest {
         repository.insert(
             TranscriptionEntity(
                 id = 0,
-                text = "Hello world",
+                sttText = "Hello world",
+                cleanedText = null,
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
-                status = "COMPLETED",
                 errorMessage = null,
                 seen = false
             )
@@ -38,18 +38,18 @@ class SearchTranscriptionsUseCaseTest {
         val result = useCase(viewFilter = ViewFilter.ALL).first()
 
         assertEquals(1, result.size)
-        assertEquals("Hello world", result[0].text)
+        assertEquals("Hello world", result[0].displayText)
     }
 
     @Test
-    fun `invoke filters by search query`() = runTest {
+    fun `invoke filters by search query in sttText`() = runTest {
         repository.insert(
             TranscriptionEntity(
                 id = 0,
-                text = "Hello world",
+                sttText = "Hello world",
+                cleanedText = null,
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
-                status = "COMPLETED",
                 errorMessage = null,
                 seen = false
             )
@@ -57,10 +57,10 @@ class SearchTranscriptionsUseCaseTest {
         repository.insert(
             TranscriptionEntity(
                 id = 0,
-                text = "Goodbye",
+                sttText = "Goodbye",
+                cleanedText = null,
                 audioFilePath = "/test2.mp3",
                 createdAt = LocalDateTime.now().toString(),
-                status = "COMPLETED",
                 errorMessage = null,
                 seen = false
             )
@@ -69,6 +69,37 @@ class SearchTranscriptionsUseCaseTest {
         val result = useCase(searchQuery = "Hello", viewFilter = ViewFilter.ALL).first()
 
         assertEquals(1, result.size)
-        assertEquals("Hello world", result[0].text)
+        assertEquals("Hello world", result[0].displayText)
+    }
+
+    @Test
+    fun `invoke filters by search query in cleanedText`() = runTest {
+        repository.insert(
+            TranscriptionEntity(
+                id = 0,
+                sttText = "raw hello",
+                cleanedText = "Cleaned Hello world",
+                audioFilePath = "/test.mp3",
+                createdAt = LocalDateTime.now().toString(),
+                errorMessage = null,
+                seen = false
+            )
+        )
+        repository.insert(
+            TranscriptionEntity(
+                id = 0,
+                sttText = "Goodbye",
+                cleanedText = null,
+                audioFilePath = "/test2.mp3",
+                createdAt = LocalDateTime.now().toString(),
+                errorMessage = null,
+                seen = false
+            )
+        )
+
+        val result = useCase(searchQuery = "Cleaned", viewFilter = ViewFilter.ALL).first()
+
+        assertEquals(1, result.size)
+        assertEquals("Cleaned Hello world", result[0].cleanedText)
     }
 }

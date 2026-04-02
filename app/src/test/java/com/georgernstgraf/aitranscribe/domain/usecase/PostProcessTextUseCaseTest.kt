@@ -11,7 +11,7 @@ import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiCodingApiService
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
-import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
+import com.georgernstgraf.aitranscribe.domain.repository.LanguageRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -33,6 +33,7 @@ class PostProcessTextUseCaseTest {
     private lateinit var zaiCodingApiService: ZaiCodingApiService
     private lateinit var groqApiService: GroqApiService
     private lateinit var promptManager: PromptManager
+    private lateinit var languageRepository: LanguageRepository
     private lateinit var useCase: PostProcessTextUseCase
 
     @BeforeEach
@@ -43,13 +44,15 @@ class PostProcessTextUseCaseTest {
         zaiCodingApiService = mockk()
         groqApiService = mockk()
         promptManager = mockk()
+        languageRepository = mockk()
         useCase = PostProcessTextUseCase(
             apiService,
             zaiApiService,
             zaiCodingApiService,
             groqApiService,
             repository,
-            promptManager
+            promptManager,
+            languageRepository
         )
 
         every { promptManager.get(any()) } answers {
@@ -57,7 +60,18 @@ class PostProcessTextUseCaseTest {
                 "prompt.system.base" -> "BASE"
                 "prompt.system.request" -> "User request: {{request}}"
                 "prompt.user.transcription" -> "Here is the transcription:\n\n{{text}}"
+                "prompt.cleanup" -> "Cleanup in {{language}}"
+                "prompt.translate" -> "Translate to {{language}}"
+                "prompt.summary" -> "Summary in {{language}}"
                 else -> key
+            }
+        }
+
+        coEvery { languageRepository.getLanguageName(any()) } answers {
+            when (val code = firstArg<String>()) {
+                "en" -> "English"
+                "de" -> "German"
+                else -> code
             }
         }
     }
@@ -67,10 +81,10 @@ class PostProcessTextUseCaseTest {
         val id = repository.insert(
             TranscriptionEntity(
                 id = 0,
-                text = "Hello world",
+                sttText = "Hello world",
+                cleanedText = null,
                 audioFilePath = "/test.mp3",
                 createdAt = LocalDateTime.now().toString(),
-                status = "COMPLETED",
                 errorMessage = null,
                 seen = false
             )
@@ -94,48 +108,50 @@ class PostProcessTextUseCaseTest {
         useCase(id, PostProcessingType.CLEANUP, "test-model", "test-key")
 
         val updated = repository.getById(id)
-        assertEquals("Processed text", updated?.text)
+        assertEquals("Processed text", updated?.cleanedText)
     }
 
     @Test
-    fun `detail action skips llm when language matches button and cleanup disabled`() = runTest {
+    fun `detail action skips llm when language matches target and cleanup disabled`() = runTest {
         val id = repository.insert(
             TranscriptionEntity(
-                text = "Already English text",
+                id = 0,
+                sttText = "Already English text",
+                cleanedText = null,
                 audioFilePath = null,
                 createdAt = LocalDateTime.now().toString(),
-                status = "COMPLETED",
                 errorMessage = null,
                 seen = false,
-                language = "en"
+                languageId = "en"
             )
         )
 
         useCase(
             transcriptionId = id,
             isCleanupEnabled = false,
-            translationTarget = TranslationTarget.EN,
+            targetLanguage = "en",
             llmModel = "test-model",
             apiKey = "test-key"
         )
 
         coVerify(exactly = 0) { apiService.processText(any(), any()) }
         val unchanged = repository.getById(id)
-        assertEquals("Already English text", unchanged?.text)
-        assertEquals("en", unchanged?.language)
+        assertEquals("Already English text", unchanged?.sttText)
+        assertEquals("en", unchanged?.languageId)
     }
 
     @Test
     fun `detail action translates plus cleanup then updates language and summary`() = runTest {
         val id = repository.insert(
             TranscriptionEntity(
-                text = "Original unknown language",
+                id = 0,
+                sttText = "Original unknown language",
+                cleanedText = null,
                 audioFilePath = null,
                 createdAt = LocalDateTime.now().toString(),
-                status = "COMPLETED",
                 errorMessage = null,
                 seen = false,
-                language = null
+                languageId = null
             )
         )
 
@@ -156,26 +172,38 @@ class PostProcessTextUseCaseTest {
         useCase(
             transcriptionId = id,
             isCleanupEnabled = true,
-            translationTarget = TranslationTarget.DE,
+            targetLanguage = "de",
             llmModel = "test-model",
             apiKey = "test-key"
         )
 
         coVerify(exactly = 2) { apiService.processText(any(), any()) }
         val postProcessPrompt = requests.first().messages.first().content
-        assertTrue(postProcessPrompt.contains("prompt.cleanup"))
-        assertTrue(postProcessPrompt.contains("prompt.cleanup.de"))
+        assertTrue(postProcessPrompt.contains("Translate"))
+        assertTrue(postProcessPrompt.contains("German"))
 
         val updated = repository.getById(id)
-        assertEquals("Translated and cleaned", updated?.text)
-        assertEquals("de", updated?.language)
+        assertEquals("Translated and cleaned", updated?.cleanedText)
+        assertEquals("de", updated?.languageId)
         assertEquals("Summary text", updated?.summary)
     }
 
     @Test
     fun `invoke throws exception when API key is empty`() = runTest {
+        val id = repository.insert(
+            TranscriptionEntity(
+                id = 0,
+                sttText = "Test text",
+                cleanedText = null,
+                audioFilePath = null,
+                createdAt = LocalDateTime.now().toString(),
+                errorMessage = null,
+                seen = false
+            )
+        )
+
         assertThrows<PostProcessTextUseCase.PostProcessingException> {
-            useCase(1L, PostProcessingType.CLEANUP, "test-model", "")
+            useCase(id, PostProcessingType.CLEANUP, "test-model", "")
         }
     }
 }

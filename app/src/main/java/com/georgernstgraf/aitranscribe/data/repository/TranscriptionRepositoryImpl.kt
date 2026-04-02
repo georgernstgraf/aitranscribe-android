@@ -61,11 +61,6 @@ class TranscriptionRepositoryImpl @Inject constructor(
         ).map { entities -> entities.map { it.toDomain() } }
     }
 
-    override fun getByStatus(status: String, limit: Int): Flow<List<Transcription>> {
-        return transcriptionDao.getByStatus(status, limit)
-            .map { entities -> entities.map { it.toDomain() } }
-    }
-
     override fun getAllTranscriptions(limit: Int): Flow<List<Transcription>> {
         return transcriptionDao.getAllTranscriptions(limit)
             .map { entities -> entities.map { it.toDomain() } }
@@ -89,10 +84,6 @@ class TranscriptionRepositoryImpl @Inject constructor(
         return transcriptionDao.resetPlayedCount(id)
     }
 
-    override suspend fun updateStatus(id: Long, status: String): Int {
-        return transcriptionDao.updateStatus(id, status)
-    }
-
     override suspend fun recordError(id: Long, error: String): Int {
         return transcriptionDao.recordError(id, error)
     }
@@ -109,28 +100,28 @@ class TranscriptionRepositoryImpl @Inject constructor(
         transcriptionDao.updateSummary(id, summary)
     }
 
+    override suspend fun updateCleanedText(id: Long, cleanedText: String) {
+        transcriptionDao.updateCleanedText(id, cleanedText)
+    }
+
+    override suspend fun updateLanguage(id: Long, languageId: String) {
+        transcriptionDao.updateLanguage(id, languageId)
+    }
+
     override suspend fun clearAudioPath(id: Long) {
         transcriptionDao.clearAudioPath(id)
     }
 
-    override suspend fun markAudioMissing(id: Long, status: String, errorMessage: String) {
-        transcriptionDao.markAudioMissing(id, status, errorMessage)
-    }
-
-    override suspend fun getByStatuses(statuses: List<String>): List<TranscriptionEntity> {
-        return transcriptionDao.getByStatuses(statuses)
+    override suspend fun markAudioMissing(id: Long, errorMessage: String) {
+        transcriptionDao.markAudioMissing(id, errorMessage)
     }
 
     override suspend fun getUnfinishedSttTranscriptions(): List<TranscriptionEntity> {
         return transcriptionDao.getUnfinishedSttTranscriptions()
     }
 
-    override suspend fun updateStatusAndError(id: Long, status: String, errorMessage: String?) {
-        transcriptionDao.updateStatusAndError(id, status, errorMessage)
-    }
-
-    override suspend fun markSttSuccess(id: Long, text: String, language: String?, status: String): Int {
-        return transcriptionDao.markSttSuccess(id, text, language, status)
+    override suspend fun markSttSuccess(id: Long, sttText: String, languageId: String?): Int {
+        return transcriptionDao.markSttSuccess(id, sttText, languageId)
     }
 
     override suspend fun getAllAudioPaths(): List<String> {

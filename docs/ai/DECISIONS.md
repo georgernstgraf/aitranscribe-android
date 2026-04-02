@@ -1,5 +1,11 @@
 # Architectural Decisions
 
+## 2026-04-02: Auto-insert languages from STT with Repository pattern (Issue #66)
+- **Decision:** `LanguageRepository.ensureLanguageExists(id)` checks DB and auto-creates missing languages
+- **Reason:** STT APIs (GROQ, ZAI) detect language but don't guarantee it's in our predefined list
+- **Implementation:** Language code stored as-is, display name = uppercase(code), immediately active
+- **Pattern:** Repository owns the "get or create" logic; Worker just calls it before saving transcription
+
 ## 2026-03-29: Detail screen swipe uses flatMapLatest (Issue #28)
 - **Reason:** `loadTranscription()` launched a new Flow collector on every swipe without cancelling the previous one. Multiple collectors raced to update `_uiState`, causing old data to overwrite new data.
 - **Fix:** Replaced with `_activeTranscriptionId.flatMapLatest { id -> repository.getByIdFlow(id) }` — previous Flow auto-cancelled when ID changes

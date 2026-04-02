@@ -69,12 +69,12 @@ class ExportTranscriptionsUseCase @Inject constructor(
 
     private fun exportToCsv(transcriptions: List<Transcription>, outputFile: File) {
         val csv = buildString {
-            appendLine("ID,Text,Created At,Status,Played Count")
+            appendLine("ID,Text,Created At")
             transcriptions.forEach { transcription ->
-                val textEscaped = escapeCsv(transcription.text ?: "")
+                val textEscaped = escapeCsv(transcription.displayText ?: "")
                 val createdAtEscaped = escapeCsv(transcription.createdAt.toString())
-                
-                appendLine("${transcription.id},$textEscaped,$createdAtEscaped,${transcription.status},${transcription.playedCount}")
+
+                appendLine("${transcription.id},$textEscaped,$createdAtEscaped")
             }
         }
         outputFile.writeText(csv)

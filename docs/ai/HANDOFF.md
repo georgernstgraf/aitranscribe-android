@@ -1,20 +1,53 @@
 # Hand Off
 
-No pending tasks. Last cleared: 2026-04-01.
+## Current Work: Issue #66 — Define database schema for languages and improve Kotlin code
 
-## Recently Completed
-- **Issue #61 finished** — Fixed intermittent summary language bug:
-  - Whisper API language detection now captured and stored
-  - Summary generation uses explicit language instruction in prompt
-  - Eliminates LLM guessing language from text content
-- **Issue #63 finished** — Main screen redesign
-- **Issue #60 finished** — Settings improvements
-- **Issue #59 finished** — minSdk bump to 30
-- **Issue #62 cleaned up** — Removed broken OpenRouter STT code
+### Completed in This Session
+- ✅ Created `LanguageEntity` with Room annotations (id, name, native_name, is_active)
+- ✅ Created `LanguageDao` with queries for active languages and language lookup
+- ✅ Created `LanguageRepository` interface and implementation with auto-insert logic
+- ✅ Added `ensureLanguageExists(id: String): Language` method that auto-creates languages
+- ✅ Updated `TranscriptionWorker` to call `ensureLanguageExists()` on STT response
+- ✅ Added foreign key relationship from `TranscriptionEntity` to `LanguageEntity`
+- ✅ Added database index on `languagesId` column
+- ✅ Fixed Room schema validation crash by declaring foreign key in entity
+- ✅ Added logging for STT response language detection
+- ✅ All 120 tests passing
+- ✅ APK successfully deployed and running
 
-## Architecture Insights from Recent Work
-- OpenRouter does NOT have a dedicated STT endpoint - requires base64 chat API approach
-- Whisper language detection is reliable and should always be captured
-- Language-aware prompts prevent misclassification (German→English)
-- Navigation-aware refresh pattern using currentBackStackEntryAsState()
-- Prompt logging should use {{TEXT}} placeholder for privacy
+### What Was Implemented
+When STT returns a transcription with a language code (e.g., "en", "de", "fr"):
+1. Worker captures the language from STT response
+2. Calls `languageRepository.ensureLanguageExists(langCode)`
+3. Repository checks if language exists in DB
+4. If not found, auto-creates new language with:
+   - `id` = ISO code (as-is)
+   - `name` = ISO code uppercased (e.g., "EN", "DE")
+   - `nativeName` = null
+   - `isActive` = true (immediately available for translation)
+
+### Files Modified/Created
+**New Files:**
+- `app/src/main/java/com/georgernstgraf/aitranscribe/data/local/LanguageEntity.kt`
+- `app/src/main/java/com/georgernstgraf/aitranscribe/data/local/LanguageDao.kt`
+- `app/src/main/java/com/georgernstgraf/aitranscribe/domain/repository/LanguageRepository.kt`
+
+**Modified Core Files:**
+- `TranscriptionWorker.kt` — Added language auto-insert and logging
+- `TranscriptionEntity.kt` — Added foreign key annotation
+- `TranscriptionDatabase.kt` — Migration 13→14, language seeding
+- `RepositoryModule.kt` — Added LanguageRepository binding
+- `TranscriptionRepository.kt` and Impl — Updated for new schema
+
+**Updated Tests:**
+- `TranscriptionWorkerTest.kt` — Added LanguageRepository mock
+
+### Remaining Work on Issue #66
+See issue #66 for full scope. This commit covers the auto-update languages functionality.
+
+### View Logs
+```bash
+adb logcat -s "TranscriptionWorker:D" "*:S"
+```
+
+Last updated: 2026-04-02

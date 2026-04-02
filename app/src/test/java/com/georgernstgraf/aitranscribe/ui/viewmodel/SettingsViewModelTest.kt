@@ -5,7 +5,7 @@ import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
 import com.georgernstgraf.aitranscribe.data.local.ModelEntity
 import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
+
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
@@ -164,29 +164,6 @@ class SettingsViewModelTest {
 
         val state = viewModel.uiState.value
         assertEquals(ViewFilter.ALL, state.deleteViewFilter)
-    }
-
-    @Test
-    fun `saveSettings retries queued transcriptions with new model`() = runBlocking {
-        repository.insert(
-            TranscriptionEntity(
-                id = 10,
-                text = null,
-                audioFilePath = "/a.m4a",
-                createdAt = "2026-01-01T00:00:00",
-                status = TranscriptionStatus.STT_ERROR_PERMANENT.name,
-                errorMessage = "Model invalid"
-            )
-        )
-        coEvery { appSettingsStore.getActiveAuthToken("groq") } returns "gsk_validkey1234567890123"
-        coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "sk-or-validkey12345678901"
-
-        viewModel.onSttModelChanged("whisper-large-v3-turbo")
-        viewModel.onLlmModelChanged("inception/mercury")
-        viewModel.saveSettings()
-        testDispatcher.scheduler.runCurrent()
-
-        assertEquals(TranscriptionStatus.STT_ERROR_PERMANENT.name, repository.getById(1)?.status)
     }
 
     @Test

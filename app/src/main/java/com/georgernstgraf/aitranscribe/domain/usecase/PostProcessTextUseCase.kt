@@ -10,11 +10,10 @@ import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterRequest
 import com.georgernstgraf.aitranscribe.data.remote.dto.OpenRouterResponse
 import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
-import com.georgernstgraf.aitranscribe.domain.model.TranslationTarget
-import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
+import com.georgernstgraf.aitranscribe.domain.repository.LanguageRepository
+import com.georgernstgraf.aitranscribe.domain.util.PromptManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.georgernstgraf.aitranscribe.domain.util.PromptManager
 import retrofit2.Response
 import javax.inject.Inject
 
@@ -24,7 +23,8 @@ class PostProcessTextUseCase @Inject constructor(
     private val zaiCodingApiService: ZaiCodingApiService,
     private val groqApiService: GroqApiService,
     private val repository: TranscriptionRepository,
-    private val promptManager: PromptManager
+    private val promptManager: PromptManager,
+    private val languageRepository: LanguageRepository
 ) {
 
     suspend operator fun invoke(
@@ -37,48 +37,39 @@ class PostProcessTextUseCase @Inject constructor(
     ) = withContext(Dispatchers.IO) {
         when (postProcessingType) {
             PostProcessingType.RAW -> return@withContext
-            PostProcessingType.CLEANUP -> runPostProcessing(
-                transcriptionId = transcriptionId,
-                llmModel = llmModel,
-                apiKey = apiKey,
-                llmProvider = llmProvider,
-                prompt = buildCleanupPrompt("prompt.cleanup.null"),
-                debugContext = debugContext
-            )
-            PostProcessingType.TRANSLATE_TO_EN -> runPostProcessing(
-                transcriptionId = transcriptionId,
-                llmModel = llmModel,
-                apiKey = apiKey,
-                llmProvider = llmProvider,
-                prompt = buildTranslationPrompt(TranslationTarget.EN),
-                debugContext = debugContext
-            )
-            PostProcessingType.TRANSLATE_TO_DE -> runPostProcessing(
-                transcriptionId = transcriptionId,
-                llmModel = llmModel,
-                apiKey = apiKey,
-                llmProvider = llmProvider,
-                prompt = buildTranslationPrompt(TranslationTarget.DE),
-                debugContext = debugContext
-            )
+            PostProcessingType.CLEANUP -> {
+                val entity = repository.getById(transcriptionId) ?: return@withContext
+                val languageId = entity.languageId
+                val languageName = languageId?.let { id -> languageRepository.getLanguageName(id) }
+                    ?: "the same language as the input"
+                runPostProcessing(
+                    transcriptionId = transcriptionId,
+                    llmModel = llmModel,
+                    apiKey = apiKey,
+                    llmProvider = llmProvider,
+                    prompt = buildCleanupPrompt(languageName),
+                    debugContext = debugContext
+                )
+            }
+            else -> return@withContext
         }
     }
 
     suspend operator fun invoke(
         transcriptionId: Long,
         isCleanupEnabled: Boolean,
-        translationTarget: TranslationTarget,
+        targetLanguage: String?,  // null = cleanup only, "en"/"de" = translate
         llmModel: String,
         apiKey: String,
         llmProvider: String = "openrouter"
     ) = withContext(Dispatchers.IO) {
-        val transcription = repository.getById(transcriptionId)
+        val entity = repository.getById(transcriptionId)
             ?: throw PostProcessingException("Transcription not found: $transcriptionId")
-        val currentLanguage = transcription.language?.lowercase()
+        val currentLanguage = entity.languageId?.lowercase()
 
         val (prompt, resultingLanguage) = resolveDetailPrompt(
-            language = currentLanguage,
-            button = translationTarget,
+            sourceLanguage = currentLanguage,
+            targetLanguage = targetLanguage,
             cleanup = isCleanupEnabled
         )
         if (prompt == null) return@withContext
@@ -90,10 +81,36 @@ class PostProcessTextUseCase @Inject constructor(
             llmProvider = llmProvider,
             prompt = prompt,
             resultingLanguage = resultingLanguage,
-            debugContext = "detail:${translationTarget.name.lowercase()} cleanup=$isCleanupEnabled language=${currentLanguage ?: "unknown"}"
+            debugContext = "detail:target=${targetLanguage ?: "cleanup"} cleanup=$isCleanupEnabled language=${currentLanguage ?: "unknown"}"
         )
 
         generateSummary(transcriptionId, llmModel, apiKey, llmProvider, "detail:summary")
+    }
+
+    suspend fun cleanupTranscription(
+        transcriptionId: Long,
+        llmModel: String,
+        apiKey: String,
+        llmProvider: String = "openrouter"
+    ) = withContext(Dispatchers.IO) {
+        val entity = repository.getById(transcriptionId)
+            ?: throw PostProcessingException("Transcription not found: $transcriptionId")
+
+        val languageId = entity.languageId
+        val languageName = languageId?.let { languageRepository.getLanguageName(it) }
+            ?: "the same language as the input"
+
+        val prompt = buildCleanupPrompt(languageName)
+
+        runPostProcessing(
+            transcriptionId = transcriptionId,
+            llmModel = llmModel,
+            apiKey = apiKey,
+            llmProvider = llmProvider,
+            prompt = prompt,
+            resultingLanguage = languageId,
+            debugContext = "detail:cleanup language=${languageId ?: "unknown"}"
+        )
     }
 
     suspend fun generateSummary(
@@ -105,9 +122,9 @@ class PostProcessTextUseCase @Inject constructor(
     ) = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) return@withContext
 
-        val transcription = repository.getById(transcriptionId) ?: return@withContext
-        val text = transcription.text.orEmpty()
-        val language = transcription.language
+        val entity = repository.getById(transcriptionId) ?: return@withContext
+        val text = entity.sttText.orEmpty()
+        val language = entity.languageId
         if (text.isBlank()) return@withContext
 
         try {
@@ -121,14 +138,8 @@ class PostProcessTextUseCase @Inject constructor(
             val request = OpenRouterRequest(
                 model = llmModel,
                 messages = listOf(
-                    OpenRouterMessage(
-                        role = "system",
-                        content = systemContent
-                    ),
-                    OpenRouterMessage(
-                        role = "user",
-                        content = userContent
-                    )
+                    OpenRouterMessage(role = "system", content = systemContent),
+                    OpenRouterMessage(role = "user", content = userContent)
                 )
             )
 
@@ -156,9 +167,9 @@ class PostProcessTextUseCase @Inject constructor(
             throw PostProcessingException("API key cannot be empty")
         }
 
-        val transcription = repository.getById(transcriptionId)
+        val entity = repository.getById(transcriptionId)
             ?: throw PostProcessingException("Transcription not found: $transcriptionId")
-        val sourceText = transcription.text.orEmpty()
+        val sourceText = entity.sttText.orEmpty()
         if (sourceText.isBlank()) {
             throw PostProcessingException("Cannot post-process empty transcription")
         }
@@ -175,10 +186,7 @@ class PostProcessTextUseCase @Inject constructor(
                 model = llmModel,
                 messages = listOf(
                     OpenRouterMessage(role = "system", content = systemContent),
-                    OpenRouterMessage(
-                        role = "user",
-                        content = userContent
-                    )
+                    OpenRouterMessage(role = "user", content = userContent)
                 )
             )
 
@@ -192,15 +200,10 @@ class PostProcessTextUseCase @Inject constructor(
             }
 
             val processedText = response.body()!!.getContent().trim()
-            val updatedLanguage = resultingLanguage ?: transcription.language
-            repository.update(
-                transcription.copy(
-                    text = processedText,
-                    status = TranscriptionStatus.COMPLETED.name,
-                    errorMessage = null,
-                    language = updatedLanguage
-                )
-            )
+            repository.updateCleanedText(transcriptionId, processedText)
+            if (resultingLanguage != null) {
+                repository.updateLanguage(transcriptionId, resultingLanguage)
+            }
         } catch (e: PostProcessingException) {
             repository.recordError(transcriptionId, e.message ?: "Unknown error")
             throw e
@@ -241,56 +244,41 @@ class PostProcessTextUseCase @Inject constructor(
             errorText.contains("resource package")
     }
 
-    private fun buildCleanupPrompt(languageDirectiveKey: String): String {
-        return "${promptManager.get("prompt.cleanup")}\n${promptManager.get(languageDirectiveKey)}"
+    private suspend fun buildCleanupPrompt(languageName: String): String {
+        return promptManager.get("prompt.cleanup").replace("{{language}}", languageName)
     }
 
-    private fun buildTranslationPrompt(target: TranslationTarget): String {
-        return when (target) {
-            TranslationTarget.EN -> promptManager.get("prompt.translate.en")
-            TranslationTarget.DE -> promptManager.get("prompt.translate.de")
-            TranslationTarget.NONE -> ""
-        }
+    private suspend fun buildTranslationPrompt(targetLanguageName: String): String {
+        return promptManager.get("prompt.translate").replace("{{language}}", targetLanguageName)
     }
 
-    private fun resolveDetailPrompt(
-        language: String?,
-        button: TranslationTarget,
+    private suspend fun resolveDetailPrompt(
+        sourceLanguage: String?,
+        targetLanguage: String?,
         cleanup: Boolean
     ): Pair<String?, String?> {
-        val targetLanguage = when (button) {
-            TranslationTarget.EN -> "en"
-            TranslationTarget.DE -> "de"
-            TranslationTarget.NONE -> language
+        // targetLanguage is null -> cleanup only
+        // targetLanguage equals sourceLanguage -> cleanup only
+        // targetLanguage differs -> translate (with optional cleanup)
+
+        if (targetLanguage == null || targetLanguage == sourceLanguage) {
+            if (!cleanup) return null to sourceLanguage
+            val languageName = sourceLanguage?.let { languageRepository.getLanguageName(it) }
+                ?: "the same language as the input"
+            return buildCleanupPrompt(languageName) to sourceLanguage
         }
-        if (button == TranslationTarget.NONE) {
-            if (!cleanup) return null to language
-            val directiveKey = when (language) {
-                "en" -> "prompt.cleanup.en"
-                "de" -> "prompt.cleanup.de"
-                else -> "prompt.cleanup.null"
-            }
-            return buildCleanupPrompt(directiveKey) to language
-        }
+
+        // Translation requested
+        val targetLanguageName = languageRepository.getLanguageName(targetLanguage)
 
         if (!cleanup) {
-            return if (language == targetLanguage) {
-                null to language
-            } else {
-                buildTranslationPrompt(button) to targetLanguage
-            }
+            return buildTranslationPrompt(targetLanguageName) to targetLanguage
         }
 
-        return if (language == targetLanguage && language != null) {
-            buildCleanupPrompt("prompt.cleanup.$language") to language
-        } else {
-            val directiveKey = when (targetLanguage) {
-                "en" -> "prompt.cleanup.en"
-                "de" -> "prompt.cleanup.de"
-                else -> "prompt.cleanup.null"
-            }
-            buildCleanupPrompt(directiveKey) to targetLanguage
-        }
+        // Both translate and cleanup: compose prompts
+        val translatePrompt = buildTranslationPrompt(targetLanguageName)
+        val cleanupPrompt = buildCleanupPrompt(targetLanguageName)
+        return "$translatePrompt\n$cleanupPrompt" to targetLanguage
     }
 
     private fun buildSummaryUserContent(text: String): String {
@@ -307,56 +295,13 @@ class PostProcessTextUseCase @Inject constructor(
         return promptManager.get("prompt.user.transcription").replace("{{text}}", text)
     }
 
-    private fun buildSummaryPrompt(language: String?): String {
+    private suspend fun buildSummaryPrompt(language: String?): String {
         val basePrompt = promptManager.get("prompt.summary")
         return if (language != null) {
-            val languageName = getLanguageDisplayName(language)
+            val languageName = languageRepository.getLanguageName(language)
             basePrompt.replace("{{language}}", languageName)
         } else {
             basePrompt.replace("{{language}}", "the original language of the text")
-        }
-    }
-
-    private fun getLanguageDisplayName(languageCode: String): String {
-        return when (languageCode.lowercase()) {
-            "de", "german" -> "German"
-            "en", "english" -> "English"
-            "fr", "french" -> "French"
-            "es", "spanish" -> "Spanish"
-            "it", "italian" -> "Italian"
-            "pt", "portuguese" -> "Portuguese"
-            "nl", "dutch" -> "Dutch"
-            "pl", "polish" -> "Polish"
-            "ru", "russian" -> "Russian"
-            "ja", "japanese" -> "Japanese"
-            "zh", "chinese" -> "Chinese"
-            "ko", "korean" -> "Korean"
-            "ar", "arabic" -> "Arabic"
-            "hi", "hindi" -> "Hindi"
-            "tr", "turkish" -> "Turkish"
-            "sv", "swedish" -> "Swedish"
-            "da", "danish" -> "Danish"
-            "no", "norwegian" -> "Norwegian"
-            "fi", "finnish" -> "Finnish"
-            "cs", "czech" -> "Czech"
-            "hu", "hungarian" -> "Hungarian"
-            "ro", "romanian" -> "Romanian"
-            "el", "greek" -> "Greek"
-            "he", "hebrew" -> "Hebrew"
-            "th", "thai" -> "Thai"
-            "vi", "vietnamese" -> "Vietnamese"
-            "id", "indonesian" -> "Indonesian"
-            "ms", "malay" -> "Malay"
-            "uk", "ukrainian" -> "Ukrainian"
-            "bg", "bulgarian" -> "Bulgarian"
-            "hr", "croatian" -> "Croatian"
-            "sr", "serbian" -> "Serbian"
-            "sk", "slovak" -> "Slovak"
-            "sl", "slovenian" -> "Slovenian"
-            "lt", "lithuanian" -> "Lithuanian"
-            "lv", "latvian" -> "Latvian"
-            "et", "estonian" -> "Estonian"
-            else -> languageCode.uppercase()
         }
     }
 
