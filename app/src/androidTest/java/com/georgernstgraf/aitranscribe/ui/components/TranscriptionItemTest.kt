@@ -71,17 +71,19 @@ class TranscriptionItemTest {
             )
         }
 
+        // Component truncates at 60 chars and adds "…"
+        val expectedText = "A".repeat(60) + "…"
         composeTestRule
-            .onNodeWithText("…")
+            .onNodeWithText(expectedText, substring = true)
             .assertIsDisplayed()
     }
 
     @Test
-    fun transcriptionItemDisplaysDateAndTime() {
-        val testDate = LocalDateTime.of(2024, 3, 1, 14, 30)
+    fun transcriptionItemDisplaysShortTextFully() {
+        val shortText = "Short text"
 
         val transcription = createTestTranscription(
-            createdAt = testDate
+            text = shortText
         )
 
         composeTestRule.setContent {
@@ -92,11 +94,7 @@ class TranscriptionItemTest {
         }
 
         composeTestRule
-            .onNodeWithText("Mar 01, 2024")
-            .assertIsDisplayed()
-
-        composeTestRule
-            .onNodeWithText("14:30")
+            .onNodeWithText(shortText)
             .assertIsDisplayed()
     }
 

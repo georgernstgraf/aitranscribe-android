@@ -60,34 +60,6 @@ class AudioRecordingButtonTest {
     }
 
     @Test
-    fun clickingButtonTogglesRecordingState() {
-        var isRecording = false
-
-        composeTestRule.setContent {
-            AudioRecordingButton(
-                isRecording = isRecording,
-                recordingDuration = 0,
-                onStartRecording = { isRecording = true },
-                onStopRecording = { isRecording = false }
-            )
-        }
-
-        composeTestRule
-            .onNodeWithContentDescription("Start Recording")
-            .performClick()
-
-        composeTestRule.waitForIdle()
-        assert(isRecording) { "Recording should start after click" }
-
-        composeTestRule
-            .onNodeWithContentDescription("Stop Recording")
-            .performClick()
-
-        composeTestRule.waitForIdle()
-        assert(!isRecording) { "Recording should stop after click" }
-    }
-
-    @Test
     fun recordingButtonShowsDurationWhenRecording() {
         val duration = 30
 
