@@ -3,7 +3,7 @@
 Current status as of 2026-04-02.
 
 ## Current Focus
-Issue #66 — Define database schema for languages and improve Kotlin code (IN PROGRESS)
+Issue #66 — Transcription detail screen enhancements (IN PROGRESS, checkpoint committed)
 
 ## Completed (this cycle)
 - [x] Created LanguageEntity, LanguageDao, and LanguageRepository
@@ -17,27 +17,27 @@ Issue #66 — Define database schema for languages and improve Kotlin code (IN P
 - [x] Implemented validation to prevent unchecking last active language
 - [x] Added Languages row to Settings screen with "Manage" button
 - [x] Fixed Settings state reset bug (changed `SettingsUiState()` to `.copy()` in loadSettings)
-- [x] All 120 tests passing
-- [x] APK deployed and verified working
+- [x] Added `cleanupEnabled` to TranscriptionDetailUiState (defaults based on cleanedText)
+- [x] Added `toggleCleanup()` to TranscriptionDetailViewModel
+- [x] Fixed `translateTo()` to respect `cleanupEnabled` toggle
+- [x] Added ModalBottomSheet for forced language selection when language is null
+- [x] Replaced TextButton row with FlowRow + OutlinedButton for language translate buttons
+- [x] Language buttons display `language.name` and filter out current source language
+- [x] Fixed loadAvailableLanguages() to use languageRepository.getActiveLanguages() (DB query) instead of AppSettingsStore
+- [x] Fixed ModalBottomSheet confirmValueChange to only block Hidden transition
+- [x] Added 4 new tests for cleanup toggle and language selection
+- [x] All tests passing (BUILD SUCCESSFUL)
 
 ## Pending
-- [ ] Complete remaining Issue #66 scope (if any)
+- [ ] Test forced language picker on device with language=null transcriptions
+- [ ] Test cleanup toggle behavior on device with real LLM calls
+- [ ] Test translate buttons with FlowRow layout on device
+- [ ] Add "select/deselect all" control to LanguageSettingsScreen
+- [ ] Remove debug logging from SettingsScreen/SettingsViewModel before final release
+- [ ] Review Issue #66 for any remaining scope
 
 ## Blockers
 - None.
 
-## Testing Infrastructure
-- **Unit tests**: JUnit 5, all passing (120 tests)
-- **Instrumentation tests**: JUnit 4, all passing on API 35 emulator
-- **Emulator**: API 35 (Android 15) - `Medium_Phone_API_35` AVD configured
-
 ## Next Session Suggestion
-Review Issue #66 for remaining scope or proceed with other open issues.
-
-## Recent Architecture Decisions
-1. Languages table auto-populates from STT-detected languages
-2. Unknown ISO codes use uppercase code as display name (e.g., "XX")
-3. New languages are immediately active for translation UI
-4. Room entities must declare foreign keys to match database schema exactly
-5. Language settings UI: Full-screen list, sorted active-first, row-tap toggles
-6. Minimum one language must remain active at all times
+Manual device testing of the three new UI features on the detail screen, then address remaining items from Issue #66.

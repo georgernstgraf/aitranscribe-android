@@ -1,82 +1,50 @@
 # Hand Off
 
-## Current Work: Issue #66 — Define database schema for languages and improve Kotlin code
+## Current Work: Issue #66 — Transcription detail screen enhancements
 
-### Completed in This Session
+### Checkpoint: Detail screen language picker, translate buttons, cleanup toggle
 
-#### Language Settings UI Implementation
-- ✅ Created `LanguageSettingsScreen.kt` — Full-screen language management
-  - TopAppBar with back button
-  - LazyColumn showing all languages
-  - Each row: Checkbox + "LanguageName (NativeName)" format
-  - Active languages sorted first, then alphabetical
-  - Tap anywhere on row toggles checkbox
-  - Validation: Cannot uncheck last active language (Toast message)
-  
-- ✅ Updated `SettingsScreen.kt` with Languages section
-  - Shows "X active / Y total" subtitle
-  - "Manage" button navigates to LanguageSettingsScreen
-  
-- ✅ Added Navigation
-  - New route "languages" in MainActivity.kt
-  - SettingsViewModel handles language loading and toggling
+#### What was implemented
 
-#### Data Layer Extensions
-- ✅ Extended `LanguageDao` with:
-  - `getAllLanguages()` — Flow of all languages ordered by name
-  - `updateLanguageActiveStatus()` — Toggle is_active flag
-  - `getActiveLanguageCount()` — Count for validation
+1. **Forced language picker (ModalBottomSheet)**
+   - When `transcription.language == null`, a non-dismissible bottom sheet appears
+   - Shows all active languages from DB (`languageRepository.getActiveLanguages()`)
+   - User must pick one; `confirmValueChange` blocks only the `Hidden` transition
+   - File: `TranscriptionDetailScreen.kt:92-98` (sheet state) + `LanguagePickerBottomSheet` composable
 
-- ✅ Extended `LanguageRepository` with:
-  - `getAllLanguages()` — Sorted: active first, then alphabetical
-  - `setLanguageActive()` — Persist toggle to database
-  - `getActiveLanguageCount()` — For minimum validation
+2. **Translate buttons with FlowRow + OutlinedButton**
+   - Replaced single `Row` of `TextButton` with `FlowRow` of `OutlinedButton`
+   - Displays `language.name` (e.g., "German") instead of ISO code
+   - Filters out the transcription's own source language
+   - File: `TranscriptionDetailScreen.kt:226-240`
 
-- ✅ Updated `SettingsViewModel`:
-  - Injected LanguageRepository
-  - `loadLanguages()` — Collect and sort languages
-  - `toggleLanguageActive()` — Prevents unchecking last active
-  - `getLanguageDisplayName()` — Format: "English (English)"
-  - New state: `allLanguages`, `activeLanguageCount`
+3. **Cleanup toggle (Switch)**
+   - `cleanupEnabled: Boolean` in `TranscriptionDetailUiState`
+   - Default: `true` when `cleanedText == null`, `false` when cleaned text exists
+   - Reset on each page swipe (set in `observeActiveTranscription()`)
+   - `translateTo()` passes `_uiState.value.cleanupEnabled` to PostProcessTextUseCase
+   - File: `TranscriptionDetailViewModel.kt:139-141` (toggle), `TranscriptionDetailViewModel.kt:122` (used in translate)
 
-### User Flow
-```
-Settings Screen → [Manage] button → Language Settings Screen
-     ↓                                      ↓
-Languages: 3/34 total              ☑ English (English)
-[Manage]                           ☑ German (Deutsch)  
-                                   ☑ French (Français)  
-                                   ─────────────────  
-                                   ☐ Spanish (Español)  
-                                   ☐ Italian (Italiano)
-```
+4. **Bug fix: loadAvailableLanguages() now reads from DB**
+   - Old: `appSettingsStore.getActiveLanguages()` returned empty (preference key never set)
+   - New: `languageRepository.getActiveLanguages()` queries Room directly (`is_active = 1`)
+   - File: `TranscriptionDetailViewModel.kt:66-70`
 
-### Files Modified/Created in This Session
-**New Files:**
-- `app/src/main/java/com/georgernstgraf/aitranscribe/ui/screen/LanguageSettingsScreen.kt`
+5. **Bug fix: ModalBottomSheet wouldn't open**
+   - Old: `confirmValueChange = { false }` blocked ALL state transitions including show
+   - New: `confirmValueChange = { it != SheetValue.Hidden }` blocks only dismiss
+   - File: `TranscriptionDetailScreen.kt:92-96`
 
-**Modified:**
-- `LanguageDao.kt` — Added queries for language management
-- `LanguageRepository.kt` — Added toggle methods and sorting
-- `SettingsViewModel.kt` — Added language management logic
-- `SettingsScreen.kt` — Added Languages section with Manage button
-- `MainActivity.kt` — Added "languages" navigation route
-- `SettingsViewModelTest.kt` — Added LanguageRepository mock
+#### Remaining on Issue #66
+- [ ] Device-test forced language picker
+- [ ] Device-test cleanup toggle with real LLM calls
+- [ ] Device-test translate button layout
+- [ ] "Select/deselect all" on LanguageSettingsScreen
+- [ ] Remove debug logging before final release
 
-### Bug Fixes in This Session
-- ✅ Fixed SettingsScreen showing "0 active / 0 total" 
-  - Root cause: `loadSettings()` created new `SettingsUiState()` which reset language data
-  - Fix: Changed to use `.copy()` to preserve existing state
-  - Added debug logging to trace state changes
-
-### Testing
-- All 120 unit tests passing
-- APK deployed and tested on device
-- Language toggle works correctly
-- Validation prevents unchecking last active language
-- Settings now correctly shows "37 active / 37 total"
-
-### Remaining Work on Issue #66
-Review issue #66 description for any remaining scope not yet implemented.
+#### Key Files Changed
+- `app/src/main/java/.../ui/screen/TranscriptionDetailScreen.kt` — Major rewrite (ModalBottomSheet, FlowRow, Switch)
+- `app/src/main/java/.../ui/viewmodel/TranscriptionDetailViewModel.kt` — cleanupEnabled, toggleCleanup(), loadAvailableLanguages fix
+- `app/src/test/.../ui/viewmodel/TranscriptionDetailViewModelTest.kt` — 4 new tests
 
 Last updated: 2026-04-02

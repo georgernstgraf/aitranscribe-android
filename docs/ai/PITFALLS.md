@@ -168,6 +168,12 @@ Running instrumentation tests on API 36 (Android 16) causes `java.lang.NoSuchMet
 ## Cannot call setContent twice in same Compose UI test
 In Compose UI tests (`ComposeContentTestRule`), calling `setContent` more than once per test method throws `IllegalStateException: Cannot call setContent twice per test!`. Split into separate test methods or use state-based recomposition instead.
 
+## ModalBottomSheet confirmValueChange={false} blocks showing the sheet
+Setting `confirmValueChange = { false }` on `rememberModalBottomSheetState` blocks ALL sheet state transitions, including the initial `Hidden → Expanded`. The sheet never appears. To make a non-dismissible sheet, block only the hide transition: `confirmValueChange = { it != SheetValue.Hidden }`.
+
+## AppSettingsStore.getActiveLanguages() returns empty when preference never set
+`AppSettingsStore.getActiveLanguages()` reads from a `KEY_ACTIVE_LANGUAGES` preference that may never have been written. It returns an empty list even though the `languages` table has active rows. Use `languageRepository.getActiveLanguages()` (which queries `is_active = 1` directly) for reliable language loading.
+
 ## Instrumentation tests must use JUnit 4, not JUnit 5
 Android instrumentation tests (`src/androidTest`) require JUnit 4 (`org.junit.Test`, `org.junit.Assert`). While JUnit 5 works for unit tests (`src/test`), the Android testing framework and Espresso have limited JUnit 5 support. Use JUnit 4 for all instrumentation tests to avoid compatibility issues.
 

@@ -317,3 +317,23 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Reason**: API 36 has Espresso/Compose compatibility issues (`InputManager.getInstance` method not found); API 35 provides stable testing environment.
 - **Changed**: Installed API 35 system image; created `Medium_Phone_API_35` AVD; verified all 31 instrumentation tests pass.
 - **Note**: Production app targets API 36 for compilation, but tests run on API 35.
+
+## 2026-04-02: Detail screen forces language selection via ModalBottomSheet (#66)
+- **Choice**: When `transcription.language == null`, show a non-dismissible `ModalBottomSheet` with active languages. User must pick before interacting with content.
+- **Reason**: STT sometimes returns null language; user must disambiguate for correct translation/cleanup prompts.
+- **Changed**: `TranscriptionDetailScreen` shows `LanguagePickerBottomSheet` when language is null; `confirmValueChange` blocks only dismiss, not show.
+
+## 2026-04-02: Cleanup toggle is per-transcription, defaulting based on cleanedText (#66)
+- **Choice**: `cleanupEnabled` boolean in `TranscriptionDetailUiState`, default `true` when `cleanedText == null`, `false` otherwise. Reset on each page swipe.
+- **Reason**: Per-transcription toggle gives granular control; smart default avoids redundant cleanup of already-cleaned text.
+- **Changed**: `translateTo()` uses `_uiState.value.cleanupEnabled` instead of hardcoded `true`; `observeActiveTranscription()` sets default on each transcription load.
+
+## 2026-04-02: Translate buttons use FlowRow + OutlinedButton, filter source language (#66)
+- **Choice**: Replace flat `TextButton` row with `FlowRow` of `OutlinedButton`, display `language.name`, filter out transcription's own language.
+- **Reason**: Better visual style, wraps naturally for many languages, prevents "translate to self".
+- **Changed**: `TranscriptionDetailScreen` uses `FlowRow` + `OutlinedButton` + `language.name` display.
+
+## 2026-04-02: loadAvailableLanguages reads from DB, not AppSettingsStore (#66)
+- **Choice**: Use `languageRepository.getActiveLanguages()` (Room query `is_active = 1`) instead of `appSettingsStore.getActiveLanguages()` (preferences key).
+- **Reason**: AppSettingsStore preference was never written on device, returning empty list. DB query is the reliable source of truth.
+- **Changed**: `TranscriptionDetailViewModel.loadAvailableLanguages()` now collects from repository Flow.

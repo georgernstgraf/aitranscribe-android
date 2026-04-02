@@ -65,14 +65,9 @@ class TranscriptionDetailViewModel @Inject constructor(
 
     private fun loadAvailableLanguages() {
         viewModelScope.launch {
-            val activeLanguageIds = appSettingsStore.getActiveLanguages()
-            val languages = if (activeLanguageIds.isEmpty()) {
-                // Default to English if no languages configured
-                listOf(languageRepository.getLanguageById("en")!!)
-            } else {
-                activeLanguageIds.mapNotNull { languageRepository.getLanguageById(it) }
+            languageRepository.getActiveLanguages().collect { languages ->
+                _uiState.update { it.copy(availableLanguages = languages) }
             }
-            _uiState.update { it.copy(availableLanguages = languages) }
         }
     }
 
@@ -126,7 +121,7 @@ class TranscriptionDetailViewModel @Inject constructor(
             try {
                 postProcessTextUseCase(
                     transcriptionId = transcription.id,
-                    isCleanupEnabled = true,
+                    isCleanupEnabled = _uiState.value.cleanupEnabled,
                     targetLanguage = targetLanguage,
                     llmModel = llmModel,
                     apiKey = apiKey,
@@ -142,6 +137,10 @@ class TranscriptionDetailViewModel @Inject constructor(
 
     fun toggleRawCleaned() {
         _uiState.update { it.copy(showRawText = !it.showRawText) }
+    }
+
+    fun toggleCleanup() {
+        _uiState.update { it.copy(cleanupEnabled = !it.cleanupEnabled) }
     }
 
     private fun loadFilteredIds() {
@@ -162,10 +161,13 @@ class TranscriptionDetailViewModel @Inject constructor(
                 .collect { entity ->
                     if (entity != null) {
                         val transcription = entity.toDomain()
+                        // Cleanup enabled by default if cleaned_text is null, disabled otherwise
+                        val cleanupEnabled = transcription.cleanedText == null
                         _uiState.update {
                             it.copy(
                                 transcription = transcription,
-                                isViewed = transcription.isViewed
+                                isViewed = transcription.isViewed,
+                                cleanupEnabled = cleanupEnabled
                             )
                         }
                         if (!suppressAutoMark && !entity.seen && viewFilter != ViewFilter.UNVIEWED_ONLY) {
@@ -270,5 +272,6 @@ data class TranscriptionDetailUiState(
     val isDeleted: Boolean = false,
     val isProcessing: Boolean = false,
     val showRawText: Boolean = false,
-    val availableLanguages: List<com.georgernstgraf.aitranscribe.domain.repository.Language> = emptyList()
+    val availableLanguages: List<com.georgernstgraf.aitranscribe.domain.repository.Language> = emptyList(),
+    val cleanupEnabled: Boolean = true
 )

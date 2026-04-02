@@ -1,18 +1,13 @@
-# Prompt Queue
+# POP OFF HEAD, APPEND TO BODY
 
-## do not interrupt agents, put it here
+## centralize knowledge:
 
-### pop off head, append to body
+integrate Architecture.txt, ORCHESTRATION.md, BUILD_STATUS.md into knowlegde-persist. they might be outdated
 
-## fix lang choices
+## prisma knowledge-persist
 
-on the main menu in the languages settings i want a "select/deselect all" control.
+to get a current sqlite copy from the device do this:
 
-### DETAILS: on the details screen
+- cd prisma && make
 
-- if language = null, FORCE the user to say what language this is.
-- the language buttons: Offer a translate button for EACH active language
-- make these more button-like optically
-- implement a cleanup on/off toggle slider to steer prompt generation accordingly
-
-integrate Architecture.txt, ORCHESTRATION.md, BUILD_STATUS.md into knowlegde-persist.
+This will update prisma/device_db.sqlite directly from device
