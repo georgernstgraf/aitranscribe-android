@@ -71,32 +71,49 @@ fun LanguageSettingsScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            items(
-                items = uiState.allLanguages,
-                key = { it.id }
-            ) { language ->
-                LanguageListItem(
-                    language = language,
-                    displayName = viewModel.getLanguageDisplayName(language),
-                    isLastActive = language.isActive && uiState.activeLanguageCount <= 1,
-                    onToggle = { isActive ->
-                        scope.launch {
-                            val success = viewModel.toggleLanguageActive(language.id, isActive)
-                            if (!success) {
-                                Toast.makeText(
-                                    context,
-                                    "At least one language must be active",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+        if (uiState.allLanguages.isEmpty()) {
+            // Show empty state while loading
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(32.dp))
+                Text(
+                    text = "Loading languages...",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                items(
+                    items = uiState.allLanguages,
+                    key = { it.id }
+                ) { language ->
+                    LanguageListItem(
+                        language = language,
+                        displayName = viewModel.getLanguageDisplayName(language),
+                        isLastActive = language.isActive && uiState.activeLanguageCount <= 1,
+                        onToggle = { isActive ->
+                            scope.launch {
+                                val success = viewModel.toggleLanguageActive(language.id, isActive)
+                                if (!success) {
+                                    Toast.makeText(
+                                        context,
+                                        "At least one language must be active",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }

@@ -1,5 +1,8 @@
 # Pitfalls and Gotchas
 
+## Creating new UiState instance resets all fields to defaults
+When updating ViewModel state, using `_uiState.update { SettingsUiState(...) }` creates a completely new instance, resetting all fields not explicitly provided to their default values. This caused SettingsScreen to show "0 active / 0 total" languages because `allLanguages` was reset to emptyList(). **Fix:** Use `_uiState.update { it.copy(...) }` to preserve existing values.
+
 ## Room entity must declare foreign keys to match database schema
 If migration creates a table with `FOREIGN KEY...` but the Entity class lacks `@Entity(foreignKeys = [...])`, Room throws `IllegalStateException: Migration didn't properly handle...` at runtime. The schema validation is strict. **Fix:** Add matching `ForeignKey` annotation AND `Index` on the column.
 

@@ -26,7 +26,7 @@ model languages {
   id             String           @id
   name           String
   native_name    String?
-  is_active      Boolean          @default(true)
+  is_active      Int              @default(1)
   transcriptions transcriptions[]
 }
 
@@ -78,6 +78,8 @@ model transcriptions {
   error_message   String?
   seen            Int        @default(0)
   summary         String?
-  language        languages? @relation(fields: [languagesId], references: [id])
   languagesId     String?
+  languages       languages? @relation(fields: [languagesId], references: [id])
+
+  @@index([languagesId], map: "index_transcriptions_languagesId")
 }

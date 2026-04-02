@@ -110,6 +110,16 @@ fun SettingsScreen(
     var showAddProviderSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
+    LaunchedEffect(Unit) {
+        android.util.Log.d("SettingsScreen", "LaunchedEffect triggered, calling loadLanguages()")
+        viewModel.loadLanguages()
+    }
+    
+    // Debug: Log state changes
+    LaunchedEffect(state.allLanguages.size, state.activeLanguageCount) {
+        android.util.Log.d("SettingsScreen", "Languages updated: ${state.allLanguages.size} total, ${state.activeLanguageCount} active")
+    }
+
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) {
             snackbarHostState.showSnackbar(

@@ -63,11 +63,18 @@ Languages: 3/34 total              ☑ English (English)
 - `MainActivity.kt` — Added "languages" navigation route
 - `SettingsViewModelTest.kt` — Added LanguageRepository mock
 
+### Bug Fixes in This Session
+- ✅ Fixed SettingsScreen showing "0 active / 0 total" 
+  - Root cause: `loadSettings()` created new `SettingsUiState()` which reset language data
+  - Fix: Changed to use `.copy()` to preserve existing state
+  - Added debug logging to trace state changes
+
 ### Testing
 - All 120 unit tests passing
 - APK deployed and tested on device
 - Language toggle works correctly
 - Validation prevents unchecking last active language
+- Settings now correctly shows "37 active / 37 total"
 
 ### Remaining Work on Issue #66
 Review issue #66 description for any remaining scope not yet implemented.

@@ -243,8 +243,8 @@ class SettingsViewModel @Inject constructor(
                 val llmModels = providerModelDao.getModelsForProvider(llmProvider)
                 val llmFallback = llmModels.firstOrNull()?.externalId ?: ProviderConfig.getDefaultLlmModel(llmProvider)
 
-                _uiState.update {
-                    SettingsUiState(
+                _uiState.update { currentState ->
+                    currentState.copy(
                         activeProviders = activeProviders,
                         availableProviders = availableProviders,
                         providerAuthStatus = authStatus,
@@ -259,8 +259,8 @@ class SettingsViewModel @Inject constructor(
                         llmAvailableModels = llmModels
                     )
                 }
-            } catch (_: Exception) {
-                _uiState.update { SettingsUiState() }
+            } catch (e: Exception) {
+                Log.e("SettingsViewModel", "Error loading settings", e)
             }
         }
     }
@@ -304,7 +304,9 @@ class SettingsViewModel @Inject constructor(
     // Language management
     fun loadLanguages() {
         viewModelScope.launch {
+            Log.d("SettingsViewModel", "Loading languages...")
             languageRepository.getAllLanguages().collect { languages ->
+                Log.d("SettingsViewModel", "Loaded ${languages.size} languages, ${languages.count { it.isActive }} active")
                 val activeCount = languages.count { it.isActive }
                 _uiState.update {
                     it.copy(

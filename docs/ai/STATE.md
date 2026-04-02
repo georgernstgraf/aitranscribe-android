@@ -16,6 +16,7 @@ Issue #66 — Define database schema for languages and improve Kotlin code (IN P
 - [x] Added language management UI with check/uncheck functionality
 - [x] Implemented validation to prevent unchecking last active language
 - [x] Added Languages row to Settings screen with "Manage" button
+- [x] Fixed Settings state reset bug (changed `SettingsUiState()` to `.copy()` in loadSettings)
 - [x] All 120 tests passing
 - [x] APK deployed and verified working
 
