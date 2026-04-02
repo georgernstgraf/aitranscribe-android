@@ -4,12 +4,13 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 
 class ProviderModelDaoTest {
 
@@ -19,7 +20,7 @@ class ProviderModelDaoTest {
     private lateinit var database: TranscriptionDatabase
     private lateinit var dao: ProviderModelDao
 
-    @BeforeEach
+    @Before
     fun setup() {
         database = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
@@ -28,7 +29,7 @@ class ProviderModelDaoTest {
         dao = database.providerModelDao()
     }
 
-    @AfterEach
+    @After
     fun teardown() {
         database.close()
     }

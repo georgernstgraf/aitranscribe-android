@@ -6,10 +6,9 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.georgernstgraf.aitranscribe.domain.model.Transcription
 import com.georgernstgraf.aitranscribe.domain.model.TranscriptionStatus
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Rule
-import org.junit.jupiter.api.Test
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
 import java.time.LocalDateTime
 
 /**
@@ -22,7 +21,7 @@ class TranscriptionItemTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun `transcription item displays preview text`() {
+    fun transcriptionItemDisplaysPreviewText() {
         val transcription = createTestTranscription(
             text = "This is a test transcription with some text"
         )
@@ -40,7 +39,7 @@ class TranscriptionItemTest {
     }
 
     @Test
-    fun `transcription item displays text`() {
+    fun transcriptionItemDisplaysText() {
         val transcription = createTestTranscription(
             text = "This is the processed text"
         )
@@ -58,7 +57,7 @@ class TranscriptionItemTest {
     }
 
     @Test
-    fun `transcription item truncates long text`() {
+    fun transcriptionItemTruncatesLongText() {
         val longText = "A".repeat(200)
 
         val transcription = createTestTranscription(
@@ -78,7 +77,7 @@ class TranscriptionItemTest {
     }
 
     @Test
-    fun `transcription item displays date and time`() {
+    fun transcriptionItemDisplaysDateAndTime() {
         val testDate = LocalDateTime.of(2024, 3, 1, 14, 30)
 
         val transcription = createTestTranscription(
@@ -102,7 +101,7 @@ class TranscriptionItemTest {
     }
 
     @Test
-    fun `transcription item is clickable`() {
+    fun transcriptionItemIsClickable() {
         var clicked = false
 
         val transcription = createTestTranscription()
@@ -123,7 +122,7 @@ class TranscriptionItemTest {
     }
 
     @Test
-    fun `unviewed transcription shows blue indicator`() {
+    fun unviewedTranscriptionShowsBlueIndicator() {
         val transcription = createTestTranscription(
             seen = false
         )
@@ -141,7 +140,7 @@ class TranscriptionItemTest {
     }
 
     @Test
-    fun `viewed transcription shows gray indicator`() {
+    fun viewedTranscriptionShowsGrayIndicator() {
         val transcription = createTestTranscription(
             seen = true
         )

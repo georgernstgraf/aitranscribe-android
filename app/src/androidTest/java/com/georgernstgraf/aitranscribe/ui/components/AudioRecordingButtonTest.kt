@@ -2,12 +2,12 @@ package com.georgernstgraf.aitranscribe.ui.components
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import org.junit.Rule
-import org.junit.jupiter.api.Test
+import org.junit.Test
 
 /**
  * Test class for AudioRecordingButton.
@@ -19,7 +19,7 @@ class AudioRecordingButtonTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun `recording button displays microphone icon when not recording`() {
+    fun recordingButtonDisplaysMicrophoneIconWhenNotRecording() {
         var isRecording = false
 
         composeTestRule.setContent {
@@ -37,7 +37,7 @@ class AudioRecordingButtonTest {
     }
 
     @Test
-    fun `recording button displays stop icon when recording`() {
+    fun recordingButtonDisplaysStopIconWhenRecording() {
         var isRecording = true
         var duration = 15
 
@@ -60,7 +60,7 @@ class AudioRecordingButtonTest {
     }
 
     @Test
-    fun `clicking button toggles recording state`() {
+    fun clickingButtonTogglesRecordingState() {
         var isRecording = false
 
         composeTestRule.setContent {
@@ -77,18 +77,18 @@ class AudioRecordingButtonTest {
             .performClick()
 
         composeTestRule.waitForIdle()
-        assert("Recording should start after click") { isRecording }
+        assert(isRecording) { "Recording should start after click" }
 
         composeTestRule
             .onNodeWithContentDescription("Stop Recording")
             .performClick()
 
         composeTestRule.waitForIdle()
-        assert("Recording should stop after click") { !isRecording }
+        assert(!isRecording) { "Recording should stop after click" }
     }
 
     @Test
-    fun `recording button shows duration when recording`() {
+    fun recordingButtonShowsDurationWhenRecording() {
         val duration = 30
 
         composeTestRule.setContent {
@@ -106,7 +106,7 @@ class AudioRecordingButtonTest {
     }
 
     @Test
-    fun `recording button is always clickable`() {
+    fun recordingButtonIsAlwaysClickable() {
         composeTestRule.setContent {
             AudioRecordingButton(
                 isRecording = false,
