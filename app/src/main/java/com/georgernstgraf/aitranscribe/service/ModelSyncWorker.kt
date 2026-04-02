@@ -6,7 +6,6 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.georgernstgraf.aitranscribe.data.local.AppSettingsStore
-import com.georgernstgraf.aitranscribe.data.local.CapabilityEntity
 import com.georgernstgraf.aitranscribe.data.local.ModelCatalogEntry
 import com.georgernstgraf.aitranscribe.data.local.ProviderModelDao
 import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
@@ -76,8 +75,7 @@ class ModelSyncWorker @AssistedInject constructor(
                         response.body()?.data?.map {
                             ModelCatalogEntry(
                                 externalId = it.id,
-                                modelName = it.name ?: it.id,
-                                capabilities = extractCapabilities(it.architecture?.modality, it.architecture?.instructType)
+                                modelName = it.name ?: it.id
                             )
                         } ?: emptyList()
                     } else emptyList()
@@ -89,8 +87,7 @@ class ModelSyncWorker @AssistedInject constructor(
                         response.body()?.data?.map {
                             ModelCatalogEntry(
                                 externalId = it.id,
-                                modelName = it.name ?: it.id,
-                                capabilities = extractCapabilities(it.architecture?.modality, it.architecture?.instructType)
+                                modelName = it.name ?: it.id
                             )
                         } ?: emptyList()
                     } else emptyList()
@@ -105,8 +102,7 @@ class ModelSyncWorker @AssistedInject constructor(
                         response.body()?.data?.map {
                             ModelCatalogEntry(
                                 externalId = it.id,
-                                modelName = it.name ?: it.id,
-                                capabilities = extractCapabilities(it.architecture?.modality, it.architecture?.instructType)
+                                modelName = it.name ?: it.id
                             )
                         } ?: emptyList()
                     } else emptyList()
@@ -124,22 +120,5 @@ class ModelSyncWorker @AssistedInject constructor(
             Log.e(TAG, "Failed to sync models for $providerId", e)
             // Do not throw here, let other providers try to sync
         }
-    }
-
-    private fun extractCapabilities(modality: String?, instructType: String?): List<CapabilityEntity> {
-        val result = mutableListOf<CapabilityEntity>()
-        modality?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            result += CapabilityEntity(
-                id = "modality:$it",
-                name = "Modality: $it"
-            )
-        }
-        instructType?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            result += CapabilityEntity(
-                id = "instruct_type:$it",
-                name = "Instruct Type: $it"
-            )
-        }
-        return result
     }
 }
