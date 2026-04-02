@@ -155,3 +155,23 @@ When logging prompts for debugging, never log the full transcription text. Use a
 
 ## MediaRecorder requires API version check at minSdk 30
 `MediaRecorder(Context)` constructor was added in API 31. At minSdk 30, you must check `Build.VERSION.SDK_INT >= Build.VERSION_CODES.S` and use `MediaRecorder(context)` on API 31+ or `MediaRecorder()` (no-arg, deprecated) on API 30.
+
+## Android API 36+ has Espresso/Compose testing compatibility issues
+Running instrumentation tests on API 36 (Android 16) causes `java.lang.NoSuchMethodException: android.hardware.input.InputManager.getInstance []` errors. This is a framework compatibility issue between Espresso and newer Android versions. **Solution**: Use API 35 emulator for instrumentation testing.
+
+## Cannot call setContent twice in same Compose UI test
+In Compose UI tests (`ComposeContentTestRule`), calling `setContent` more than once per test method throws `IllegalStateException: Cannot call setContent twice per test!`. Split into separate test methods or use state-based recomposition instead.
+
+## Instrumentation tests must use JUnit 4, not JUnit 5
+Android instrumentation tests (`src/androidTest`) require JUnit 4 (`org.junit.Test`, `org.junit.Assert`). While JUnit 5 works for unit tests (`src/test`), the Android testing framework and Espresso have limited JUnit 5 support. Use JUnit 4 for all instrumentation tests to avoid compatibility issues.
+
+## META-INF/LICENSE.md conflicts in test APK packaging
+When both JUnit 4 and JUnit 5 dependencies are present, building the test APK may fail with "6 files found with path 'META-INF/LICENSE.md'". **Fix**: Add to `build.gradle.kts`:
+```kotlin
+packaging {
+    resources {
+        excludes += "/META-INF/LICENSE.md"
+        excludes += "/META-INF/LICENSE-notice.md"
+    }
+}
+```

@@ -59,7 +59,13 @@ No active focus. All open issues addressed.
 - None.
 
 ## Blockers
-- `compileDebugAndroidTestKotlin` still has pre-existing failures outside current issue scope.
+- None. Instrumentation tests now compile and run successfully on API 35.
+
+## Testing Infrastructure
+- **Unit tests**: JUnit 5, all passing (115 tests)
+- **Instrumentation tests**: JUnit 4, all passing (31 tests) on API 35 emulator
+- **Emulator**: API 35 (Android 15) - `Medium_Phone_API_35` AVD configured and working
+- **API 36 compatibility**: Known Espresso/Compose testing issues on API 36+, use API 35 for UI tests
 
 ## Next Session Suggestion
 Issue #47 (Database delays require item caching) — Performance issue causing lag when swiping through transcriptions. Medium complexity, high user impact.

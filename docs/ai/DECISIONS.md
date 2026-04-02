@@ -299,3 +299,15 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Reason**: OpenRouter has no dedicated STT endpoint; would require complex base64 chat API integration with higher costs and lower accuracy.
 - **Changed**: Removed OpenRouter from `sttProviders` in ProviderConfig; removed `transcribeAudio()` from OpenRouterApiService; removed OpenRouter case from TranscriptionWorker; updated tests; tagged issue #62 with "not now" label.
 - **OpenRouter remains**: As LLM provider for post-processing (works correctly via chat completions).
+
+## 2026-04-01: Instrumentation tests use JUnit 4, unit tests use JUnit 5
+- **Choice**: Keep instrumentation tests (`src/androidTest`) on JUnit 4 while unit tests (`src/test`) use JUnit 5.
+- **Reason**: Android instrumentation testing has limited JUnit 5 support; Espresso and Compose testing work best with JUnit 4. The android-junit5 plugin exists but has compatibility issues with API 36+.
+- **Changed**: Converted 6 instrumentation test files from JUnit 5 to JUnit 4 imports; added `packagingOptions` excludes for META-INF/LICENSE.md files; created API 35 emulator for testing.
+- **Results**: All 31 instrumentation tests pass on API 35 emulator; 115 unit tests pass with JUnit 5.
+
+## 2026-04-01: API 35 emulator for instrumentation testing
+- **Choice**: Use API 35 (Android 15) emulator instead of API 36 for instrumentation tests.
+- **Reason**: API 36 has Espresso/Compose compatibility issues (`InputManager.getInstance` method not found); API 35 provides stable testing environment.
+- **Changed**: Installed API 35 system image; created `Medium_Phone_API_35` AVD; verified all 31 instrumentation tests pass.
+- **Note**: Production app targets API 36 for compilation, but tests run on API 35.
