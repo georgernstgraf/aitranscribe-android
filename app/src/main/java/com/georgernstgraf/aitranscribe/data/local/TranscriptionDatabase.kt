@@ -12,11 +12,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         TranscriptionEntity::class,
         ProviderEntity::class,
         ModelEntity::class,
-        CapabilityEntity::class,
-        ModelCapabilityEntity::class,
         AppPreferenceEntity::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = false
 )
 abstract class TranscriptionDatabase : RoomDatabase() {
@@ -38,7 +36,7 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                     TranscriptionDatabase::class.java,
                     DATABASE_NAME
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14)
                     .addCallback(ProviderPrepopulateCallback())
                     .fallbackToDestructiveMigration()
                     .build()
@@ -499,6 +497,13 @@ abstract class TranscriptionDatabase : RoomDatabase() {
         val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE transcriptions ADD COLUMN language TEXT")
+            }
+        }
+
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS `model_capabilities`")
+                db.execSQL("DROP TABLE IF EXISTS `capabilities`")
             }
         }
     }

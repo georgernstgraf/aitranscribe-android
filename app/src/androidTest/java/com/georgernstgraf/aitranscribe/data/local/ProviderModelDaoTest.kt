@@ -58,13 +58,11 @@ class ProviderModelDaoTest {
         val initialModels = listOf(
             ModelCatalogEntry(
                 externalId = "mod1",
-                modelName = "Model 1",
-                capabilities = emptyList()
+                modelName = "Model 1"
             ),
             ModelCatalogEntry(
                 externalId = "mod2",
-                modelName = "Model 2",
-                capabilities = emptyList()
+                modelName = "Model 2"
             )
         )
         dao.replaceModelsForProvider("prov1", initialModels, 500L)
@@ -78,8 +76,7 @@ class ProviderModelDaoTest {
         val newModels = listOf(
             ModelCatalogEntry(
                 externalId = "mod3",
-                modelName = "Model 3",
-                capabilities = emptyList()
+                modelName = "Model 3"
             )
         )
         dao.replaceModelsForProvider("prov1", newModels, 1000L)
