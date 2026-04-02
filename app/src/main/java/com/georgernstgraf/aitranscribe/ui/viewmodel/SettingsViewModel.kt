@@ -12,6 +12,8 @@ import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.model.DeleteMode
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
+import com.georgernstgraf.aitranscribe.domain.repository.Language
+import com.georgernstgraf.aitranscribe.domain.repository.LanguageRepository
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import com.georgernstgraf.aitranscribe.service.TranscriptionWorker
@@ -33,6 +35,7 @@ class SettingsViewModel @Inject constructor(
     private val appSettingsStore: AppSettingsStore,
     private val validateApiKeysUseCase: ValidateApiKeysUseCase,
     private val providerModelDao: ProviderModelDao,
+    private val languageRepository: LanguageRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -297,6 +300,39 @@ class SettingsViewModel @Inject constructor(
         }
         Log.d("SettingsViewModel", "Retrying ${queuedItems.size} queued transcription(s)")
     }
+
+    // Language management
+    fun loadLanguages() {
+        viewModelScope.launch {
+            languageRepository.getAllLanguages().collect { languages ->
+                val activeCount = languages.count { it.isActive }
+                _uiState.update {
+                    it.copy(
+                        allLanguages = languages,
+                        activeLanguageCount = activeCount
+                    )
+                }
+            }
+        }
+    }
+
+    suspend fun toggleLanguageActive(id: String, isActive: Boolean): Boolean {
+        val activeCount = languageRepository.getActiveLanguageCount()
+        // Prevent unchecking the last active language
+        if (!isActive && activeCount <= 1) {
+            return false
+        }
+        languageRepository.setLanguageActive(id, isActive)
+        return true
+    }
+
+    fun getLanguageDisplayName(language: Language): String {
+        return if (language.nativeName != null && language.nativeName != language.name) {
+            "${language.name} (${language.nativeName})"
+        } else {
+            language.name
+        }
+    }
 }
 
 data class SettingsUiState(
@@ -318,7 +354,9 @@ data class SettingsUiState(
     val deletedCount: Int? = null,
     val oldCount: Int? = null,
     val isValidating: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val allLanguages: List<Language> = emptyList(),
+    val activeLanguageCount: Int = 0
 )
 
 sealed class ProviderAuthResult {

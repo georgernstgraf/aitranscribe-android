@@ -29,6 +29,8 @@ interface LanguageRepository {
     suspend fun getLanguageById(id: String): Language?
     suspend fun getLanguageName(id: String): String
     suspend fun ensureLanguageExists(id: String): Language
+    suspend fun setLanguageActive(id: String, isActive: Boolean)
+    suspend fun getActiveLanguageCount(): Int
 }
 
 @Singleton
@@ -43,9 +45,12 @@ class LanguageRepositoryImpl @Inject constructor(
     }
 
     override fun getAllLanguages(): Flow<List<Language>> {
-        // For now, same as active - can be extended later
-        return languageDao.getActiveLanguages().map { entities ->
+        return languageDao.getAllLanguages().map { entities ->
             entities.map { it.toDomain() }
+                .sortedWith(
+                    compareByDescending<Language> { it.isActive }
+                        .thenBy { it.name }
+                )
         }
     }
 
@@ -73,5 +78,13 @@ class LanguageRepositoryImpl @Inject constructor(
         )
         languageDao.insertLanguage(newLanguage)
         return newLanguage.toDomain()
+    }
+
+    override suspend fun setLanguageActive(id: String, isActive: Boolean) {
+        languageDao.updateLanguageActiveStatus(id, isActive)
+    }
+
+    override suspend fun getActiveLanguageCount(): Int {
+        return languageDao.getActiveLanguageCount()
     }
 }

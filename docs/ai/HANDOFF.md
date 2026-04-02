@@ -3,51 +3,73 @@
 ## Current Work: Issue #66 — Define database schema for languages and improve Kotlin code
 
 ### Completed in This Session
-- ✅ Created `LanguageEntity` with Room annotations (id, name, native_name, is_active)
-- ✅ Created `LanguageDao` with queries for active languages and language lookup
-- ✅ Created `LanguageRepository` interface and implementation with auto-insert logic
-- ✅ Added `ensureLanguageExists(id: String): Language` method that auto-creates languages
-- ✅ Updated `TranscriptionWorker` to call `ensureLanguageExists()` on STT response
-- ✅ Added foreign key relationship from `TranscriptionEntity` to `LanguageEntity`
-- ✅ Added database index on `languagesId` column
-- ✅ Fixed Room schema validation crash by declaring foreign key in entity
-- ✅ Added logging for STT response language detection
-- ✅ All 120 tests passing
-- ✅ APK successfully deployed and running
 
-### What Was Implemented
-When STT returns a transcription with a language code (e.g., "en", "de", "fr"):
-1. Worker captures the language from STT response
-2. Calls `languageRepository.ensureLanguageExists(langCode)`
-3. Repository checks if language exists in DB
-4. If not found, auto-creates new language with:
-   - `id` = ISO code (as-is)
-   - `name` = ISO code uppercased (e.g., "EN", "DE")
-   - `nativeName` = null
-   - `isActive` = true (immediately available for translation)
+#### Language Settings UI Implementation
+- ✅ Created `LanguageSettingsScreen.kt` — Full-screen language management
+  - TopAppBar with back button
+  - LazyColumn showing all languages
+  - Each row: Checkbox + "LanguageName (NativeName)" format
+  - Active languages sorted first, then alphabetical
+  - Tap anywhere on row toggles checkbox
+  - Validation: Cannot uncheck last active language (Toast message)
+  
+- ✅ Updated `SettingsScreen.kt` with Languages section
+  - Shows "X active / Y total" subtitle
+  - "Manage" button navigates to LanguageSettingsScreen
+  
+- ✅ Added Navigation
+  - New route "languages" in MainActivity.kt
+  - SettingsViewModel handles language loading and toggling
 
-### Files Modified/Created
+#### Data Layer Extensions
+- ✅ Extended `LanguageDao` with:
+  - `getAllLanguages()` — Flow of all languages ordered by name
+  - `updateLanguageActiveStatus()` — Toggle is_active flag
+  - `getActiveLanguageCount()` — Count for validation
+
+- ✅ Extended `LanguageRepository` with:
+  - `getAllLanguages()` — Sorted: active first, then alphabetical
+  - `setLanguageActive()` — Persist toggle to database
+  - `getActiveLanguageCount()` — For minimum validation
+
+- ✅ Updated `SettingsViewModel`:
+  - Injected LanguageRepository
+  - `loadLanguages()` — Collect and sort languages
+  - `toggleLanguageActive()` — Prevents unchecking last active
+  - `getLanguageDisplayName()` — Format: "English (English)"
+  - New state: `allLanguages`, `activeLanguageCount`
+
+### User Flow
+```
+Settings Screen → [Manage] button → Language Settings Screen
+     ↓                                      ↓
+Languages: 3/34 total              ☑ English (English)
+[Manage]                           ☑ German (Deutsch)  
+                                   ☑ French (Français)  
+                                   ─────────────────  
+                                   ☐ Spanish (Español)  
+                                   ☐ Italian (Italiano)
+```
+
+### Files Modified/Created in This Session
 **New Files:**
-- `app/src/main/java/com/georgernstgraf/aitranscribe/data/local/LanguageEntity.kt`
-- `app/src/main/java/com/georgernstgraf/aitranscribe/data/local/LanguageDao.kt`
-- `app/src/main/java/com/georgernstgraf/aitranscribe/domain/repository/LanguageRepository.kt`
+- `app/src/main/java/com/georgernstgraf/aitranscribe/ui/screen/LanguageSettingsScreen.kt`
 
-**Modified Core Files:**
-- `TranscriptionWorker.kt` — Added language auto-insert and logging
-- `TranscriptionEntity.kt` — Added foreign key annotation
-- `TranscriptionDatabase.kt` — Migration 13→14, language seeding
-- `RepositoryModule.kt` — Added LanguageRepository binding
-- `TranscriptionRepository.kt` and Impl — Updated for new schema
+**Modified:**
+- `LanguageDao.kt` — Added queries for language management
+- `LanguageRepository.kt` — Added toggle methods and sorting
+- `SettingsViewModel.kt` — Added language management logic
+- `SettingsScreen.kt` — Added Languages section with Manage button
+- `MainActivity.kt` — Added "languages" navigation route
+- `SettingsViewModelTest.kt` — Added LanguageRepository mock
 
-**Updated Tests:**
-- `TranscriptionWorkerTest.kt` — Added LanguageRepository mock
+### Testing
+- All 120 unit tests passing
+- APK deployed and tested on device
+- Language toggle works correctly
+- Validation prevents unchecking last active language
 
 ### Remaining Work on Issue #66
-See issue #66 for full scope. This commit covers the auto-update languages functionality.
-
-### View Logs
-```bash
-adb logcat -s "TranscriptionWorker:D" "*:S"
-```
+Review issue #66 description for any remaining scope not yet implemented.
 
 Last updated: 2026-04-02

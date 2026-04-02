@@ -146,6 +146,12 @@ fun MainNavigation() {
             )
         }
 
+        composable("languages") {
+            LanguageSettingsScreen(
+                navController = navController
+            )
+        }
+
         composable("connect_provider") {
             ConnectProviderScreen(
                 navController = navController

@@ -285,6 +285,31 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Languages Section
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Languages",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "${state.activeLanguageCount} active / ${state.allLanguages.size} total",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Button(onClick = { navController.navigate("languages") }) {
+                    Text("Manage")
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             Button(
                 onClick = { showDeleteDialog = true },
                 modifier = Modifier

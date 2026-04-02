@@ -12,6 +12,10 @@ Issue #66 — Define database schema for languages and improve Kotlin code (IN P
 - [x] Added foreign key constraint from transcriptions to languages table
 - [x] Fixed Room schema validation by adding proper annotations to TranscriptionEntity
 - [x] Added logging for STT language detection in TranscriptionWorker
+- [x] Created LanguageSettingsScreen for managing active languages
+- [x] Added language management UI with check/uncheck functionality
+- [x] Implemented validation to prevent unchecking last active language
+- [x] Added Languages row to Settings screen with "Manage" button
 - [x] All 120 tests passing
 - [x] APK deployed and verified working
 
@@ -34,3 +38,5 @@ Review Issue #66 for remaining scope or proceed with other open issues.
 2. Unknown ISO codes use uppercase code as display name (e.g., "XX")
 3. New languages are immediately active for translation UI
 4. Room entities must declare foreign keys to match database schema exactly
+5. Language settings UI: Full-screen list, sorted active-first, row-tap toggles
+6. Minimum one language must remain active at all times

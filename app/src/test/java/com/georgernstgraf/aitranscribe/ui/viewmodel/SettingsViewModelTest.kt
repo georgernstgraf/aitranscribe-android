@@ -7,6 +7,7 @@ import com.georgernstgraf.aitranscribe.data.local.TranscriptionEntity
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
 
 import com.georgernstgraf.aitranscribe.domain.model.ViewFilter
+import com.georgernstgraf.aitranscribe.domain.repository.LanguageRepository
 import com.georgernstgraf.aitranscribe.domain.usecase.DeleteTranscriptionUseCase
 import com.georgernstgraf.aitranscribe.domain.usecase.ValidateApiKeysUseCase
 import io.mockk.coEvery
@@ -36,6 +37,7 @@ class SettingsViewModelTest {
     private lateinit var validateApiKeysUseCase: ValidateApiKeysUseCase
     private lateinit var appSettingsStore: AppSettingsStore
     private lateinit var providerModelDao: ProviderModelDao
+    private lateinit var languageRepository: LanguageRepository
     private lateinit var context: android.content.Context
     private lateinit var viewModel: SettingsViewModel
     private val testDispatcher = StandardTestDispatcher()
@@ -47,6 +49,7 @@ class SettingsViewModelTest {
         deleteUseCase = DeleteTranscriptionUseCase(repository)
         appSettingsStore = mockk(relaxed = true)
         providerModelDao = mockk(relaxed = true)
+        languageRepository = mockk(relaxed = true)
         context = mockk(relaxed = true)
         validateApiKeysUseCase = mockk(relaxed = true)
 
@@ -62,7 +65,7 @@ class SettingsViewModelTest {
         coEvery { appSettingsStore.getSttProvider() } returns "groq"
         coEvery { validateApiKeysUseCase.isValidKeyFormat(any(), any()) } returns true
         coEvery { validateApiKeysUseCase.validateProviderKey(any(), any()) } returns true
-        viewModel = SettingsViewModel(deleteUseCase, repository, appSettingsStore, validateApiKeysUseCase, providerModelDao, context)
+        viewModel = SettingsViewModel(deleteUseCase, repository, appSettingsStore, validateApiKeysUseCase, providerModelDao, languageRepository, context)
     }
 
     @Test
@@ -80,7 +83,7 @@ class SettingsViewModelTest {
         coEvery { appSettingsStore.getActiveAuthToken("openrouter") } returns "token_or"
         coEvery { appSettingsStore.getActiveAuthToken("zai") } returns null
 
-        viewModel = SettingsViewModel(deleteUseCase, repository, appSettingsStore, validateApiKeysUseCase, providerModelDao, context)
+        viewModel = SettingsViewModel(deleteUseCase, repository, appSettingsStore, validateApiKeysUseCase, providerModelDao, languageRepository, context)
         testDispatcher.scheduler.runCurrent()
 
         val state = viewModel.uiState.value

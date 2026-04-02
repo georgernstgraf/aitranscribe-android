@@ -20,6 +20,15 @@ interface LanguageDao {
     @Query("SELECT EXISTS(SELECT 1 FROM languages WHERE id = :id)")
     suspend fun languageExists(id: String): Boolean
 
+    @Query("SELECT COUNT(*) FROM languages WHERE is_active = 1")
+    suspend fun getActiveLanguageCount(): Int
+
+    @Query("UPDATE languages SET is_active = :isActive WHERE id = :id")
+    suspend fun updateLanguageActiveStatus(id: String, isActive: Boolean)
+
+    @Query("SELECT * FROM languages ORDER BY name")
+    fun getAllLanguages(): Flow<List<LanguageEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLanguage(language: LanguageEntity)
 
