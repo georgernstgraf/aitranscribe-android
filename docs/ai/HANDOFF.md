@@ -1,50 +1,31 @@
 # Hand Off
 
-## Current Work: Issue #66 — Transcription detail screen enhancements
+## Current Work: Issue #67 — STT verbose_json for language capture
 
-### Checkpoint: Detail screen language picker, translate buttons, cleanup toggle
+### Status: Fix applied, test passing, ready for commit
 
-#### What was implemented
+#### What was done this session
+1. **Applied Issue #67 fix**: `TranscriptionWorker.kt:237` — changed `"json"` to `"verbose_json"` in `createFormatPart()`
+2. **Added and fixed test**: `TranscriptionWorkerTest.worker captures language from verbose_json response`
+   - Root cause #1: `languageRepository` relaxed mock couldn't construct `Language` data class (no-arg constructor) → added explicit `coEvery` mock
+   - Root cause #2: `FakeTranscriptionRepository.insert()` ignores provided ID and auto-assigns sequential IDs → test now uses returned `insertedId`
+3. All unit tests pass (BUILD SUCCESSFUL)
 
-1. **Forced language picker (ModalBottomSheet)**
-   - When `transcription.language == null`, a non-dismissible bottom sheet appears
-   - Shows all active languages from DB (`languageRepository.getActiveLanguages()`)
-   - User must pick one; `confirmValueChange` blocks only the `Hidden` transition
-   - File: `TranscriptionDetailScreen.kt:92-98` (sheet state) + `LanguagePickerBottomSheet` composable
-
-2. **Translate buttons with FlowRow + OutlinedButton**
-   - Replaced single `Row` of `TextButton` with `FlowRow` of `OutlinedButton`
-   - Displays `language.name` (e.g., "German") instead of ISO code
-   - Filters out the transcription's own source language
-   - File: `TranscriptionDetailScreen.kt:226-240`
-
-3. **Cleanup toggle (Switch)**
-   - `cleanupEnabled: Boolean` in `TranscriptionDetailUiState`
-   - Default: `true` when `cleanedText == null`, `false` when cleaned text exists
-   - Reset on each page swipe (set in `observeActiveTranscription()`)
-   - `translateTo()` passes `_uiState.value.cleanupEnabled` to PostProcessTextUseCase
-   - File: `TranscriptionDetailViewModel.kt:139-141` (toggle), `TranscriptionDetailViewModel.kt:122` (used in translate)
-
-4. **Bug fix: loadAvailableLanguages() now reads from DB**
-   - Old: `appSettingsStore.getActiveLanguages()` returned empty (preference key never set)
-   - New: `languageRepository.getActiveLanguages()` queries Room directly (`is_active = 1`)
-   - File: `TranscriptionDetailViewModel.kt:66-70`
-
-5. **Bug fix: ModalBottomSheet wouldn't open**
-   - Old: `confirmValueChange = { false }` blocked ALL state transitions including show
-   - New: `confirmValueChange = { it != SheetValue.Hidden }` blocks only dismiss
-   - File: `TranscriptionDetailScreen.kt:92-96`
+#### Remaining on Issue #67
+- [ ] Move `./tmp/english.m4a` and `./tmp/deutsch.m4a` into project as test fixtures
+- [ ] Create integration/device test with real audio files for language capture end-to-end
+- [ ] Device-test: record audio → verify language captured from verbose_json response
 
 #### Remaining on Issue #66
 - [ ] Device-test forced language picker
 - [ ] Device-test cleanup toggle with real LLM calls
-- [ ] Device-test translate button layout
+- [ ] Device-test translate buttons with FlowRow layout
 - [ ] "Select/deselect all" on LanguageSettingsScreen
 - [ ] Remove debug logging before final release
+- [ ] Consider ZAI `verbose_json` support
 
-#### Key Files Changed
-- `app/src/main/java/.../ui/screen/TranscriptionDetailScreen.kt` — Major rewrite (ModalBottomSheet, FlowRow, Switch)
-- `app/src/main/java/.../ui/viewmodel/TranscriptionDetailViewModel.kt` — cleanupEnabled, toggleCleanup(), loadAvailableLanguages fix
-- `app/src/test/.../ui/viewmodel/TranscriptionDetailViewModelTest.kt` — 4 new tests
+#### Key Files Changed This Session
+- `app/src/main/java/.../service/TranscriptionWorker.kt` — Line 237: `"json"` → `"verbose_json"`
+- `app/src/test/.../service/TranscriptionWorkerTest.kt` — New test for language capture, with Language import and mock fix
 
 Last updated: 2026-04-02

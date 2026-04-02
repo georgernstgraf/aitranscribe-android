@@ -234,7 +234,7 @@ class TranscriptionWorker @AssistedInject constructor(
 
     private fun createModelPart(model: String) = model.toRequestBody("text/plain".toMediaType())
 
-    private fun createFormatPart() = "json".toRequestBody("text/plain".toMediaType())
+    private fun createFormatPart() = "verbose_json".toRequestBody("text/plain".toMediaType())
 
     private fun cleanupAudioFile(path: String) {
         try {

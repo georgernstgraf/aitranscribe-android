@@ -11,6 +11,7 @@ import com.georgernstgraf.aitranscribe.data.remote.GroqApiService
 import com.georgernstgraf.aitranscribe.data.remote.ZaiApiService
 import com.georgernstgraf.aitranscribe.data.remote.dto.GroqTranscriptionResponse
 import com.georgernstgraf.aitranscribe.data.testing.FakeTranscriptionRepository
+import com.georgernstgraf.aitranscribe.domain.repository.Language
 import com.georgernstgraf.aitranscribe.domain.repository.LanguageRepository
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
@@ -134,5 +135,39 @@ class TranscriptionWorkerTest {
         coVerify(exactly = 1) {
             postProcessTextUseCase.generateSummary(queued.id, any(), any(), any(), any())
         }
+    }
+
+    @Test
+    fun `worker captures language from verbose_json response`() = runBlocking {
+        val audioFile = createAudioFile()
+        val queued = TranscriptionEntity(
+            id = 0,
+            sttText = null,
+            cleanedText = null,
+            audioFilePath = audioFile.absolutePath,
+            createdAt = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+            errorMessage = null,
+            seen = false,
+            summary = null
+        )
+        val insertedId = fakeRepository.insert(queued)
+
+        coEvery {
+            groqApiService.transcribeAudio(any(), any(), any(), any())
+        } returns Response.success(GroqTranscriptionResponse(text = "Hallo Welt", language = "de"))
+
+        coEvery { languageRepository.ensureLanguageExists(any()) } returns Language(id = "de", name = "German", nativeName = "Deutsch", isActive = true)
+
+        every { params.inputData } returns Data.Builder().putLong("transcription_id", insertedId).build()
+
+        val result = worker.doWork()
+
+        assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
+
+        val saved = fakeRepository.getById(insertedId)
+        assertNotNull(saved)
+        assertEquals("de", saved!!.languageId)
+        assertEquals("Hallo Welt", saved.sttText)
+        assertNull(saved.audioFilePath)
     }
 }

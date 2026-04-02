@@ -333,6 +333,12 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Reason**: Better visual style, wraps naturally for many languages, prevents "translate to self".
 - **Changed**: `TranscriptionDetailScreen` uses `FlowRow` + `OutlinedButton` + `language.name` display.
 
+## 2026-04-02: STT response_format changed from json to verbose_json (#67)
+- **Choice**: Changed `createFormatPart()` in `TranscriptionWorker` from `"json"` to `"verbose_json"`.
+- **Reason**: `response_format=json` drops the `language` field from Groq Whisper API responses. `verbose_json` returns `language`, `duration`, and `segments`.
+- **Changed**: One-line fix at `TranscriptionWorker.kt:237`. DTO `GroqTranscriptionResponse` already had `language: String? = null`; no DTO changes needed.
+- **Tradeoff**: Slightly larger response payload (includes `segments` array), but Gson silently ignores unmatched fields.
+
 ## 2026-04-02: loadAvailableLanguages reads from DB, not AppSettingsStore (#66)
 - **Choice**: Use `languageRepository.getActiveLanguages()` (Room query `is_active = 1`) instead of `appSettingsStore.getActiveLanguages()` (preferences key).
 - **Reason**: AppSettingsStore preference was never written on device, returning empty list. DB query is the reliable source of truth.

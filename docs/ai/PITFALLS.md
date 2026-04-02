@@ -174,6 +174,9 @@ Setting `confirmValueChange = { false }` on `rememberModalBottomSheetState` bloc
 ## AppSettingsStore.getActiveLanguages() returns empty when preference never set
 `AppSettingsStore.getActiveLanguages()` reads from a `KEY_ACTIVE_LANGUAGES` preference that may never have been written. It returns an empty list even though the `languages` table has active rows. Use `languageRepository.getActiveLanguages()` (which queries `is_active = 1` directly) for reliable language loading.
 
+## FakeTranscriptionRepository.insert() ignores provided ID
+`FakeTranscriptionRepository.insert()` auto-assigns sequential IDs (`maxId + 1`) and ignores the `id` field on the passed-in entity. Tests that insert an entity with `id = 2` will find the entity stored with `id = 1`. **Fix:** Use the returned `insertedId` from `insert()` instead of assuming the ID you passed in.
+
 ## Instrumentation tests must use JUnit 4, not JUnit 5
 Android instrumentation tests (`src/androidTest`) require JUnit 4 (`org.junit.Test`, `org.junit.Assert`). While JUnit 5 works for unit tests (`src/test`), the Android testing framework and Espresso have limited JUnit 5 support. Use JUnit 4 for all instrumentation tests to avoid compatibility issues.
 
