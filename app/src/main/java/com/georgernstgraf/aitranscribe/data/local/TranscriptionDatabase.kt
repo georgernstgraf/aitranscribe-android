@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AppPreferenceEntity::class,
         LanguageEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = false
 )
 abstract class TranscriptionDatabase : RoomDatabase() {
@@ -44,7 +44,7 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                         MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
                         MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
                         MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13,
-                        MIGRATION_13_14, MIGRATION_14_15
+                        MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16
                     )
                     .addCallback(ProviderPrepopulateCallback())
                     .addCallback(LanguagePrepopulateCallback())
@@ -72,7 +72,7 @@ abstract class TranscriptionDatabase : RoomDatabase() {
         }
 
         private fun seedLanguages(db: SupportSQLiteDatabase) {
-            val languages = listOf(
+            val active = listOf(
                 Triple("de", "German", "Deutsch"),
                 Triple("en", "English", "English"),
                 Triple("fr", "French", "Français"),
@@ -111,9 +111,80 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                 Triple("lv", "Latvian", "Latviešu"),
                 Triple("et", "Estonian", "Eesti")
             )
-            languages.forEach { (id, name, nativeName) ->
+            val inactive = listOf(
+                Triple("ca", "Catalan", "Català"),
+                Triple("ta", "Tamil", "தமிழ்"),
+                Triple("ur", "Urdu", "اردو"),
+                Triple("la", "Latin", "Latina"),
+                Triple("mi", "Maori", "Te Reo Māori"),
+                Triple("ml", "Malayalam", "മലയാളം"),
+                Triple("cy", "Welsh", "Cymraeg"),
+                Triple("te", "Telugu", "తెలుగు"),
+                Triple("fa", "Persian", "فارسی"),
+                Triple("bn", "Bengali", "বাংলা"),
+                Triple("az", "Azerbaijani", "Azərbaycan"),
+                Triple("kn", "Kannada", "ಕನ್ನಡ"),
+                Triple("mk", "Macedonian", "Македонски"),
+                Triple("br", "Breton", "Brezhoneg"),
+                Triple("eu", "Basque", "Euskara"),
+                Triple("is", "Icelandic", "Íslenska"),
+                Triple("hy", "Armenian", "Հայերեն"),
+                Triple("ne", "Nepali", "नेपाली"),
+                Triple("mn", "Mongolian", "Монгол"),
+                Triple("bs", "Bosnian", "Bosanski"),
+                Triple("kk", "Kazakh", "Қазақ"),
+                Triple("sq", "Albanian", "Shqip"),
+                Triple("sw", "Swahili", "Kiswahili"),
+                Triple("gl", "Galician", "Galego"),
+                Triple("mr", "Marathi", "मराठी"),
+                Triple("pa", "Punjabi", "ਪੰਜਾਬੀ"),
+                Triple("si", "Sinhala", "සිංහල"),
+                Triple("km", "Khmer", "ខ្មែរ"),
+                Triple("sn", "Shona", "chiShona"),
+                Triple("yo", "Yoruba", "Yorùbá"),
+                Triple("so", "Somali", "Soomaali"),
+                Triple("af", "Afrikaans", "Afrikaans"),
+                Triple("oc", "Occitan", "Occitan"),
+                Triple("ka", "Georgian", "ქართული"),
+                Triple("be", "Belarusian", "Беларуская"),
+                Triple("tg", "Tajik", "Тоҷикӣ"),
+                Triple("sd", "Sindhi", "سنڌي"),
+                Triple("gu", "Gujarati", "ગુજરાતી"),
+                Triple("am", "Amharic", "አማርኛ"),
+                Triple("yi", "Yiddish", "ייִדיש"),
+                Triple("lo", "Lao", "ລາວ"),
+                Triple("uz", "Uzbek", "Oʻzbek"),
+                Triple("fo", "Faroese", "Føroyskt"),
+                Triple("ht", "Haitian Creole", "Kreyòl Ayisyen"),
+                Triple("ps", "Pashto", "پښتو"),
+                Triple("tk", "Turkmen", "Türkmen"),
+                Triple("nn", "Nynorsk", "Nynorsk"),
+                Triple("mt", "Maltese", "Malti"),
+                Triple("sa", "Sanskrit", "संस्कृतम्"),
+                Triple("lb", "Luxembourgish", "Lëtzebuergesch"),
+                Triple("my", "Myanmar", "မြန်မာ"),
+                Triple("bo", "Tibetan", "བོད་སྐད"),
+                Triple("tl", "Tagalog", "Tagalog"),
+                Triple("mg", "Malagasy", "Malagasy"),
+                Triple("as", "Assamese", "অসমীয়া"),
+                Triple("tt", "Tatar", "Татар"),
+                Triple("haw", "Hawaiian", "ʻŌlelo Hawaiʻi"),
+                Triple("ln", "Lingala", "Lingála"),
+                Triple("ha", "Hausa", "Hausa"),
+                Triple("ba", "Bashkir", "Башҡорт"),
+                Triple("jw", "Javanese", "Basa Jawa"),
+                Triple("su", "Sundanese", "Basa Sunda"),
+                Triple("yue", "Cantonese", "粵語")
+            )
+            active.forEach { (id, name, nativeName) ->
                 db.execSQL(
                     "INSERT INTO languages (id, name, native_name, is_active) VALUES (?, ?, ?, 1)",
+                    arrayOf(id, name, nativeName)
+                )
+            }
+            inactive.forEach { (id, name, nativeName) ->
+                db.execSQL(
+                    "INSERT INTO languages (id, name, native_name, is_active) VALUES (?, ?, ?, 0)",
                     arrayOf(id, name, nativeName)
                 )
             }
@@ -552,19 +623,40 @@ abstract class TranscriptionDatabase : RoomDatabase() {
         val MIGRATION_14_15 = object : Migration(14, 15) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 val mappings = listOf(
-                    "english" to "en", "german" to "de", "french" to "fr",
-                    "spanish" to "es", "italian" to "it", "portuguese" to "pt",
-                    "dutch" to "nl", "polish" to "pl", "russian" to "ru",
-                    "japanese" to "ja", "chinese" to "zh", "korean" to "ko",
-                    "arabic" to "ar", "hindi" to "hi", "turkish" to "tr",
-                    "swedish" to "sv", "danish" to "da", "norwegian" to "no",
-                    "finnish" to "fi", "czech" to "cs", "hungarian" to "hu",
-                    "romanian" to "ro", "greek" to "el", "hebrew" to "he",
-                    "thai" to "th", "vietnamese" to "vi", "indonesian" to "id",
-                    "malay" to "ms", "ukrainian" to "uk", "bulgarian" to "bg",
-                    "croatian" to "hr", "serbian" to "sr", "slovak" to "sk",
-                    "slovenian" to "sl", "lithuanian" to "lt", "latvian" to "lv",
-                    "estonian" to "et"
+                    "english" to "en", "chinese" to "zh", "german" to "de",
+                    "spanish" to "es", "russian" to "ru", "korean" to "ko",
+                    "french" to "fr", "japanese" to "ja", "portuguese" to "pt",
+                    "turkish" to "tr", "polish" to "pl", "catalan" to "ca",
+                    "dutch" to "nl", "arabic" to "ar", "swedish" to "sv",
+                    "italian" to "it", "indonesian" to "id", "hindi" to "hi",
+                    "finnish" to "fi", "vietnamese" to "vi", "hebrew" to "he",
+                    "ukrainian" to "uk", "greek" to "el", "malay" to "ms",
+                    "czech" to "cs", "romanian" to "ro", "danish" to "da",
+                    "hungarian" to "hu", "tamil" to "ta", "norwegian" to "no",
+                    "thai" to "th", "urdu" to "ur", "croatian" to "hr",
+                    "bulgarian" to "bg", "lithuanian" to "lt", "latin" to "la",
+                    "maori" to "mi", "malayalam" to "ml", "welsh" to "cy",
+                    "slovak" to "sk", "telugu" to "te", "persian" to "fa",
+                    "latvian" to "lv", "bengali" to "bn", "serbian" to "sr",
+                    "azerbaijani" to "az", "slovenian" to "sl", "kannada" to "kn",
+                    "estonian" to "et", "macedonian" to "mk", "breton" to "br",
+                    "basque" to "eu", "icelandic" to "is", "armenian" to "hy",
+                    "nepali" to "ne", "mongolian" to "mn", "bosnian" to "bs",
+                    "kazakh" to "kk", "albanian" to "sq", "swahili" to "sw",
+                    "galician" to "gl", "marathi" to "mr", "punjabi" to "pa",
+                    "sinhala" to "si", "khmer" to "km", "shona" to "sn",
+                    "yoruba" to "yo", "somali" to "so", "afrikaans" to "af",
+                    "occitan" to "oc", "georgian" to "ka", "belarusian" to "be",
+                    "tajik" to "tg", "sindhi" to "sd", "gujarati" to "gu",
+                    "amharic" to "am", "yiddish" to "yi", "lao" to "lo",
+                    "uzbek" to "uz", "faroese" to "fo", "haitian creole" to "ht",
+                    "pashto" to "ps", "turkmen" to "tk", "nynorsk" to "nn",
+                    "maltese" to "mt", "sanskrit" to "sa", "luxembourgish" to "lb",
+                    "myanmar" to "my", "tibetan" to "bo", "tagalog" to "tl",
+                    "malagasy" to "mg", "assamese" to "as", "tatar" to "tt",
+                    "hawaiian" to "haw", "lingala" to "ln", "hausa" to "ha",
+                    "bashkir" to "ba", "javanese" to "jw", "sundanese" to "su",
+                    "cantonese" to "yue"
                 )
                 mappings.forEach { (name, code) ->
                     db.execSQL("UPDATE transcriptions SET languagesId = ? WHERE languagesId = ?", arrayOf(code, name))
@@ -576,6 +668,82 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                       AND id NOT IN (SELECT DISTINCT languagesId FROM transcriptions WHERE languagesId IS NOT NULL)
                     """.trimIndent()
                 )
+            }
+        }
+
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val inactiveLanguages = listOf(
+                    Triple("ca", "Catalan", "Català"),
+                    Triple("ta", "Tamil", "தமிழ்"),
+                    Triple("ur", "Urdu", "اردو"),
+                    Triple("la", "Latin", "Latina"),
+                    Triple("mi", "Maori", "Te Reo Māori"),
+                    Triple("ml", "Malayalam", "മലയാളം"),
+                    Triple("cy", "Welsh", "Cymraeg"),
+                    Triple("te", "Telugu", "తెలుగు"),
+                    Triple("fa", "Persian", "فارسی"),
+                    Triple("bn", "Bengali", "বাংলা"),
+                    Triple("az", "Azerbaijani", "Azərbaycan"),
+                    Triple("kn", "Kannada", "ಕನ್ನಡ"),
+                    Triple("mk", "Macedonian", "Македонски"),
+                    Triple("br", "Breton", "Brezhoneg"),
+                    Triple("eu", "Basque", "Euskara"),
+                    Triple("is", "Icelandic", "Íslenska"),
+                    Triple("hy", "Armenian", "Հայերեն"),
+                    Triple("ne", "Nepali", "नेपाली"),
+                    Triple("mn", "Mongolian", "Монгол"),
+                    Triple("bs", "Bosnian", "Bosanski"),
+                    Triple("kk", "Kazakh", "Қазақ"),
+                    Triple("sq", "Albanian", "Shqip"),
+                    Triple("sw", "Swahili", "Kiswahili"),
+                    Triple("gl", "Galician", "Galego"),
+                    Triple("mr", "Marathi", "मराठी"),
+                    Triple("pa", "Punjabi", "ਪੰਜਾਬੀ"),
+                    Triple("si", "Sinhala", "සිංහල"),
+                    Triple("km", "Khmer", "ខ្មែរ"),
+                    Triple("sn", "Shona", "chiShona"),
+                    Triple("yo", "Yoruba", "Yorùbá"),
+                    Triple("so", "Somali", "Soomaali"),
+                    Triple("af", "Afrikaans", "Afrikaans"),
+                    Triple("oc", "Occitan", "Occitan"),
+                    Triple("ka", "Georgian", "ქართული"),
+                    Triple("be", "Belarusian", "Беларуская"),
+                    Triple("tg", "Tajik", "Тоҷикӣ"),
+                    Triple("sd", "Sindhi", "سنڌي"),
+                    Triple("gu", "Gujarati", "ગુજરાતી"),
+                    Triple("am", "Amharic", "አማርኛ"),
+                    Triple("yi", "Yiddish", "ייִדיש"),
+                    Triple("lo", "Lao", "ລາວ"),
+                    Triple("uz", "Uzbek", "Oʻzbek"),
+                    Triple("fo", "Faroese", "Føroyskt"),
+                    Triple("ht", "Haitian Creole", "Kreyòl Ayisyen"),
+                    Triple("ps", "Pashto", "پښتو"),
+                    Triple("tk", "Turkmen", "Türkmen"),
+                    Triple("nn", "Nynorsk", "Nynorsk"),
+                    Triple("mt", "Maltese", "Malti"),
+                    Triple("sa", "Sanskrit", "संस्कृतम्"),
+                    Triple("lb", "Luxembourgish", "Lëtzebuergesch"),
+                    Triple("my", "Myanmar", "မြန်မာ"),
+                    Triple("bo", "Tibetan", "བོད་སྐད"),
+                    Triple("tl", "Tagalog", "Tagalog"),
+                    Triple("mg", "Malagasy", "Malagasy"),
+                    Triple("as", "Assamese", "অসমীয়া"),
+                    Triple("tt", "Tatar", "Татар"),
+                    Triple("haw", "Hawaiian", "ʻŌlelo Hawaiʻi"),
+                    Triple("ln", "Lingala", "Lingála"),
+                    Triple("ha", "Hausa", "Hausa"),
+                    Triple("ba", "Bashkir", "Башҡорт"),
+                    Triple("jw", "Javanese", "Basa Jawa"),
+                    Triple("su", "Sundanese", "Basa Sunda"),
+                    Triple("yue", "Cantonese", "粵語")
+                )
+                inactiveLanguages.forEach { (id, name, nativeName) ->
+                    db.execSQL(
+                        "INSERT OR IGNORE INTO languages (id, name, native_name, is_active) VALUES (?, ?, ?, 0)",
+                        arrayOf(id, name, nativeName)
+                    )
+                }
             }
         }
     }
