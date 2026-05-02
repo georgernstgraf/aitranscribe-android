@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         AppPreferenceEntity::class,
         LanguageEntity::class
     ],
-    version = 14,
+    version = 15,
     exportSchema = false
 )
 abstract class TranscriptionDatabase : RoomDatabase() {
@@ -44,7 +44,7 @@ abstract class TranscriptionDatabase : RoomDatabase() {
                         MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
                         MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
                         MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13,
-                        MIGRATION_13_14
+                        MIGRATION_13_14, MIGRATION_14_15
                     )
                     .addCallback(ProviderPrepopulateCallback())
                     .addCallback(LanguagePrepopulateCallback())
@@ -546,6 +546,36 @@ abstract class TranscriptionDatabase : RoomDatabase() {
 
                 // 6. Create index for FK
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_transcriptions_languagesId ON transcriptions (languagesId)")
+            }
+        }
+
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val mappings = listOf(
+                    "english" to "en", "german" to "de", "french" to "fr",
+                    "spanish" to "es", "italian" to "it", "portuguese" to "pt",
+                    "dutch" to "nl", "polish" to "pl", "russian" to "ru",
+                    "japanese" to "ja", "chinese" to "zh", "korean" to "ko",
+                    "arabic" to "ar", "hindi" to "hi", "turkish" to "tr",
+                    "swedish" to "sv", "danish" to "da", "norwegian" to "no",
+                    "finnish" to "fi", "czech" to "cs", "hungarian" to "hu",
+                    "romanian" to "ro", "greek" to "el", "hebrew" to "he",
+                    "thai" to "th", "vietnamese" to "vi", "indonesian" to "id",
+                    "malay" to "ms", "ukrainian" to "uk", "bulgarian" to "bg",
+                    "croatian" to "hr", "serbian" to "sr", "slovak" to "sk",
+                    "slovenian" to "sl", "lithuanian" to "lt", "latvian" to "lv",
+                    "estonian" to "et"
+                )
+                mappings.forEach { (name, code) ->
+                    db.execSQL("UPDATE transcriptions SET languagesId = ? WHERE languagesId = ?", arrayOf(code, name))
+                }
+                db.execSQL(
+                    """
+                    DELETE FROM languages
+                    WHERE native_name IS NULL
+                      AND id NOT IN (SELECT DISTINCT languagesId FROM transcriptions WHERE languagesId IS NOT NULL)
+                    """.trimIndent()
+                )
             }
         }
     }

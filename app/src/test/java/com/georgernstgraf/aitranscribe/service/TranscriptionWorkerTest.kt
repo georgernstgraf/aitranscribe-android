@@ -154,9 +154,9 @@ class TranscriptionWorkerTest {
 
         coEvery {
             groqApiService.transcribeAudio(any(), any(), any(), any())
-        } returns Response.success(GroqTranscriptionResponse(text = "Hallo Welt", language = "de"))
+        } returns Response.success(GroqTranscriptionResponse(text = "Hallo Welt", language = "german"))
 
-        coEvery { languageRepository.ensureLanguageExists(any()) } returns Language(id = "de", name = "German", nativeName = "Deutsch", isActive = true)
+        coEvery { languageRepository.ensureLanguageExists("de") } returns Language(id = "de", name = "German", nativeName = "Deutsch", isActive = true)
 
         every { params.inputData } returns Data.Builder().putLong("transcription_id", insertedId).build()
 

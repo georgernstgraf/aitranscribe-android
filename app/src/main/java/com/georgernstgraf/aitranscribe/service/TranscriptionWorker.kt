@@ -15,6 +15,7 @@ import com.georgernstgraf.aitranscribe.data.repository.TranscriptionRepository
 import com.georgernstgraf.aitranscribe.domain.repository.LanguageRepository
 import com.georgernstgraf.aitranscribe.domain.model.PostProcessingType
 import com.georgernstgraf.aitranscribe.domain.model.ProviderConfig
+import com.georgernstgraf.aitranscribe.domain.model.WhisperLanguageMapper
 import com.georgernstgraf.aitranscribe.domain.usecase.PostProcessTextUseCase
 import com.georgernstgraf.aitranscribe.util.NetworkMonitor
 import dagger.assisted.Assisted
@@ -79,15 +80,16 @@ class TranscriptionWorker @AssistedInject constructor(
             return@withContext Result.failure()
         }
 
-        // Auto-insert new language if detected from STT
-        transcriptionResult.language?.let { langCode ->
-            languageRepository.ensureLanguageExists(langCode)
+        val resolvedLanguageId = transcriptionResult.language?.let { whisperName ->
+            val code = WhisperLanguageMapper.mapToCode(whisperName)
+            languageRepository.ensureLanguageExists(code)
+            code
         }
 
         repository.markSttSuccess(
             id = transcriptionId,
             sttText = transcriptionResult.text,
-            languageId = transcriptionResult.language
+            languageId = resolvedLanguageId
         )
         cleanupAudioFile(audioPath)
 
