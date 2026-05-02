@@ -355,3 +355,9 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Reason**: Prevents `ensureLanguageExists` from creating stubs with `name=CODE.uppercase()` and no native name. All entries now have proper English names and native script names.
 - **Changed**: `seedLanguages()` now inserts 100 languages; `MIGRATION_15_16` inserts 63 inactive languages for existing installs; `MIGRATION_14_15` expanded to remap all 100 Whisper names to codes.
 - **DB version**: Bumped to 16.
+
+## 2026-05-02: Removed capabilities + model_capabilities tables (#64)
+- **Choice**: Dropped `capabilities` and `model_capabilities` tables entirely (migration 16→17).
+- **Reason**: Capabilities were written during `ModelSyncWorker` sync but never read by any consumer — no UI, no worker, no business logic queried them. The app routes STT/LLM calls via hardcoded `when(providerId)` dispatch, not capability-based logic.
+- **Changed**: Deleted `CapabilityEntity.kt`, `ModelCapabilityEntity.kt`; removed capability fields from `ModelCatalogEntry`; removed `insertCapabilities()`, `insertModelCapabilities()`, `deleteModelCapabilitiesForProvider()` from `ProviderModelDao`; removed `extractCapabilities()` from `ModelSyncWorker`.
+- **DB version**: Bumped to 17.
