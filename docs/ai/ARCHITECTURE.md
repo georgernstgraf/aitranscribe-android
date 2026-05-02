@@ -58,16 +58,15 @@ Hilt modules in `di/`:
 ## Database Schema
 
 **Engine:** Room (SQLite)  
-**Version:** 14  
+**Version:** 17  
 **File:** `aitranscribe.db`  
 **Canonical schema:** `prisma/desired/schema.prisma`
 
 ### Entity-Relationship Diagram
 
 ```
-providers ──1:N──> models ──N:M──> capabilities
-                     │                (via model_capabilities)
-                     │
+providers ──1:N──> models
+
 languages ──1:N──> transcriptions
                      │
                 app_preferences (standalone key-value)
@@ -115,25 +114,6 @@ languages ──1:N──> transcriptions
 
 **Unique constraint:** (`provider_id`, `external_id`)
 
-#### `capabilities`
-
-| Column | Type    | Nullable | Default | Notes       |
-|--------|---------|----------|---------|-------------|
-| `id`   | TEXT    | no       |         | Primary key |
-| `name` | TEXT    | no       |         | Unique      |
-
-Format: `modality:text-chat`, `instruct_type:chat`, etc.
-
-#### `model_capabilities` (junction table)
-
-| Column         | Type    | Nullable | Default | Notes                          |
-|----------------|---------|----------|---------|--------------------------------|
-| `model_id`     | INTEGER | no       |         | FK → models.id (CASCADE)       |
-| `capability_id`| TEXT    | no       |         | FK → capabilities.id (CASCADE) |
-| `source`       | TEXT    | yes      |         | e.g. "legacy_json", "api_sync" |
-
-**Primary key:** composite (`model_id`, `capability_id`)
-
 #### `languages`
 
 | Column       | Type    | Nullable | Default | Notes            |
@@ -162,8 +142,6 @@ Format: `modality:text-chat`, `instruct_type:chat`, etc.
 | `TranscriptionEntity`      | transcriptions      | data/local/            |
 | `ProviderEntity`           | providers           | data/local/            |
 | `ModelEntity`              | models              | data/local/            |
-| `CapabilityEntity`         | capabilities        | data/local/            |
-| `ModelCapabilityEntity`    | model_capabilities  | data/local/            |
 | `LanguageEntity`           | languages           | data/local/            |
 | `AppPreferenceEntity`      | app_preferences     | data/local/            |
 
@@ -188,6 +166,7 @@ All entities in `app/src/main/java/com/georgernstgraf/aitranscribe/data/local/`.
 | 11→12   | Merge original_text + processed_text → single text column | Add language column |
 | 12→13   | Add language TEXT column to transcriptions | |
 | 13→14   | Create languages table; rebuild transcriptions with FK to languages | Split text → stt_text + cleaned_text; drop status column |
+| 16→17   | Remove capabilities + model_capabilities tables | Dead code — written but never read |
 
 ---
 

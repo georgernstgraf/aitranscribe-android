@@ -16,12 +16,6 @@ model app_preferences {
   updated_at String
 }
 
-model capabilities {
-  id                 String               @id
-  name               String               @unique(map: "index_capabilities_name")
-  model_capabilities model_capabilities[]
-}
-
 model languages {
   id             String           @id
   name           String
@@ -30,24 +24,12 @@ model languages {
   transcriptions transcriptions[]
 }
 
-model model_capabilities {
-  model_id      Int
-  capability_id String
-  source        String?
-  capabilities  capabilities @relation(fields: [capability_id], references: [id], onDelete: Cascade)
-  models        models       @relation(fields: [model_id], references: [id], onDelete: Cascade)
-
-  @@id([model_id, capability_id])
-  @@index([capability_id], map: "index_model_capabilities_capability_id")
-}
-
 model models {
-  id                 Int                  @id @default(autoincrement())
-  provider_id        String
-  external_id        String
-  model_name         String
-  model_capabilities model_capabilities[]
-  providers          providers            @relation(fields: [provider_id], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement())
+  provider_id String
+  external_id String
+  model_name  String
+  providers   providers @relation(fields: [provider_id], references: [id], onDelete: Cascade)
 
   @@unique([provider_id, external_id], map: "index_models_provider_id_external_id")
   @@index([model_name], map: "index_models_model_name")
