@@ -177,6 +177,12 @@ Setting `confirmValueChange = { false }` on `rememberModalBottomSheetState` bloc
 ## FakeTranscriptionRepository.insert() ignores provided ID
 `FakeTranscriptionRepository.insert()` auto-assigns sequential IDs (`maxId + 1`) and ignores the `id` field on the passed-in entity. Tests that insert an entity with `id = 2` will find the entity stored with `id = 1`. **Fix:** Use the returned `insertedId` from `insert()` instead of assuming the ID you passed in.
 
+## Whisper API returns language names, not BCP-47 codes
+The Whisper `verbose_json` response `language` field returns lowercase English names (`"english"`, `"german"`, `"french"`) — NOT ISO-639-1 codes (`"en"`, `"de"`, `"fr"`). The prepopulated `languages` table uses BCP-47 codes as primary keys. Always map via `WhisperLanguageMapper.mapToCode()` before storing. The full list of 100 language names is from `openai/whisper/whisper/tokenizer.py`.
+
+## Whisper language name to code mapping must cover all 100 languages
+The `WhisperLanguageMapper` and `MIGRATION_14_15` must stay in sync with the Whisper tokenizer's `LANGUAGES` dictionary. When adding new language support, check both the mapper and the migration. Only 37 of the 100 Whisper languages are active by default; the rest are inactive but pre-seeded.
+
 ## Instrumentation tests must use JUnit 4, not JUnit 5
 Android instrumentation tests (`src/androidTest`) require JUnit 4 (`org.junit.Test`, `org.junit.Assert`). While JUnit 5 works for unit tests (`src/test`), the Android testing framework and Espresso have limited JUnit 5 support. Use JUnit 4 for all instrumentation tests to avoid compatibility issues.
 

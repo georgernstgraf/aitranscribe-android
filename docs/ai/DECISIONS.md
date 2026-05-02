@@ -343,3 +343,15 @@ Replaced copy icon with share icon on TranscriptionDetailScreen. Added shareTran
 - **Choice**: Use `languageRepository.getActiveLanguages()` (Room query `is_active = 1`) instead of `appSettingsStore.getActiveLanguages()` (preferences key).
 - **Reason**: AppSettingsStore preference was never written on device, returning empty list. DB query is the reliable source of truth.
 - **Changed**: `TranscriptionDetailViewModel.loadAvailableLanguages()` now collects from repository Flow.
+
+## 2026-05-02: Whisper language names mapped to BCP-47 codes via WhisperLanguageMapper (#69)
+- **Choice**: Static mapper object converts Whisper `verbose_json` language names (e.g., `"german"`) to BCP-47 codes (e.g., `"de"`) before DB storage.
+- **Reason**: Whisper API returns lowercase English language names, but the prepopulated `languages` table uses BCP-47 codes as primary keys. Without mapping, `ensureLanguageExists()` created duplicate stubs (`id="english"`, `name="ENGLISH"`) instead of matching `id="en"`, `name="German"`.
+- **Changed**: Added `WhisperLanguageMapper` (100 entries covering full Whisper tokenizer dictionary); `TranscriptionWorker` maps language before `ensureLanguageExists` and `markSttSuccess`.
+- **Source**: Whisper `LANGUAGES` dict in `openai/whisper/whisper/tokenizer.py` (100 languages).
+
+## 2026-05-02: All 100 Whisper languages pre-seeded in DB (#69)
+- **Choice**: Pre-seed all 100 Whisper languages in `languages` table — 37 active (original set), 63 inactive (new additions).
+- **Reason**: Prevents `ensureLanguageExists` from creating stubs with `name=CODE.uppercase()` and no native name. All entries now have proper English names and native script names.
+- **Changed**: `seedLanguages()` now inserts 100 languages; `MIGRATION_15_16` inserts 63 inactive languages for existing installs; `MIGRATION_14_15` expanded to remap all 100 Whisper names to codes.
+- **DB version**: Bumped to 16.
