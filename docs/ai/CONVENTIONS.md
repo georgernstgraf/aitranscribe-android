@@ -140,7 +140,7 @@ If the `knowledge-persistence` skill is not available:
 5. Update HANDOFF.md: clear if done, or list pending tasks with context
 6. Report which files were changed and how many entries were added
 
-Keep each knowledge file under 200 lines. Split by topic if needed.
+Keep each knowledge file under 1000 lines. Split by topic if needed.
 
 ## Testing Strategy
 

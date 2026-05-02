@@ -8,9 +8,7 @@ This project is a standard Android/Kotlin codebase. It should be straightforward
 - Follow standard git/github operations (commit, push, PR)
 - Use `AGENTS.md` for project-specific instructions
 - Use `docs/ai/` knowledge files for persistent context (bootstrap sequence below)
-- Use the OpenCode `available_skills` feature to discover and load all skills available in the current harness
 - Follow project-specific conventions documented in `docs/ai/CONVENTIONS.md`
-- A **local project-specific skill** resides at `skills/orchestrator/` — honor it alongside all other available skills
 
 ## Project Identity
 
