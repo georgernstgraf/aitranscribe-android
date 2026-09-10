@@ -1,8 +1,9 @@
 # POP OFF HEAD, APPEND TO BODY
 
+
 ## centralize knowledge:
 
-integrate Architecture.txt, ORCHESTRATION.md, BUILD_STATUS.md into knowlegde-persist. they might be outdated
+integrate Architecture.txt, ORCHESTRATION.md, BUILD_STATUS.md into knowlegde-persist. they might be outdat1ed
 
 ## prisma knowledge-persist
 
